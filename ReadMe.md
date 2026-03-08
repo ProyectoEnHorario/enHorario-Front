@@ -4,7 +4,6 @@ Aplicación móvil orientada a optimizar el tiempo de las personas, permitiendo 
 
 El sistema utiliza datos históricos, reportes colaborativos de usuarios y análisis predictivo para estimar cuánto tiempo podría tardar una fila antes de que el usuario llegue al lugar. 
 
-P.I-EnHorario
 
 📱 Descripción del Proyecto
 
@@ -22,168 +21,71 @@ Visualizar la concurrencia mediante mapas.
 
 De esta forma, los usuarios pueden tomar decisiones más inteligentes sobre cuándo y dónde realizar sus actividades. 
 
-P.I-EnHorario
+## Reglas de Colaboración
 
-🎯 Objetivo General
+Este documento describe el flujo de trabajo y las convenciones que seguirá el equipo de desarrollo del proyecto **EnHorario**.
 
-Desarrollar una aplicación móvil que optimice la gestión de tiempos de espera en establecimientos comerciales y de servicios mediante automatización y análisis predictivo. 
+### Estrategia de Ramificación: GitFlow Adaptado
 
-P.I-EnHorario
+Adoptamos un esquema **GitFlow adaptado** como flujo de trabajo principal. A continuación se describen las ramas del proyecto y su propósito:
 
-🎯 Objetivos Específicos
+| Rama | Propósito |
+|------|-----------|
+| `main` | Código estable y listo para producción. Protegida contra cambios directos. |
+| `develop` | Rama de integración continua. Base para crear todas las feature branches. |
+| `feature/nombre-funcionalidad` | Una rama por historia de usuario o tarea del backlog. |
+| `fix/nombre-bug` | Corrección de bugs encontrados en `develop`. |
+| `hotfix/nombre-critico` | Correcciones urgentes en producción. Se integra en `main` y `develop`. |
 
-Identificar requerimientos funcionales para monitorear la afluencia de personas.
+---
 
-Diseñar un modelo de datos para almacenar tiempos de espera por establecimiento.
+### Flujo de Trabajo Paso a Paso
 
-Desarrollar un prototipo que represente la concurrencia mediante mapas de calor.
+1. Crear la rama desde `develop`:
+   ```bash
+   git checkout develop
+   git pull origin develop
+   git checkout -b feature/nombre-funcionalidad
+   ```
 
-Evaluar la precisión de las predicciones usando datos de usuarios. 
+2. Desarrollar y hacer commits siguiendo las convenciones (ver abajo).
 
-P.I-EnHorario
+3. Subir la rama al repositorio remoto:
+   ```bash
+   git push origin feature/nombre-funcionalidad
+   ```
 
-👥 Público Objetivo
+4. Abrir un **Pull Request** hacia `develop` en GitHub.
 
-La aplicación está dirigida a:
+5. El PR debe recibir **al menos 1 aprobación** de otro miembro del equipo antes del merge.
 
-Trabajadores
+6. Una vez aprobado, hacer merge y eliminar la rama remota.
 
-Estudiantes
+---
 
-Ciudadanos que utilizan servicios públicos o privados
+### Convenciones de Mensajes de Commit
 
-Rango de edad aproximado: 18 – 65 años
-Nivel tecnológico: Básico – Intermedio 
+Seguimos la especificación **Conventional Commits**:
 
-P.I-EnHorario
+```
+tipo(alcance): descripción breve
+```
 
-🚀 Funcionalidades Principales
-⏳ Estimador de espera
+**Tipos válidos:**
 
-Permite consultar cuánto tiempo tardará una fila en un establecimiento específico.
+| Tipo | Cuándo usarlo |
+|------|---------------|
+| `feat` | Nueva funcionalidad |
+| `fix` | Corrección de bug |
+| `docs` | Cambios en documentación |
+| `refactor` | Refactorización sin cambio de funcionalidad |
+| `test` | Agregar o modificar pruebas |
+| `chore` | Tareas de mantenimiento (dependencias, configs) |
 
-📊 Horarios de afluencia
-
-Muestra gráficas con horas pico y horas con menor concurrencia.
-
-🔔 Notificaciones inteligentes
-
-La aplicación avisa cuando un lugar tiene baja afluencia.
-
-🗺️ Mapa de concurrencia
-
-Visualización en tiempo real de zonas con mayor o menor cantidad de personas.
-
-🤝 Reportes colaborativos
-
-Los usuarios pueden confirmar o ajustar tiempos de espera, mejorando la precisión del sistema.
-
-📍 Filtros por proximidad
-
-Sugiere establecimientos cercanos con menos fila. 
-
-P.I-EnHorario
-
-🏗️ Actores del Sistema
-
-Usuario ciudadano
-
-Consulta tiempos de espera.
-
-Visualiza mapas de concurrencia.
-
-Recibe notificaciones.
-
-Administrador del sistema
-
-Supervisa datos del sistema.
-
-Analiza niveles de afluencia.
-
-Sistema de recolección de datos
-
-Proporciona información de concurrencia basada en reportes y datos recopilados. 
-
-P.I-EnHorario
-
-📌 Alcance del Proyecto
-
-El proyecto contempla:
-
-Registro y consulta de establecimientos.
-
-Estimación de tiempos de espera.
-
-Visualización de concurrencia mediante mapas de calor.
-
-Notificaciones inteligentes.
-
-Validación inicial usando datos simulados.
-
-El proyecto no incluye:
-
-Integración con sistemas reales de bancos o entidades.
-
-Gestión oficial de turnos o reservas.
-
-Implementación de modelos avanzados de IA en producción.
-
-Despliegue a gran escala. 
-
-P.I-EnHorario
-
-🧠 Innovación
-
-El valor innovador de EnHorario radica en la combinación de:
-
-Inteligencia Artificial
-
-Datos históricos
-
-Reportes colaborativos
-
-Análisis predictivo
-
-Visualización mediante mapas
-
-Esto permite anticipar los tiempos de espera antes de que el usuario llegue al lugar, mejorando la planificación del tiempo. 
-
-P.I-EnHorario
-
-👨‍💻 Equipo de Desarrollo
-
-Santiago García Granda
-
-Valentina González Mejía
-
-Santiago Ospina González
-
-Michael Stiven Vasco Cárdenas
-
-Universidad: Unidad Central del Valle del Cauca (UCEVA)
-Programa: Ingeniería de Sistemas
-Año: 2026 
-
-P.I-EnHorario
-
-📚 Contexto Académico
-
-Proyecto desarrollado en el marco de las asignaturas:
-
-Desarrollo de Aplicaciones Móviles
-
-Ingeniería de Software
-
-El objetivo es aplicar conceptos como:
-
-levantamiento de requisitos
-
-modelado del sistema
-
-diseño de arquitectura
-
-desarrollo de prototipos
-
-validación y documentación. 
-
-P.I-EnHorario
+**Ejemplos:**
+```
+feat(mapas): implementar mapa de calor con datos simulados
+fix(auth): corregir redirección tras login exitoso
+docs(readme): actualizar sección de instalación
+test(reportes): agregar unit tests para validación de campos
+```
