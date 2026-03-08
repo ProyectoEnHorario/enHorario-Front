@@ -89,3 +89,5 @@ fix(auth): corregir redirección tras login exitoso
 docs(readme): actualizar sección de instalación
 test(reportes): agregar unit tests para validación de campos
 ```
+## PR de prueba
+Este cambio se realizó solo para probar la plantilla de Pull Request.
