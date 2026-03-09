@@ -54,22 +54,34 @@ Ejemplo:
 
 ---
 
-# Validación Funcional
+Antes de aprobar este Pull Request, verifica los siguientes criterios:
 
-* [ ] La funcionalidad cumple con los requerimientos definidos en el backlog
-* [ ] No se afecta el funcionamiento de otras historias de usuario
-* [ ] Los datos se almacenan correctamente en el sistema
-* [ ] La interfaz muestra la información correctamente
-* [ ] El flujo principal del caso de uso funciona sin errores
+### 🧩 Calidad y Organización del Código
+- [ ] El código está organizado en archivos y carpetas con nombres claros y coherentes.
+- [ ] Las variables, funciones y clases tienen nombres descriptivos que facilitan entender el código.
+- [ ] No hay código duplicado y las funciones tienen responsabilidades bien definidas.
 
----
+### 🛠 Buenas Prácticas de Desarrollo
+- [ ] El código maneja posibles errores (ej. fallos en conexión, datos nulos o excepciones).
+- [ ] Las partes complejas del código incluyen comentarios que explican su funcionamiento.
 
-# Validación Técnica
+### 🎨 Interfaz y Experiencia de Usuario
+- [ ] La interfaz mantiene coherencia visual (botones, colores, tamaños y estilos consistentes).
+- [ ] La aplicación muestra estados claros como **cargando, error o datos disponibles** en pantallas dinámicas.
 
-* [ ] El código sigue buenas prácticas de programación
-* [ ] No existen errores de compilación
-* [ ] El código fue probado localmente
-* [ ] Las nuevas funcionalidades están integradas correctamente con el sistema
+### 📊 Manejo de Datos
+- [ ] Los datos ingresados por el usuario son validados antes de guardarse o procesarse.
+- [ ] El manejo de datos es consistente y evita inconsistencias o errores en la aplicación.
+
+### ⚡ Rendimiento
+- [ ] El código evita operaciones innecesarias que puedan afectar el rendimiento de la aplicación.
+- [ ] Las funciones críticas están optimizadas.
+
+### 🚀 Funcionalidad y Pruebas
+- [ ] La funcionalidad implementada cumple con lo descrito en el Pull Request.
+- [ ] La funcionalidad fue probada manualmente antes de enviarse a revisión.
+- [ ] El cambio no rompe funcionalidades existentes del sistema.
+
 
 ---
 
