@@ -33,6 +33,9 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Firebase Data Connect local state
+dataconnect/.dataconnect/
+
 # Symbolication related
 app.*.symbols
 
