@@ -1,6 +1,5 @@
 import 'package:enhorario/app/theme/app_theme.dart';
-import 'package:enhorario/features/home/data/repositories/in_memory_wait_point_repository.dart';
-import 'package:enhorario/features/home/presentation/pages/home_page.dart';
+import 'package:enhorario/features/auth/presentation/pages/auth_gate_screen.dart';
 import 'package:flutter/material.dart';
 
 class EnHorarioApp extends StatelessWidget {
@@ -8,13 +7,11 @@ class EnHorarioApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repository = InMemoryWaitPointRepository();
-
     return MaterialApp(
       title: 'EnHorario',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
-      home: HomePage(repository: repository),
+      home: const AuthGateScreen(),
     );
   }
 }
