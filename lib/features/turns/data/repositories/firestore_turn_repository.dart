@@ -12,6 +12,8 @@ class FirestoreTurnRepository implements TurnRepository {
 
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
+  String? _cachedAdminUid;
+  bool? _cachedIsAdmin;
 
   CollectionReference<Map<String, dynamic>> _turnsOf(String establishmentId) {
     return _firestore
@@ -25,7 +27,7 @@ class FirestoreTurnRepository implements TurnRepository {
     return _turnsOf(establishmentId).orderBy('posicion').snapshots().asyncMap((
       snapshot,
     ) async {
-      final isAdmin = await _isCurrentUserAdmin();
+      final isAdmin = await _isCurrentUserAdminCached();
       final currentUid = _auth.currentUser?.uid;
       final turns = snapshot.docs
           .map((doc) => TurnModel.fromMap(doc.data(), id: doc.id))
@@ -110,6 +112,15 @@ class FirestoreTurnRepository implements TurnRepository {
         return const Left<Failure, void>(Failure('Turno no encontrado'));
       }
 
+      final data = doc.data()!;
+      final isAdmin = await _isCurrentUserAdminCached();
+      final currentUid = _auth.currentUser?.uid;
+      if (!isAdmin && data['userId'] != currentUid) {
+        return const Left<Failure, void>(
+          Failure('No tienes permisos para actualizar este turno'),
+        );
+      }
+
       final updates = <String, dynamic>{'estado': estado};
       if (estado == 'atendido') updates['atendidoEn'] = Timestamp.now();
       if (estado == 'cancelado') updates['canceladoEn'] = Timestamp.now();
@@ -142,7 +153,7 @@ class FirestoreTurnRepository implements TurnRepository {
 
       final data = doc.data()!;
       final current = _auth.currentUser;
-      final isAdmin = await _isCurrentUserAdmin();
+      final isAdmin = await _isCurrentUserAdminCached();
       if (!isAdmin && data['userId'] != current?.uid) {
         return const Left<Failure, void>(
           Failure('Solo puedes cancelar tus propios turnos'),
@@ -188,5 +199,23 @@ class FirestoreTurnRepository implements TurnRepository {
     if (current == null) return false;
     final userDoc = await _firestore.collection('users').doc(current.uid).get();
     return userDoc.data()?['rol'] == 'admin';
+  }
+
+  Future<bool> _isCurrentUserAdminCached() async {
+    final current = _auth.currentUser;
+    if (current == null) {
+      _cachedAdminUid = null;
+      _cachedIsAdmin = false;
+      return false;
+    }
+
+    if (_cachedAdminUid == current.uid && _cachedIsAdmin != null) {
+      return _cachedIsAdmin!;
+    }
+
+    final isAdmin = await _isCurrentUserAdmin();
+    _cachedAdminUid = current.uid;
+    _cachedIsAdmin = isAdmin;
+    return isAdmin;
   }
 }

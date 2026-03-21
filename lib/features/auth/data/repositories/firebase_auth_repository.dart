@@ -144,14 +144,24 @@ class FirebaseAuthRepository implements AuthRepository {
           .where('estado', isEqualTo: 'en_espera')
           .get();
 
-      final batch = _firestore.batch();
-      for (final doc in pendingTurns.docs) {
-        batch.update(doc.reference, {
-          'estado': 'cancelado',
-          'canceladoEn': Timestamp.now(),
-        });
+      const maxBatchSize = 500;
+      final docs = pendingTurns.docs;
+      for (var i = 0; i < docs.length; i += maxBatchSize) {
+        final batch = _firestore.batch();
+        final end = (i + maxBatchSize < docs.length)
+            ? i + maxBatchSize
+            : docs.length;
+
+        for (var j = i; j < end; j++) {
+          final doc = docs[j];
+          batch.update(doc.reference, {
+            'estado': 'cancelado',
+            'canceladoEn': Timestamp.now(),
+          });
+        }
+
+        await batch.commit();
       }
-      await batch.commit();
 
       return const Right<Failure, void>(null);
     } on FirebaseException catch (e) {
