@@ -1,0 +1,64 @@
+extend type AfluenciaStat {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "AfluenciaStat", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `AfluenciaStat`.`category`. It must match the value of `Category`.`id`. See `@ref` for how to customize it.
+  """
+  categoryId: UUID! @fdc_generated(from: "AfluenciaStat.category", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `AfluenciaStat`.`establishment`. It must match the value of `Establishment`.`id`. See `@ref` for how to customize it.
+  """
+  establishmentId: UUID! @fdc_generated(from: "AfluenciaStat.establishment", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Category {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Category", purpose: IMPLICIT_KEY_FIELD)
+}
+extend type Establishment {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Establishment", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Establishment`.`admin`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  adminId: UUID! @fdc_generated(from: "Establishment.admin", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Establishment`.`category`. It must match the value of `Category`.`id`. See `@ref` for how to customize it.
+  """
+  categoryId: UUID! @fdc_generated(from: "Establishment.category", purpose: IMPLICIT_REF_FIELD)
+}
+extend type Turn {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "Turn", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Turn`.`establishment`. It must match the value of `Establishment`.`id`. See `@ref` for how to customize it.
+  """
+  establishmentId: UUID! @fdc_generated(from: "Turn.establishment", purpose: IMPLICIT_REF_FIELD)
+  """
+  ✨ Implicit foreign key field based on `Turn`.`user`. It must match the value of `User`.`id`. See `@ref` for how to customize it.
+  """
+  userId: UUID! @fdc_generated(from: "Turn.user", purpose: IMPLICIT_REF_FIELD)
+}
+extend type User {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "User", purpose: IMPLICIT_KEY_FIELD)
+}
+extend type WaitTime {
+  """
+  ✨ Implicit primary key field. It's a UUID column default to a generated new value. See `@table` for how to customize it.
+  """
+  id: UUID! @default(expr: "uuidV4()") @fdc_generated(from: "WaitTime", purpose: IMPLICIT_KEY_FIELD)
+  """
+  ✨ Implicit foreign key field based on `WaitTime`.`establishment`. It must match the value of `Establishment`.`id`. See `@ref` for how to customize it.
+  """
+  establishmentId: UUID! @fdc_generated(from: "WaitTime.establishment", purpose: IMPLICIT_REF_FIELD)
+}

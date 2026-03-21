@@ -1,0 +1,42 @@
+query AllDepartments @auth(level: PUBLIC, insecureReason: "This operation is safe to expose to the public as it only fetches department names and descriptions.") {
+  departments {
+    id
+    name
+    description
+  }
+}
+
+query EmployeeAvailability($userId: UUID!) @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users as it requires a specific user ID.") {
+  employeeAvailabilities(where: {userId: {eq: $userId}}) {
+    id
+    dayOfWeek
+    startTime
+    endTime
+    isAvailable
+    note
+  }
+}
+
+mutation CreateShift($scheduleId: UUID!, $assignedEmployeeId: UUID!, $startTime: String!, $endTime: String!, $date: Date!) @auth(level: USER) {
+  shift_insert(data: {
+    scheduleId: $scheduleId,
+    assignedEmployeeId: $assignedEmployeeId,
+    startTime: $startTime,
+    endTime: $endTime,
+    date: $date
+  }) {
+    id
+  }
+}
+
+mutation RequestTimeOff($employeeId: UUID!, $startDate: Date!, $endDate: Date!, $reason: String!) @auth(level: USER) {
+  timeOffRequest_insert(data: {
+    employeeId: $employeeId,
+    startDate: $startDate,
+    endDate: $endDate,
+    reason: $reason,
+    status: "Pending" # Default status for new requests
+  }) {
+    id
+  }
+}
