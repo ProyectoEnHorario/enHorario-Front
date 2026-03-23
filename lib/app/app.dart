@@ -1,4 +1,5 @@
 import 'package:enhorario/app/theme/app_theme.dart';
+import 'package:enhorario/features/auth/presentation/pages/admin_placeholder_page.dart';
 import 'package:enhorario/features/auth/presentation/pages/login_selection_page.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_placeholder_page.dart';
 import 'package:enhorario/features/auth/presentation/pages/auth_gate_screen.dart';
@@ -25,6 +26,13 @@ class EnHorarioApp extends StatelessWidget {
           onEnterTestMode: () {
             Navigator.of(context).push(
               MaterialPageRoute<void>(builder: (_) => const AuthGateScreen()),
+            );
+          },
+          onEnterAdmin: () {
+            Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const AdminPlaceholderPage(),
+              ),
             );
           },
         ),

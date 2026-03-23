@@ -5,10 +5,12 @@ class LoginSelectionPage extends StatelessWidget {
     super.key,
     required this.onEnterRealApp,
     required this.onEnterTestMode,
+    required this.onEnterAdmin,
   });
 
   final VoidCallback onEnterRealApp;
   final VoidCallback onEnterTestMode;
+  final VoidCallback onEnterAdmin;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +32,7 @@ class LoginSelectionPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Modo real disponible en construcción. El modo test carga la app actual con CRUDs.',
+                  'Modo real y modo administrador en construcción. El modo test carga la app actual con CRUDs.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
@@ -43,6 +45,11 @@ class LoginSelectionPage extends StatelessWidget {
                 OutlinedButton(
                   onPressed: onEnterTestMode,
                   child: const Text('Entrar en modo test'),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: onEnterAdmin,
+                  child: const Text('Entrar como administrador'),
                 ),
               ],
             ),
