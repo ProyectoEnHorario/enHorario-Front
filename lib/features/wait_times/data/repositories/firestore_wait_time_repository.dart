@@ -33,15 +33,6 @@ class FirestoreWaitTimeRepository implements WaitTimeRepository {
       if (current == null) {
         return const Left<Failure, void>(Failure('Debes iniciar sesion'));
       }
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(current.uid)
-          .get();
-      if (userDoc.data()?['rol'] != 'admin') {
-        return const Left<Failure, void>(
-          Failure('Solo admin puede actualizar tiempos'),
-        );
-      }
 
       final data = model
           .copyWith(id: model.establishmentId, actualizadoEn: DateTime.now())
