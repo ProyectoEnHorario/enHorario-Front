@@ -68,7 +68,24 @@ class _EstablishmentsView extends StatelessWidget {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (state.error != null) {
-                  return Center(child: Text(state.error!));
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(state.error!, textAlign: TextAlign.center),
+                          const SizedBox(height: 12),
+                          FilledButton(
+                            onPressed: context
+                                .read<EstablishmentsCubit>()
+                                .retrySearch,
+                            child: const Text('Reintentar'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
                 }
                 if (state.filtered.isEmpty) {
                   final hasSearch =
@@ -79,6 +96,7 @@ class _EstablishmentsView extends StatelessWidget {
                       hasSearch
                           ? 'No se encontraron establecimientos con ese nombre'
                           : 'No hay establecimientos para mostrar',
+                      textAlign: TextAlign.center,
                     ),
                   );
                 }
