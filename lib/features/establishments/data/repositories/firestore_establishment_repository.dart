@@ -32,6 +32,27 @@ class FirestoreEstablishmentRepository implements EstablishmentRepository {
   }
 
   @override
+  Future<Result<List<EstablishmentModel>>> fetchForSearch() async {
+    try {
+      final snapshot = await _collection
+          .orderBy('createdAt', descending: true)
+          .get();
+      final items = snapshot.docs
+          .map((doc) => EstablishmentModel.fromMap(doc.data(), id: doc.id))
+          .toList();
+      return Right<Failure, List<EstablishmentModel>>(items);
+    } on FirebaseException catch (e) {
+      return Left<Failure, List<EstablishmentModel>>(
+        Failure(e.message ?? 'No se pudieron obtener establecimientos'),
+      );
+    } catch (_) {
+      return const Left<Failure, List<EstablishmentModel>>(
+        Failure('Error inesperado al consultar establecimientos'),
+      );
+    }
+  }
+
+  @override
   Future<Result<void>> create(EstablishmentModel model) async {
     try {
       final adminId = await _ensureAdmin();
