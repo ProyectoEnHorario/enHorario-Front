@@ -18,6 +18,12 @@ service cloud.firestore {
       return isAuthenticated() && currentUserDoc().data.rol == 'admin';
     }
 
+    // Permiso temporal de pruebas para un unico usuario.
+    function isTestAdmin() {
+      return isAuthenticated()
+        && request.auth.uid == 'KYOGXeSnMLM8PnesmRCnXgDR5C93';
+    }
+
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       allow create: if isOwner(uid)
@@ -30,33 +36,35 @@ service cloud.firestore {
 
     match /categories/{categoryId} {
       allow read: if isAuthenticated();
-      // Modo test: permitir CRUD a cualquier usuario autenticado.
-      allow write: if isAuthenticated();
+      allow write: if isAdmin() || isTestAdmin();
     }
 
     match /establishments/{establishmentId} {
       allow read: if isAuthenticated();
-      // Modo test: permitir CRUD a cualquier usuario autenticado.
-      allow create, update, delete: if isAuthenticated();
+      allow create, update, delete: if isAdmin() || isTestAdmin();
 
       match /turns/{turnId} {
-        allow read: if isAuthenticated();
+        allow read: if isAdmin()
+          || isTestAdmin()
+          || (isAuthenticated() && resource.data.userId == request.auth.uid);
         allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
-        allow update: if isAuthenticated();
-        allow delete: if isAuthenticated();
+        allow update: if isAdmin()
+          || isTestAdmin()
+          || (isAuthenticated() && resource.data.userId == request.auth.uid);
+        allow delete: if isAdmin()
+          || isTestAdmin()
+          || (isAuthenticated() && resource.data.userId == request.auth.uid);
       }
     }
 
     match /wait_times/{waitTimeId} {
       allow read: if isAuthenticated();
-      // Modo test: permitir CRUD a cualquier usuario autenticado.
-      allow write: if isAuthenticated();
+      allow write: if isAdmin() || isTestAdmin();
     }
 
     match /afluencia_stats/{statId} {
       allow read: if isAuthenticated();
-      // Modo test: permitir CRUD a cualquier usuario autenticado.
-      allow write: if isAuthenticated();
+      allow write: if isAdmin() || isTestAdmin();
     }
   }
 }
