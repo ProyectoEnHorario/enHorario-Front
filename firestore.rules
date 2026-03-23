@@ -1,0 +1,60 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuthenticated() && request.auth.uid == uid;
+    }
+
+    function currentUserDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && currentUserDoc().data.rol == 'admin';
+    }
+
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.rol == 'usuario';
+      allow update: if (isOwner(uid) && request.resource.data.rol == resource.data.rol)
+        || isAdmin();
+      allow delete: if isOwner(uid) || isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /establishments/{establishmentId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+
+      match /turns/{turnId} {
+        allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+        allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+        allow update: if isAdmin()
+          || (isAuthenticated() && resource.data.userId == request.auth.uid);
+        allow delete: if isAdmin()
+          || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      }
+    }
+
+    match /wait_times/{waitTimeId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /afluencia_stats/{statId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+  }
+}

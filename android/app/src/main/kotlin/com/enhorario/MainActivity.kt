@@ -1,4 +1,4 @@
-package com.example.enhorario
+package com.enhorario
 
 import io.flutter.embedding.android.FlutterActivity
 
