@@ -1,5 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:enhorario/core/utils/firestore_mapper.dart';
+import 'package:enhorario/core/utils/date_mapper.dart';
 
 class EstablishmentModel {
   const EstablishmentModel({
@@ -40,7 +39,7 @@ class EstablishmentModel {
       adminId: (map['adminId'] ?? '') as String,
       activo: (map['activo'] ?? true) as bool,
       abierto: (map['abierto'] ?? false) as bool,
-      createdAt: FirestoreMapper.toDateTime(map['createdAt']) ?? DateTime.now(),
+      createdAt: DateMapper.toDateTime(map['createdAt']) ?? DateTime.now(),
     );
   }
 
@@ -55,7 +54,7 @@ class EstablishmentModel {
       'adminId': adminId,
       'activo': activo,
       'abierto': abierto,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': DateMapper.toIsoString(createdAt),
     };
   }
 
