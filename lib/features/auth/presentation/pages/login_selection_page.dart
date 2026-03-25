@@ -32,7 +32,7 @@ class LoginSelectionPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Modo real y modo administrador en construcción. El modo test carga la app actual con CRUDs.',
+                  'Modo real y modo administrador en construcción. El modo test carga CRUDs y un panel avanzado para probar Railway.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
