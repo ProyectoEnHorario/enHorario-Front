@@ -1,17 +1,19 @@
 import 'package:enhorario/features/afluencia_stats/presentation/pages/afluencia_stats_screen.dart';
+import 'package:enhorario/features/auth/data/repositories/local_auth_repository.dart';
 import 'package:enhorario/features/categories/presentation/pages/categories_screen.dart';
 import 'package:enhorario/features/establishments/presentation/pages/establishments_screen.dart';
 import 'package:enhorario/features/turns/presentation/pages/turns_screen.dart';
 import 'package:enhorario/features/wait_times/presentation/pages/wait_times_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  static final LocalAuthRepository _authRepository = LocalAuthRepository();
+
   @override
   Widget build(BuildContext context) {
-    final email = FirebaseAuth.instance.currentUser?.email ?? 'sin correo';
+    final email = LocalAuthRepository.currentUserSync?.email ?? 'sin correo';
 
     return Scaffold(
       appBar: AppBar(
@@ -19,7 +21,7 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             onPressed: () async {
-              await FirebaseAuth.instance.signOut();
+              await _authRepository.signOut();
             },
             icon: const Icon(Icons.logout),
             tooltip: 'Cerrar sesion',

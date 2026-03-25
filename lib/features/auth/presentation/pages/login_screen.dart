@@ -1,4 +1,4 @@
-import 'package:enhorario/features/auth/data/repositories/firebase_auth_repository.dart';
+import 'package:enhorario/features/auth/data/repositories/local_auth_repository.dart';
 import 'package:enhorario/features/auth/presentation/bloc/login_cubit.dart';
 import 'package:enhorario/features/auth/presentation/pages/register_screen.dart';
 import 'package:enhorario/features/home/presentation/pages/home_screen.dart';
@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => LoginCubit(FirebaseAuthRepository()),
+      create: (_) => LoginCubit(LocalAuthRepository()),
       child: Scaffold(
         appBar: AppBar(title: const Text('Iniciar sesion')),
         body: BlocConsumer<LoginCubit, LoginState>(

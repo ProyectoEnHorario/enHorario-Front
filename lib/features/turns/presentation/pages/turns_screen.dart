@@ -1,5 +1,5 @@
 import 'package:enhorario/features/turns/data/models/turn_model.dart';
-import 'package:enhorario/features/turns/data/repositories/firestore_turn_repository.dart';
+import 'package:enhorario/features/turns/data/repositories/local_turn_repository.dart';
 import 'package:enhorario/features/turns/presentation/bloc/turns_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -23,7 +23,7 @@ class _TurnsScreenState extends State<TurnsScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => TurnsCubit(FirestoreTurnRepository()),
+      create: (_) => TurnsCubit(LocalTurnRepository()),
       child: Scaffold(
         appBar: AppBar(title: const Text('Turnos')),
         body: BlocBuilder<TurnsCubit, TurnsState>(
