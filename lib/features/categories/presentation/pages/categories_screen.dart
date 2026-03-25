@@ -1,5 +1,5 @@
 import 'package:enhorario/features/categories/data/models/category_model.dart';
-import 'package:enhorario/features/categories/data/repositories/local_category_repository.dart';
+import 'package:enhorario/features/categories/data/repositories/firestore_category_repository.dart';
 import 'package:enhorario/features/categories/presentation/bloc/categories_cubit.dart';
 import 'package:enhorario/features/categories/presentation/pages/category_form_screen.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +11,7 @@ class CategoriesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => CategoriesCubit(LocalCategoryRepository()),
+      create: (_) => CategoriesCubit(FirestoreCategoryRepository()),
       child: const _CategoriesView(),
     );
   }

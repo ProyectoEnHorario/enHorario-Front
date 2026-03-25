@@ -45,31 +45,40 @@ class EstablishmentsState {
 
 class EstablishmentsCubit extends Cubit<EstablishmentsState> {
   EstablishmentsCubit(this._repository) : super(const EstablishmentsState()) {
-    _loadSearchResults();
+    _subscription = _repository.watchAll().listen(
+      (items) {
+        final newState = state.copyWith(
+          all: items,
+          isLoading: false,
+          clearError: true,
+        );
+        emit(_applyFilter(newState));
+      },
+      onError: (_) => emit(
+        state.copyWith(
+          isLoading: false,
+          error: 'Error cargando establecimientos',
+        ),
+      ),
+    );
   }
 
   final EstablishmentRepository _repository;
-  Timer? _searchDebounce;
+  StreamSubscription<List<EstablishmentModel>>? _subscription;
 
-  void setQuery(String rawInput) {
-    final query = _captureSearchInput(rawInput);
-    emit(state.copyWith(query: query));
-    _scheduleSearch();
+  void setQuery(String query) {
+    emit(_applyFilter(state.copyWith(query: query)));
   }
 
   void setCategoryFilter(String? categoryId) {
-    final normalizedCategory = _captureCategoryInput(categoryId);
     emit(
-      state.copyWith(
-        categoryId: normalizedCategory,
-        clearCategory: normalizedCategory == null,
+      _applyFilter(
+        state.copyWith(
+          categoryId: categoryId,
+          clearCategory: categoryId == null,
+        ),
       ),
     );
-    _scheduleSearch();
-  }
-
-  Future<void> retrySearch() {
-    return _loadSearchResults();
   }
 
   Future<String?> create(EstablishmentModel model) async {
@@ -87,83 +96,23 @@ class EstablishmentsCubit extends Cubit<EstablishmentsState> {
     return result.fold((l) => l.message, (_) => null);
   }
 
-  void _scheduleSearch() {
-    _searchDebounce?.cancel();
-    _searchDebounce = Timer(
-      const Duration(milliseconds: 250),
-      _loadSearchResults,
-    );
-  }
-
-  Future<void> _loadSearchResults() async {
-    emit(state.copyWith(isLoading: true, clearError: true));
-    final result = await _repository.fetchForSearch();
-    result.fold(
-      (failure) => emit(
-        state.copyWith(
-          isLoading: false,
-          error: _mapSearchError(failure.message),
-          filtered: const [],
-        ),
-      ),
-      (items) {
-        final filtered = _filterItems(
-          items: items,
-          query: state.query,
-          categoryId: state.categoryId,
-        );
-        emit(
-          state.copyWith(
-            all: items,
-            filtered: filtered,
-            isLoading: false,
-            clearError: true,
-          ),
-        );
-      },
-    );
-  }
-
-  String _captureSearchInput(String input) {
-    final trimmed = input.trim();
-    return trimmed.isEmpty ? '' : input;
-  }
-
-  String? _captureCategoryInput(String? value) {
-    if (value == null) return null;
-    final trimmed = value.trim();
-    return trimmed.isEmpty ? null : trimmed;
-  }
-
-  List<EstablishmentModel> _filterItems({
-    required List<EstablishmentModel> items,
-    required String query,
-    String? categoryId,
-  }) {
-    final normalizedQuery = StringNormalizer.normalize(query);
-    return items.where((item) {
-      final normalizedName = item.nombreNormalizado.isNotEmpty
-          ? item.nombreNormalizado
-          : StringNormalizer.normalize(item.nombre);
+  EstablishmentsState _applyFilter(EstablishmentsState value) {
+    final query = StringNormalizer.normalize(value.query);
+    final filtered = value.all.where((item) {
       final matchesQuery =
-          normalizedQuery.isEmpty || normalizedName.contains(normalizedQuery);
-      final matchesCategory = categoryId == null
+          query.isEmpty || item.nombreNormalizado.contains(query);
+      final matchesCategory =
+          value.categoryId == null || value.categoryId!.isEmpty
           ? true
-          : item.categoryId == categoryId;
+          : item.categoryId == value.categoryId;
       return matchesQuery && matchesCategory;
     }).toList();
-  }
-
-  String _mapSearchError(String original) {
-    if (original.toLowerCase().contains('permission')) {
-      return 'No fue posible buscar establecimientos por permisos insuficientes.';
-    }
-    return 'No fue posible obtener resultados. Revisa tu conexión e intenta de nuevo.';
+    return value.copyWith(filtered: filtered);
   }
 
   @override
   Future<void> close() {
-    _searchDebounce?.cancel();
+    _subscription?.cancel();
     return super.close();
   }
 }

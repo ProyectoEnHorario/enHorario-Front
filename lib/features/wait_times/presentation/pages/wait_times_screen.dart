@@ -1,4 +1,4 @@
-import 'package:enhorario/features/wait_times/data/repositories/local_wait_time_repository.dart';
+import 'package:enhorario/features/wait_times/data/repositories/firestore_wait_time_repository.dart';
 import 'package:enhorario/features/wait_times/presentation/bloc/wait_times_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,7 +24,7 @@ class _WaitTimesScreenState extends State<WaitTimesScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => WaitTimesCubit(LocalWaitTimeRepository()),
+      create: (_) => WaitTimesCubit(FirestoreWaitTimeRepository()),
       child: Scaffold(
         appBar: AppBar(title: const Text('Tiempo de espera')),
         body: BlocBuilder<WaitTimesCubit, WaitTimesState>(

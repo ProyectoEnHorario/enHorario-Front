@@ -1,4 +1,5 @@
-import 'package:enhorario/core/utils/date_mapper.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:enhorario/core/utils/firestore_mapper.dart';
 
 class WaitTimeModel {
   const WaitTimeModel({
@@ -21,7 +22,8 @@ class WaitTimeModel {
       id: id,
       establishmentId: (map['establishmentId'] ?? '') as String,
       minutos: (map['minutos'] ?? 0) as int,
-        actualizadoEn: DateMapper.toDateTime(map['actualizadoEn']) ?? DateTime.now(),
+      actualizadoEn:
+          FirestoreMapper.toDateTime(map['actualizadoEn']) ?? DateTime.now(),
     );
   }
 
@@ -30,7 +32,7 @@ class WaitTimeModel {
       'id': id,
       'establishmentId': establishmentId,
       'minutos': minutos,
-      'actualizadoEn': DateMapper.toIsoString(actualizadoEn),
+      'actualizadoEn': Timestamp.fromDate(actualizadoEn),
     };
   }
 

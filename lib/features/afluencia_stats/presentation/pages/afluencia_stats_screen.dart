@@ -1,5 +1,5 @@
 import 'package:enhorario/features/afluencia_stats/data/models/afluencia_stat_model.dart';
-import 'package:enhorario/features/afluencia_stats/data/repositories/local_afluencia_stats_repository.dart';
+import 'package:enhorario/features/afluencia_stats/data/repositories/firestore_afluencia_stats_repository.dart';
 import 'package:enhorario/features/afluencia_stats/presentation/bloc/afluencia_stats_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,7 +10,7 @@ class AfluenciaStatsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AfluenciaStatsCubit(LocalAfluenciaStatsRepository()),
+      create: (_) => AfluenciaStatsCubit(FirestoreAfluenciaStatsRepository()),
       child: const _AfluenciaStatsView(),
     );
   }

@@ -4,8 +4,6 @@ import 'package:enhorario/features/establishments/data/models/establishment_mode
 abstract class EstablishmentRepository {
   Stream<List<EstablishmentModel>> watchAll();
 
-  Future<Result<List<EstablishmentModel>>> fetchForSearch();
-
   Future<Result<void>> create(EstablishmentModel model);
 
   Future<Result<void>> update(EstablishmentModel model);
