@@ -1,5 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:enhorario/core/utils/firestore_mapper.dart';
+import 'package:enhorario/core/utils/date_mapper.dart';
 import 'package:enhorario/features/auth/domain/entities/app_user.dart';
 
 class AppUserModel extends AppUser {
@@ -22,8 +21,8 @@ class AppUserModel extends AppUser {
       apellido: (map['apellido'] ?? '') as String,
       rol: (map['rol'] ?? 'usuario') as String,
       telefono: map['telefono'] as String?,
-      createdAt: FirestoreMapper.toDateTime(map['createdAt']) ?? DateTime.now(),
-      deletedAt: FirestoreMapper.toDateTime(map['deletedAt']),
+      createdAt: DateMapper.toDateTime(map['createdAt']) ?? DateTime.now(),
+      deletedAt: DateMapper.toDateTime(map['deletedAt']),
     );
   }
 
@@ -35,8 +34,8 @@ class AppUserModel extends AppUser {
       'apellido': apellido,
       'rol': rol,
       'telefono': telefono,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'deletedAt': FirestoreMapper.toTimestamp(deletedAt),
+      'createdAt': DateMapper.toIsoString(createdAt),
+      'deletedAt': DateMapper.toIsoString(deletedAt),
     };
   }
 
