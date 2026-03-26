@@ -1,5 +1,5 @@
 import 'package:enhorario/features/auth/presentation/pages/admin_placeholder_page.dart';
-import 'package:enhorario/features/auth/presentation/pages/real_app_placeholder_page.dart';
+import 'package:enhorario/features/auth/presentation/pages/register_user_screen.dart';
 import 'package:enhorario/features/home/presentation/pages/dev_tools_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -9,9 +9,7 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('EnHorario - Inicio'),
-      ),
+      appBar: AppBar(title: const Text('EnHorario - Inicio')),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -31,7 +29,7 @@ class HomeScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) => const RealAppPlaceholderPage(),
+                        builder: (_) => const RegisterUserScreen(),
                       ),
                     );
                   },
