@@ -1,6 +1,7 @@
 import 'package:enhorario/features/afluencia_stats/presentation/pages/afluencia_stats_screen.dart';
 import 'package:enhorario/features/auth/data/repositories/local_auth_repository.dart';
 import 'package:enhorario/features/categories/presentation/pages/categories_screen.dart';
+import 'package:enhorario/features/home/presentation/pages/dev_tools_screen.dart';
 import 'package:enhorario/features/establishments/presentation/pages/establishments_screen.dart';
 import 'package:enhorario/features/turns/presentation/pages/turns_screen.dart';
 import 'package:enhorario/features/wait_times/presentation/pages/wait_times_screen.dart';
@@ -33,6 +34,7 @@ class HomeScreen extends StatelessWidget {
         children: [
           Text('Usuario autenticado: $email'),
           const SizedBox(height: 16),
+          _item(context, 'Menu test avanzado (Railway)', const DevToolsScreen()),
           _item(context, 'CRUD Categorias', const CategoriesScreen()),
           _item(context, 'CRUD Establecimientos', const EstablishmentsScreen()),
           _item(context, 'CRUD Turnos', const TurnsScreen()),
