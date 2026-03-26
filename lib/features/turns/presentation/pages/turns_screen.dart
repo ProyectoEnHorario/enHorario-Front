@@ -34,115 +34,121 @@ class _TurnsScreenState extends State<TurnsScreen> {
   }
 
   void _showCreateTicketDialog() {
+    // Reset dialog state for clean state
+    _selectedEstablishmentId = null;
+    _isPriority = false;
+    _priorityReason = 'adulto_mayor';
+
     showDialog(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text('Solicitar nuevo ticket'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Seleccionar establecimiento:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              BlocProvider(
-                create: (_) => RealEstablishmentsCubit(
-                  RailwayEstablishmentQueryService(ApiClient()),
-                ),
-                child: BlocBuilder<RealEstablishmentsCubit, RealEstablishmentsState>(
-                  builder: (context, state) {
-                    return DropdownButtonFormField<String>(
-                      initialValue: _selectedEstablishmentId,
-                      hint: const Text('Elige un establecimiento'),
-                      isExpanded: true,
-                      items: state.items.map((establishment) {
-                        return DropdownMenuItem<String>(
-                          value: establishment.id,
-                          child: Text(establishment.name),
-                        );
-                      }).toList(),
-                      onChanged: (value) {
-                        setState(() {
-                          _selectedEstablishmentId = value;
-                        });
-                      },
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Tipo de ticket:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 12),
-              // Checkbox para prioridad
-              CheckboxListTile(
-                title: const Text('Ticket con prioridad'),
-                value: _isPriority,
-                onChanged: (bool? value) {
-                  setState(() {
-                    _isPriority = value ?? false;
-                  });
-                },
-              ),
-              if (_isPriority) ...[
-                const SizedBox(height: 12),
+      builder: (BuildContext context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Solicitar nuevo ticket'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 const Text(
-                  'Razón de prioridad:',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  'Seleccionar establecimiento:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(height: 8),
-                DropdownButtonFormField<String>(
-                  initialValue: _priorityReason,
-                  items: const [
-                    DropdownMenuItem(
-                      value: 'adulto_mayor',
-                      child: Text('Adulto mayor (65+)'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'mujer_gestante',
-                      child: Text('Mujer en estado de gestación'),
-                    ),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      _priorityReason = value ?? 'adulto_mayor';
+                const SizedBox(height: 12),
+                BlocProvider(
+                  create: (_) => RealEstablishmentsCubit(
+                    RailwayEstablishmentQueryService(ApiClient()),
+                  ),
+                  child: BlocBuilder<RealEstablishmentsCubit, RealEstablishmentsState>(
+                    builder: (context, state) {
+                      return DropdownButtonFormField<String>(
+                        value: _selectedEstablishmentId,
+                        hint: const Text('Elige un establecimiento'),
+                        isExpanded: true,
+                        items: state.items.map((establishment) {
+                          return DropdownMenuItem<String>(
+                            value: establishment.id,
+                            child: Text(establishment.name),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            _selectedEstablishmentId = value;
+                          });
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Tipo de ticket:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                CheckboxListTile(
+                  title: const Text('Ticket con prioridad'),
+                  value: _isPriority,
+                  onChanged: (bool? value) {
+                    setDialogState(() {
+                      _isPriority = value ?? false;
                     });
                   },
                 ),
-              ] else ...[
-                const SizedBox(height: 12),
-                const Text(
-                  'Tipo: Ticket Regular',
-                  style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
-                ),
+                if (_isPriority) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Razón de prioridad:',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                  const SizedBox(height: 8),
+                  DropdownButtonFormField<String>(
+                    value: _priorityReason,
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'adulto_mayor',
+                        child: Text('Adulto mayor (65+)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'mujer_gestante',
+                        child: Text('Mujer en estado de gestación'),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setDialogState(() {
+                        _priorityReason = value ?? 'adulto_mayor';
+                      });
+                    },
+                  ),
+                ] else ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Tipo: Ticket Regular',
+                    style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: _selectedEstablishmentId == null
+                  ? null
+                  : () {
+                      _userTicketsCubit.createTurn(
+                        establishmentId: _selectedEstablishmentId!,
+                        isPriority: _isPriority,
+                        priorityReason: _isPriority ? _priorityReason : null,
+                      );
+                      Navigator.of(context).pop();
+                    },
+              child: const Text('Crear ticket'),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: _selectedEstablishmentId == null
-                ? null
-                : () {
-                    _userTicketsCubit.createTurn(
-                      establishmentId: _selectedEstablishmentId!,
-                      isPriority: _isPriority,
-                      priorityReason: _isPriority ? _priorityReason : null,
-                    );
-                    Navigator.of(context).pop();
-                  },
-            child: const Text('Crear ticket'),
-          ),
-        ],
       ),
     );
   }
