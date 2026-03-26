@@ -1,6 +1,6 @@
 import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
 import 'package:enhorario/features/auth/presentation/pages/login_user_screen.dart';
-import 'package:enhorario/features/establishments/presentation/pages/real_establishment_search_screen.dart';
+import 'package:enhorario/features/establishments/presentation/pages/real_app_home_screen.dart';
 import 'package:flutter/material.dart';
 
 class RealAppEntryScreen extends StatelessWidget {
@@ -19,7 +19,7 @@ class RealAppEntryScreen extends StatelessWidget {
 
         final hasSession = snapshot.data ?? false;
         if (hasSession) {
-          return const RealEstablishmentSearchScreen();
+          return const RealAppHomeScreen();
         }
         return const LoginUserScreen();
       },

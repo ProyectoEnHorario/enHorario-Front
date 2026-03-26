@@ -5,33 +5,41 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class RealEstablishmentsState {
   const RealEstablishmentsState({
-    this.all = const [],
+    this.items = const [],
     this.filtered = const [],
     this.query = '',
     this.isLoading = true,
+    this.isRefreshing = false,
     this.error,
+    this.lastUpdated,
   });
 
-  final List<RailwayEstablishmentView> all;
+  final List<RailwayEstablishmentView> items;
   final List<RailwayEstablishmentView> filtered;
   final String query;
   final bool isLoading;
+  final bool isRefreshing;
   final String? error;
+  final DateTime? lastUpdated;
 
   RealEstablishmentsState copyWith({
-    List<RailwayEstablishmentView>? all,
+    List<RailwayEstablishmentView>? items,
     List<RailwayEstablishmentView>? filtered,
     String? query,
     bool? isLoading,
+    bool? isRefreshing,
     String? error,
     bool clearError = false,
+    DateTime? lastUpdated,
   }) {
     return RealEstablishmentsState(
-      all: all ?? this.all,
+      items: items ?? this.items,
       filtered: filtered ?? this.filtered,
       query: query ?? this.query,
       isLoading: isLoading ?? this.isLoading,
+      isRefreshing: isRefreshing ?? this.isRefreshing,
       error: clearError ? null : (error ?? this.error),
+      lastUpdated: lastUpdated ?? this.lastUpdated,
     );
   }
 }
@@ -39,20 +47,27 @@ class RealEstablishmentsState {
 class RealEstablishmentsCubit extends Cubit<RealEstablishmentsState> {
   RealEstablishmentsCubit(this._service)
       : super(const RealEstablishmentsState()) {
-    load();
+    loadInitial();
   }
 
   final RailwayEstablishmentQueryService _service;
 
-  Future<void> load() async {
-    emit(state.copyWith(isLoading: true, clearError: true));
+  Future<void> loadInitial() async {
+    emit(
+      state.copyWith(
+        isLoading: true,
+        isRefreshing: false,
+        clearError: true,
+      ),
+    );
+
     final result = await _service.fetchEstablishments();
     result.fold(
       (failure) => emit(
         state.copyWith(
           isLoading: false,
           error: failure.message,
-          all: const [],
+          items: const [],
           filtered: const [],
         ),
       ),
@@ -61,9 +76,40 @@ class RealEstablishmentsCubit extends Cubit<RealEstablishmentsState> {
         emit(
           state.copyWith(
             isLoading: false,
-            all: items,
+            items: items,
             filtered: filtered,
             clearError: true,
+            lastUpdated: DateTime.now(),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> load() => loadInitial();
+
+  Future<void> refreshTimes() async {
+    if (state.isRefreshing) return;
+
+    emit(state.copyWith(isRefreshing: true, clearError: true));
+    final result = await _service.fetchEstablishments();
+
+    result.fold(
+      (failure) => emit(
+        state.copyWith(
+          isRefreshing: false,
+          error: failure.message,
+        ),
+      ),
+      (items) {
+        final filtered = _applyFilter(items, state.query);
+        emit(
+          state.copyWith(
+            isRefreshing: false,
+            items: items,
+            filtered: filtered,
+            clearError: true,
+            lastUpdated: DateTime.now(),
           ),
         );
       },
@@ -74,6 +120,7 @@ class RealEstablishmentsCubit extends Cubit<RealEstablishmentsState> {
     final nextQuery = value;
     final normalizedCurrent = StringNormalizer.normalize(state.query);
     final normalizedNext = StringNormalizer.normalize(nextQuery);
+
     if (normalizedCurrent == normalizedNext) {
       if (state.query != nextQuery) {
         emit(state.copyWith(query: nextQuery));
@@ -84,7 +131,7 @@ class RealEstablishmentsCubit extends Cubit<RealEstablishmentsState> {
     emit(
       state.copyWith(
         query: nextQuery,
-        filtered: _applyFilter(state.all, nextQuery),
+        filtered: _applyFilter(state.items, nextQuery),
       ),
     );
   }

@@ -42,42 +42,52 @@ class LoginUserCubit extends Cubit<LoginUserState> {
   Future<void> login({required String email, required String password}) async {
     if (state.isSubmitting) return;
 
-    emit(
-      state.copyWith(
-        isSubmitting: true,
-        clearGeneralError: true,
-        success: false,
-      ),
-    );
+    try {
+      emit(
+        state.copyWith(
+          isSubmitting: true,
+          clearGeneralError: true,
+          success: false,
+        ),
+      );
 
-    final result = await _loginService.login(
-      LoginAccountRequest(email: email, password: password),
-    );
+      final result = await _loginService.login(
+        LoginAccountRequest(email: email, password: password),
+      );
 
-    await result.fold(
-      (failure) async {
-        emit(
-          state.copyWith(
-            isSubmitting: false,
-            generalError: failure.message,
-            success: false,
-          ),
-        );
-      },
-      (successData) async {
-        await _sessionRepository.saveSession(
-          token: successData.token,
-          email: successData.email,
-        );
+      await result.fold(
+        (failure) async {
+          emit(
+            state.copyWith(
+              isSubmitting: false,
+              generalError: failure.message,
+              success: false,
+            ),
+          );
+        },
+        (successData) async {
+          await _sessionRepository.saveSession(
+            token: successData.token,
+            email: successData.email,
+          );
 
-        emit(
-          state.copyWith(
-            isSubmitting: false,
-            clearGeneralError: true,
-            success: true,
-          ),
-        );
-      },
-    );
+          emit(
+            state.copyWith(
+              isSubmitting: false,
+              clearGeneralError: true,
+              success: true,
+            ),
+          );
+        },
+      );
+    } catch (_) {
+      emit(
+        state.copyWith(
+          isSubmitting: false,
+          generalError: 'No fue posible completar el inicio de sesion.',
+          success: false,
+        ),
+      );
+    }
   }
 }
