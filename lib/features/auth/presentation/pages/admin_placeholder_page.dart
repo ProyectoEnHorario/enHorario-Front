@@ -15,10 +15,32 @@ class AdminPlaceholderPage extends StatefulWidget {
 class _AdminPlaceholderPageState extends State<AdminPlaceholderPage> {
   int _selectedIndex = 0;
 
+  Future<bool> _canAccessAdminPanel() async {
+    final sessionRepository = AuthSessionRepository();
+    final hasSession = await sessionRepository.hasSession();
+    if (!hasSession) return false;
+
+    final role = (await sessionRepository.getCurrentUserRole())
+        ?.trim()
+        .toLowerCase();
+
+    // Si el rol no viene en el login, permitimos abrir el panel y dejamos
+    // que el backend valide acceso en cada endpoint de estadisticas.
+    if (role == null || role.isEmpty) {
+      return true;
+    }
+
+    if (role == 'admin' || role == 'administrador') {
+      return true;
+    }
+
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<bool>(
-      future: AuthSessionRepository().isCurrentUserAdmin(),
+      future: _canAccessAdminPanel(),
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return const Scaffold(
@@ -49,9 +71,25 @@ class _AdminPlaceholderPageState extends State<AdminPlaceholderPage> {
                           MaterialPageRoute<void>(
                             builder: (_) => const RealAppEntryScreen(),
                           ),
-                        );
+                        ).then((_) {
+                          if (!mounted) return;
+                          setState(() {});
+                        });
                       },
                       child: const Text('Iniciar sesion como administrador'),
+                    ),
+                    const SizedBox(height: 8),
+                    OutlinedButton(
+                      onPressed: () async {
+                        await AuthSessionRepository().saveSession(
+                          token: 'demo-admin-token',
+                          email: 'admin@enhorario.com',
+                          role: 'admin',
+                        );
+                        if (!mounted) return;
+                        setState(() {});
+                      },
+                      child: const Text('Entrar con acceso admin de prueba'),
                     ),
                   ],
                 ),
