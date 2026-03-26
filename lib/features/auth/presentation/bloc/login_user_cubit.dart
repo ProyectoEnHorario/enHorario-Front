@@ -69,6 +69,7 @@ class LoginUserCubit extends Cubit<LoginUserState> {
           await _sessionRepository.saveSession(
             token: successData.token,
             email: successData.email,
+            role: successData.role,
           );
 
           emit(

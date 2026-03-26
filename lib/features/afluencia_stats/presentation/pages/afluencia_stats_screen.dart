@@ -1,6 +1,14 @@
-import 'package:enhorario/features/afluencia_stats/data/models/afluencia_stat_model.dart';
-import 'package:enhorario/features/afluencia_stats/data/repositories/local_afluencia_stats_repository.dart';
+import 'package:enhorario/core/api/api_client.dart';
+import 'package:enhorario/features/afluencia_stats/data/repositories/hybrid_afluencia_dashboard_repository.dart';
+import 'package:enhorario/features/afluencia_stats/data/repositories/local_afluencia_dashboard_service.dart';
+import 'package:enhorario/features/afluencia_stats/data/repositories/railway_afluencia_dashboard_service.dart';
+import 'package:enhorario/features/afluencia_stats/domain/filters/stats_date_filter.dart';
 import 'package:enhorario/features/afluencia_stats/presentation/bloc/afluencia_stats_cubit.dart';
+import 'package:enhorario/features/afluencia_stats/presentation/widgets/charts/stats_bar_chart_card.dart';
+import 'package:enhorario/features/afluencia_stats/presentation/widgets/charts/stats_donut_chart_card.dart';
+import 'package:enhorario/features/afluencia_stats/presentation/widgets/charts/stats_line_chart_card.dart';
+import 'package:enhorario/features/afluencia_stats/presentation/widgets/charts/stats_metric_card.dart';
+import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -10,216 +18,274 @@ class AfluenciaStatsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => AfluenciaStatsCubit(LocalAfluenciaStatsRepository()),
+      create: (_) => AfluenciaStatsCubit(
+        HybridAfluenciaDashboardRepository(
+          RailwayAfluenciaDashboardService(ApiClient()),
+          LocalAfluenciaDashboardService(),
+        ),
+        AuthSessionRepository(),
+      ),
       child: const _AfluenciaStatsView(),
     );
   }
 }
 
-class _AfluenciaStatsView extends StatefulWidget {
+class _AfluenciaStatsView extends StatelessWidget {
   const _AfluenciaStatsView();
 
   @override
-  State<_AfluenciaStatsView> createState() => _AfluenciaStatsViewState();
+  Widget build(BuildContext context) {
+    return BlocBuilder<AfluenciaStatsCubit, AfluenciaStatsState>(
+      builder: (context, state) {
+        if (state.isLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state.accessDenied) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(24),
+              child: Text(
+                'Acceso denegado. Solo administradores pueden visualizar estadisticas.',
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
+        if (state.error != null && state.data == null) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(state.error!, textAlign: TextAlign.center),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed: context.read<AfluenciaStatsCubit>().refresh,
+                    child: const Text('Reintentar'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final dashboard = state.data;
+        if (dashboard == null || !dashboard.hasData) {
+          return Column(
+            children: [
+              _DateFilterHeader(state: state),
+              const Expanded(
+                child: Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text(
+                      'No hay datos para el periodo seleccionado',
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            _DateFilterHeader(state: state),
+            if (state.error != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Text(
+                  state.error!,
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
+              ),
+            if (state.isRefreshing)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                child: LinearProgressIndicator(minHeight: 3),
+              ),
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth >= 920;
+
+                  final metrics = [
+                    StatsMetricCard(
+                      title: 'Visitas totales',
+                      value: dashboard.totalVisits.toString(),
+                      icon: Icons.groups_outlined,
+                    ),
+                    StatsMetricCard(
+                      title: 'Hora pico',
+                      value: dashboard.peakHourLabel,
+                      icon: Icons.schedule,
+                    ),
+                    StatsMetricCard(
+                      title: 'Visitas prioritarias',
+                      value: dashboard.priorityVisits.toString(),
+                      icon: Icons.priority_high,
+                    ),
+                  ];
+
+                  return ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
+                      if (dashboard.isFallbackData)
+                        const Padding(
+                          padding: EdgeInsets.only(bottom: 12),
+                          child: Text(
+                            'Mostrando datos de demostracion porque el endpoint de estadisticas no esta disponible.',
+                          ),
+                        ),
+                      if (isWide)
+                        Row(
+                          children: [
+                            for (var i = 0; i < metrics.length; i++) ...[
+                              Expanded(child: metrics[i]),
+                              if (i < metrics.length - 1)
+                                const SizedBox(width: 12),
+                            ],
+                          ],
+                        )
+                      else
+                        ...metrics.map(
+                          (card) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: card,
+                          ),
+                        ),
+                      const SizedBox(height: 4),
+                      StatsLineChartCard(
+                        title: 'Evolucion de visitas por dia',
+                        points: dashboard.visitsTimeline,
+                        emptyLabel: 'No hay visitas registradas para este periodo.',
+                      ),
+                      const SizedBox(height: 12),
+                      if (isWide)
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              child: StatsBarChartCard(
+                                title: 'Establecimientos mas consultados',
+                                items: dashboard.mostConsultedEstablishments,
+                                emptyLabel: 'No hay establecimientos consultados.',
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: StatsBarChartCard(
+                                title: 'Categorias mas populares',
+                                items: dashboard.mostPopularCategories,
+                                emptyLabel: 'No hay categorias populares.',
+                              ),
+                            ),
+                          ],
+                        )
+                      else ...[
+                        StatsBarChartCard(
+                          title: 'Establecimientos mas consultados',
+                          items: dashboard.mostConsultedEstablishments,
+                          emptyLabel: 'No hay establecimientos consultados.',
+                        ),
+                        const SizedBox(height: 12),
+                        StatsBarChartCard(
+                          title: 'Categorias mas populares',
+                          items: dashboard.mostPopularCategories,
+                          emptyLabel: 'No hay categorias populares.',
+                        ),
+                      ],
+                      const SizedBox(height: 12),
+                      StatsDonutChartCard(
+                        title: 'Distribucion de visitas',
+                        primaryLabel: 'Regulares',
+                        primaryValue: dashboard.regularVisits,
+                        secondaryLabel: 'Prioritarias',
+                        secondaryValue: dashboard.priorityVisits,
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
-class _AfluenciaStatsViewState extends State<_AfluenciaStatsView> {
-  String? _periodo;
+class _DateFilterHeader extends StatelessWidget {
+  const _DateFilterHeader({required this.state});
+
+  final AfluenciaStatsState state;
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Estadisticas de afluencia')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showCreateDialog(context),
-        child: const Icon(Icons.add),
-      ),
-      body: Column(
+    final cubit = context.read<AfluenciaStatsCubit>();
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: DropdownButtonFormField<String>(
-              initialValue: _periodo,
-              decoration: const InputDecoration(
-                labelText: 'Filtrar por periodo',
-              ),
-              items: const [
-                DropdownMenuItem(value: 'diario', child: Text('Diario')),
-                DropdownMenuItem(value: 'semanal', child: Text('Semanal')),
-                DropdownMenuItem(value: 'mensual', child: Text('Mensual')),
-              ],
-              onChanged: (value) {
-                setState(() => _periodo = value);
-                context.read<AfluenciaStatsCubit>().setPeriodo(value);
-              },
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              TextButton(
-                onPressed: () async {
-                  final from = await showDatePicker(
-                    context: context,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2100),
-                    initialDate: DateTime.now(),
-                  );
-                  if (!context.mounted) return;
-                  context.read<AfluenciaStatsCubit>().setRango(
-                    from,
-                    context.read<AfluenciaStatsCubit>().state.to,
-                  );
-                },
-                child: const Text('Fecha inicio'),
+              ChoiceChip(
+                label: const Text('Hoy'),
+                selected: state.filter.preset == StatsDatePreset.today,
+                onSelected: (_) => cubit.setPreset(StatsDatePreset.today),
               ),
-              TextButton(
-                onPressed: () async {
-                  final to = await showDatePicker(
-                    context: context,
-                    firstDate: DateTime(2020),
-                    lastDate: DateTime(2100),
-                    initialDate: DateTime.now(),
-                  );
-                  if (!context.mounted) return;
-                  context.read<AfluenciaStatsCubit>().setRango(
-                    context.read<AfluenciaStatsCubit>().state.from,
-                    to,
-                  );
-                },
-                child: const Text('Fecha fin'),
+              ChoiceChip(
+                label: const Text('Ultima semana'),
+                selected: state.filter.preset == StatsDatePreset.lastWeek,
+                onSelected: (_) => cubit.setPreset(StatsDatePreset.lastWeek),
               ),
-              TextButton(
-                onPressed: () {
-                  context.read<AfluenciaStatsCubit>().setRango(null, null);
-                },
-                child: const Text('Limpiar rango'),
+              ChoiceChip(
+                label: const Text('Ultimo mes'),
+                selected: state.filter.preset == StatsDatePreset.lastMonth,
+                onSelected: (_) => cubit.setPreset(StatsDatePreset.lastMonth),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => _selectCustomRange(context),
+                icon: const Icon(Icons.date_range),
+                label: const Text('Rango personalizado'),
               ),
             ],
           ),
-          Expanded(
-            child: BlocBuilder<AfluenciaStatsCubit, AfluenciaStatsState>(
-              builder: (context, state) {
-                if (state.isLoading) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (state.error != null) {
-                  return Center(child: Text(state.error!));
-                }
-                if (state.filtered.isEmpty) {
-                  return const Center(
-                    child: Text('No hay estadisticas para mostrar'),
-                  );
-                }
-                return ListView.builder(
-                  itemCount: state.filtered.length,
-                  itemBuilder: (_, index) {
-                    final item = state.filtered[index];
-                    return ListTile(
-                      title: Text(
-                        'Establecimiento: ${item.establishmentId} (${item.periodo})',
-                      ),
-                      subtitle: Text(
-                        'Total: ${item.totalTurnos} - Prioritarios: ${item.turnosPrioritarios}',
-                      ),
-                      trailing: Text(
-                        item.fechaHora.toLocal().toString().split('.').first,
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+          const SizedBox(height: 8),
+          Text(
+            'Rango activo: ${_formatDate(state.filter.from)} - ${_formatDate(state.filter.to)}',
+            style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
       ),
     );
   }
 
-  Future<void> _showCreateDialog(BuildContext context) async {
-    final establishmentController = TextEditingController();
-    final categoryController = TextEditingController();
-    final totalController = TextEditingController();
-    final priorityController = TextEditingController();
-    String periodo = 'diario';
-
-    final ok = await showDialog<bool>(
+  Future<void> _selectCustomRange(BuildContext context) async {
+    final now = DateTime.now();
+    final picked = await showDateRangePicker(
       context: context,
-      builder: (_) {
-        return AlertDialog(
-          title: const Text('Nueva estadistica'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(
-                  controller: establishmentController,
-                  decoration: const InputDecoration(
-                    labelText: 'Establishment ID',
-                  ),
-                ),
-                TextField(
-                  controller: categoryController,
-                  decoration: const InputDecoration(labelText: 'Category ID'),
-                ),
-                TextField(
-                  controller: totalController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Total turnos'),
-                ),
-                TextField(
-                  controller: priorityController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(
-                    labelText: 'Turnos prioritarios',
-                  ),
-                ),
-                DropdownButtonFormField<String>(
-                  initialValue: periodo,
-                  items: const [
-                    DropdownMenuItem(value: 'diario', child: Text('Diario')),
-                    DropdownMenuItem(value: 'semanal', child: Text('Semanal')),
-                    DropdownMenuItem(value: 'mensual', child: Text('Mensual')),
-                  ],
-                  onChanged: (v) {
-                    if (v != null) periodo = v;
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Crear'),
-            ),
-          ],
-        );
-      },
+      firstDate: DateTime(now.year - 2),
+      lastDate: now,
+      initialDateRange: DateTimeRange(start: state.filter.from, end: state.filter.to),
     );
 
-    if (ok != true || !context.mounted) return;
+    if (picked == null || !context.mounted) return;
 
-    final total = int.tryParse(totalController.text.trim()) ?? 0;
-    final prioritarios = int.tryParse(priorityController.text.trim()) ?? 0;
+    context.read<AfluenciaStatsCubit>().setCustomRange(picked.start, picked.end);
+  }
 
-    final model = AfluenciaStatModel(
-      id: '',
-      establishmentId: establishmentController.text.trim(),
-      categoryId: categoryController.text.trim(),
-      totalTurnos: total,
-      turnosPrioritarios: prioritarios,
-      fechaHora: DateTime.now(),
-      periodo: periodo,
-    );
-
-    final error = await context.read<AfluenciaStatsCubit>().create(model);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(error ?? 'Estadistica creada')));
+  String _formatDate(DateTime value) {
+    final d = value.day.toString().padLeft(2, '0');
+    final m = value.month.toString().padLeft(2, '0');
+    return '$d/$m/${value.year}';
   }
 }

@@ -8,10 +8,15 @@ class LoginAccountRequest {
 }
 
 class LoginAccountSuccess {
-  const LoginAccountSuccess({required this.token, required this.email});
+  const LoginAccountSuccess({
+    required this.token,
+    required this.email,
+    this.role,
+  });
 
   final String token;
   final String email;
+  final String? role;
 }
 
 abstract class LoginAccountService {

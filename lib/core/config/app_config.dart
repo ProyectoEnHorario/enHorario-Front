@@ -15,4 +15,5 @@ class AppConfig {
   // Storage Keys
   static const String authTokenKey = 'auth_token';
   static const String userKey = 'current_user';
+  static const String userRoleKey = 'current_user_role';
 }

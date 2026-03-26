@@ -1,112 +1,176 @@
 import 'dart:async';
 
-import 'package:enhorario/features/afluencia_stats/data/models/afluencia_stat_model.dart';
-import 'package:enhorario/features/afluencia_stats/domain/repositories/afluencia_stats_repository.dart';
+import 'package:enhorario/features/afluencia_stats/data/models/afluencia_dashboard_model.dart';
+import 'package:enhorario/features/afluencia_stats/domain/filters/stats_date_filter.dart';
+import 'package:enhorario/features/afluencia_stats/domain/repositories/afluencia_dashboard_repository.dart';
+import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AfluenciaStatsState {
   const AfluenciaStatsState({
-    this.all = const [],
-    this.filtered = const [],
+    required this.filter,
+    this.data,
     this.isLoading = true,
+    this.isRefreshing = false,
     this.error,
-    this.periodo,
-    this.from,
-    this.to,
+    this.accessDenied = false,
   });
 
-  final List<AfluenciaStatModel> all;
-  final List<AfluenciaStatModel> filtered;
+  final StatsDateFilter filter;
+  final AfluenciaDashboardModel? data;
   final bool isLoading;
+  final bool isRefreshing;
   final String? error;
-  final String? periodo;
-  final DateTime? from;
-  final DateTime? to;
+  final bool accessDenied;
 
   AfluenciaStatsState copyWith({
-    List<AfluenciaStatModel>? all,
-    List<AfluenciaStatModel>? filtered,
+    StatsDateFilter? filter,
+    AfluenciaDashboardModel? data,
+    bool keepData = true,
     bool? isLoading,
+    bool? isRefreshing,
     String? error,
     bool clearError = false,
-    String? periodo,
-    bool clearPeriodo = false,
-    DateTime? from,
-    bool clearFrom = false,
-    DateTime? to,
-    bool clearTo = false,
+    bool? accessDenied,
   }) {
     return AfluenciaStatsState(
-      all: all ?? this.all,
-      filtered: filtered ?? this.filtered,
+      filter: filter ?? this.filter,
+      data: keepData ? (data ?? this.data) : data,
       isLoading: isLoading ?? this.isLoading,
+      isRefreshing: isRefreshing ?? this.isRefreshing,
       error: clearError ? null : (error ?? this.error),
-      periodo: clearPeriodo ? null : (periodo ?? this.periodo),
-      from: clearFrom ? null : (from ?? this.from),
-      to: clearTo ? null : (to ?? this.to),
+      accessDenied: accessDenied ?? this.accessDenied,
     );
   }
 }
 
 class AfluenciaStatsCubit extends Cubit<AfluenciaStatsState> {
-  AfluenciaStatsCubit(this._repository) : super(const AfluenciaStatsState()) {
-    _subscription = _repository.watchAll().listen(
-      (items) {
-        final next = state.copyWith(
-          all: items,
-          isLoading: false,
-          clearError: true,
-        );
-        emit(_applyFilters(next));
-      },
-      onError: (_) => emit(
-        state.copyWith(isLoading: false, error: 'Error cargando estadisticas'),
-      ),
-    );
+  AfluenciaStatsCubit(this._repository, this._sessionRepository)
+      : super(AfluenciaStatsState(filter: StatsDateFilter.initial())) {
+    _loadDashboard(forceInitialLoading: true);
   }
 
-  final AfluenciaStatsRepository _repository;
-  StreamSubscription<List<AfluenciaStatModel>>? _subscription;
+  final AfluenciaDashboardRepository _repository;
+  final AuthSessionRepository _sessionRepository;
 
-  void setPeriodo(String? periodo) {
+  int _requestId = 0;
+  Timer? _debounce;
+
+  void setPreset(StatsDatePreset preset) {
+    final nextFilter = StatsDateFilter.fromPreset(preset);
     emit(
-      _applyFilters(
-        state.copyWith(periodo: periodo, clearPeriodo: periodo == null),
+      state.copyWith(
+        filter: nextFilter,
+        clearError: true,
+        accessDenied: false,
       ),
     );
+    _scheduleLoad();
   }
 
-  void setRango(DateTime? from, DateTime? to) {
-    emit(
-      _applyFilters(
+  void setCustomRange(DateTime from, DateTime to) {
+    final normalizedFrom = DateTime(from.year, from.month, from.day);
+    final normalizedTo = DateTime(to.year, to.month, to.day, 23, 59, 59);
+
+    final nextFilter = StatsDateFilter(
+      preset: StatsDatePreset.custom,
+      from: normalizedFrom,
+      to: normalizedTo,
+    );
+
+    if (!nextFilter.isValid) {
+      emit(
         state.copyWith(
-          from: from,
-          to: to,
-          clearFrom: from == null,
-          clearTo: to == null,
+          error: 'El rango es invalido: la fecha inicio no puede ser mayor a la fecha fin.',
+          accessDenied: false,
         ),
+      );
+      return;
+    }
+
+    emit(
+      state.copyWith(
+        filter: nextFilter,
+        clearError: true,
+        accessDenied: false,
       ),
     );
+    _scheduleLoad();
   }
 
-  Future<String?> create(AfluenciaStatModel model) async {
-    final result = await _repository.create(model);
-    return result.fold((l) => l.message, (_) => null);
+  void refresh() {
+    _loadDashboard(forceInitialLoading: state.data == null);
   }
 
-  AfluenciaStatsState _applyFilters(AfluenciaStatsState s) {
-    final filtered = s.all.where((item) {
-      final byPeriodo = s.periodo == null || s.periodo == item.periodo;
-      final byFrom = s.from == null || !item.fechaHora.isBefore(s.from!);
-      final byTo = s.to == null || !item.fechaHora.isAfter(s.to!);
-      return byPeriodo && byFrom && byTo;
-    }).toList();
-    return s.copyWith(filtered: filtered);
+  void _scheduleLoad() {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 320), () {
+      _loadDashboard(forceInitialLoading: false);
+    });
+  }
+
+  Future<void> _loadDashboard({required bool forceInitialLoading}) async {
+    final currentRequest = ++_requestId;
+
+    if (forceInitialLoading || state.data == null) {
+      emit(
+        state.copyWith(
+          isLoading: true,
+          isRefreshing: false,
+          clearError: true,
+          accessDenied: false,
+        ),
+      );
+    } else {
+      emit(
+        state.copyWith(
+          isLoading: false,
+          isRefreshing: true,
+          clearError: true,
+          accessDenied: false,
+        ),
+      );
+    }
+
+    final token = await _sessionRepository.getAuthToken() ?? '';
+    final result = await _repository.fetchDashboard(
+      filter: state.filter,
+      token: token,
+    );
+
+    if (currentRequest != _requestId) {
+      return;
+    }
+
+    result.fold(
+      (failure) {
+        final denied = failure.message.toLowerCase().contains('acceso denegado');
+        emit(
+          state.copyWith(
+            isLoading: false,
+            isRefreshing: false,
+            error: failure.message,
+            accessDenied: denied,
+          ),
+        );
+      },
+      (dashboard) {
+        emit(
+          state.copyWith(
+            data: dashboard,
+            isLoading: false,
+            isRefreshing: false,
+            clearError: true,
+            accessDenied: false,
+          ),
+        );
+      },
+    );
   }
 
   @override
   Future<void> close() {
-    _subscription?.cancel();
+    _debounce?.cancel();
     return super.close();
   }
 }

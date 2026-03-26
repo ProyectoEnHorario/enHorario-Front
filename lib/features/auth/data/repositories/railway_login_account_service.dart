@@ -33,10 +33,13 @@ class RailwayLoginAccountService implements LoginAccountService {
         );
       }
 
+      final role = _extractRole(response);
+
       return Right<Failure, LoginAccountSuccess>(
         LoginAccountSuccess(
           token: token,
           email: request.email.trim().toLowerCase(),
+          role: role,
         ),
       );
     } on ApiException catch (e) {
@@ -60,5 +63,21 @@ class RailwayLoginAccountService implements LoginAccountService {
         Failure('Error inesperado al iniciar sesion.'),
       );
     }
+  }
+
+  String? _extractRole(Map<String, dynamic> payload) {
+    final directRole = payload['rol']?.toString() ?? payload['role']?.toString();
+    if (directRole != null && directRole.trim().isNotEmpty) {
+      return directRole.trim();
+    }
+
+    final user = payload['user'];
+    if (user is Map<String, dynamic>) {
+      final nestedRole = user['rol']?.toString() ?? user['role']?.toString();
+      if (nestedRole != null && nestedRole.trim().isNotEmpty) {
+        return nestedRole.trim();
+      }
+    }
+    return null;
   }
 }
