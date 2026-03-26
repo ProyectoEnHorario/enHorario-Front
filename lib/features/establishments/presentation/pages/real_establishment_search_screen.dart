@@ -1,5 +1,7 @@
-import 'package:enhorario/features/establishments/data/repositories/local_establishment_repository.dart';
-import 'package:enhorario/features/establishments/presentation/bloc/establishments_cubit.dart';
+import 'package:enhorario/core/api/api_client.dart';
+import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
+import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
+import 'package:enhorario/features/establishments/presentation/pages/establishment_wait_time_detail_screen.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/establishment_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,7 +12,9 @@ class RealEstablishmentSearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => EstablishmentsCubit(LocalEstablishmentRepository()),
+      create: (_) => RealEstablishmentsCubit(
+        RailwayEstablishmentQueryService(ApiClient()),
+      ),
       child: const _RealEstablishmentSearchView(),
     );
   }
@@ -22,21 +26,32 @@ class _RealEstablishmentSearchView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Buscar establecimientos')),
+      appBar: AppBar(
+        title: const Text('App real - Establecimientos'),
+        actions: [
+          IconButton(
+            tooltip: 'Recargar tiempos',
+            onPressed: () => context.read<RealEstablishmentsCubit>().load(),
+            icon: const Icon(Icons.refresh),
+          ),
+        ],
+      ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: BlocBuilder<EstablishmentsCubit, EstablishmentsState>(
-              builder: (context, state) => EstablishmentSearchField(
-                value: state.query,
-                onChanged: context.read<EstablishmentsCubit>().setQuery,
-                onClear: () => context.read<EstablishmentsCubit>().setQuery(''),
-              ),
-            ),
+            child:
+                BlocBuilder<RealEstablishmentsCubit, RealEstablishmentsState>(
+                  builder: (context, state) => EstablishmentSearchField(
+                    value: state.query,
+                    onChanged: context.read<RealEstablishmentsCubit>().setQuery,
+                    onClear: () =>
+                        context.read<RealEstablishmentsCubit>().setQuery(''),
+                  ),
+                ),
           ),
           Expanded(
-            child: BlocBuilder<EstablishmentsCubit, EstablishmentsState>(
+            child: BlocBuilder<RealEstablishmentsCubit, RealEstablishmentsState>(
               builder: (context, state) {
                 if (state.isLoading) {
                   return const Center(child: CircularProgressIndicator());
@@ -53,8 +68,8 @@ class _RealEstablishmentSearchView extends StatelessWidget {
                           const SizedBox(height: 12),
                           FilledButton(
                             onPressed: context
-                                .read<EstablishmentsCubit>()
-                                .retrySearch,
+                                .read<RealEstablishmentsCubit>()
+                                .load,
                             child: const Text('Reintentar'),
                           ),
                         ],
@@ -82,8 +97,22 @@ class _RealEstablishmentSearchView extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final item = state.filtered[index];
                     return ListTile(
-                      title: Text(item.nombre),
-                      subtitle: Text(item.direccion),
+                      title: Text(item.name),
+                      subtitle: Text('${item.city} - ${item.addressLine}'),
+                      trailing: Text(
+                        item.averageWaitMinutes == null
+                            ? 'N/D'
+                            : '~${item.averageWaitMinutes} min',
+                      ),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => EstablishmentWaitTimeDetailScreen(
+                              establishmentId: item.id,
+                            ),
+                          ),
+                        );
+                      },
                     );
                   },
                 );

@@ -2,9 +2,9 @@ import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
 import 'package:enhorario/features/auth/data/repositories/railway_login_account_service.dart';
 import 'package:enhorario/features/auth/presentation/bloc/login_user_cubit.dart';
-import 'package:enhorario/features/auth/presentation/pages/real_app_placeholder_page.dart';
 import 'package:enhorario/features/auth/presentation/pages/register_user_screen.dart';
 import 'package:enhorario/features/auth/presentation/validators/login_form_validators.dart';
+import 'package:enhorario/features/establishments/presentation/pages/real_app_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -35,9 +35,9 @@ class _LoginUserScreenState extends State<LoginUserScreen> {
     }
 
     context.read<LoginUserCubit>().login(
-          email: _emailCtrl.text.trim(),
-          password: _passwordCtrl.text,
-        );
+      email: _emailCtrl.text.trim(),
+      password: _passwordCtrl.text,
+    );
   }
 
   @override
@@ -54,7 +54,7 @@ class _LoginUserScreenState extends State<LoginUserScreen> {
             if (!state.success) return;
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute<void>(
-                builder: (_) => const RealAppPlaceholderPage(),
+                builder: (_) => const RealAppHomeScreen(),
               ),
               (_) => false,
             );
@@ -82,7 +82,8 @@ class _LoginUserScreenState extends State<LoginUserScreen> {
                       ),
                       validator: (value) =>
                           LoginFormValidators.validateEmail(value ?? ''),
-                      onChanged: (_) => context.read<LoginUserCubit>().clearError(),
+                      onChanged: (_) =>
+                          context.read<LoginUserCubit>().clearError(),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -96,7 +97,8 @@ class _LoginUserScreenState extends State<LoginUserScreen> {
                       ),
                       validator: (value) =>
                           LoginFormValidators.validatePassword(value ?? ''),
-                      onChanged: (_) => context.read<LoginUserCubit>().clearError(),
+                      onChanged: (_) =>
+                          context.read<LoginUserCubit>().clearError(),
                     ),
                     const SizedBox(height: 12),
                     if (state.generalError != null)
@@ -119,7 +121,9 @@ class _LoginUserScreenState extends State<LoginUserScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text('Iniciar sesion'),
                       ),
