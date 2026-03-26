@@ -4,7 +4,7 @@ import 'package:enhorario/features/auth/domain/repositories/register_account_ser
 import 'package:enhorario/features/auth/presentation/bloc/register_user_cubit.dart';
 import 'package:enhorario/features/auth/presentation/pages/login_user_screen.dart';
 import 'package:enhorario/features/auth/presentation/validators/register_form_validators.dart';
-import 'package:enhorario/features/establishments/presentation/pages/real_app_home_screen.dart';
+import 'package:enhorario/features/home/presentation/pages/main_navigation_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -80,7 +80,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
 
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute<void>(
-                  builder: (_) => const RealAppHomeScreen(),
+                  builder: (_) => const MainNavigationScreen(),
                 ),
               );
             }
