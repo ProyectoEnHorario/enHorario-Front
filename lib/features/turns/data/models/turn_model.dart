@@ -1,5 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:enhorario/core/utils/firestore_mapper.dart';
+import 'package:enhorario/core/utils/date_mapper.dart';
 
 class TurnModel {
   const TurnModel({
@@ -35,10 +34,9 @@ class TurnModel {
       tipo: (map['tipo'] ?? 'regular') as String,
       estado: (map['estado'] ?? 'en_espera') as String,
       posicion: (map['posicion'] ?? 0) as int,
-      solicitadoEn:
-          FirestoreMapper.toDateTime(map['solicitadoEn']) ?? DateTime.now(),
-      atendidoEn: FirestoreMapper.toDateTime(map['atendidoEn']),
-      canceladoEn: FirestoreMapper.toDateTime(map['canceladoEn']),
+        solicitadoEn: DateMapper.toDateTime(map['solicitadoEn']) ?? DateTime.now(),
+        atendidoEn: DateMapper.toDateTime(map['atendidoEn']),
+        canceladoEn: DateMapper.toDateTime(map['canceladoEn']),
     );
   }
 
@@ -51,9 +49,9 @@ class TurnModel {
       'tipo': tipo,
       'estado': estado,
       'posicion': posicion,
-      'solicitadoEn': Timestamp.fromDate(solicitadoEn),
-      'atendidoEn': FirestoreMapper.toTimestamp(atendidoEn),
-      'canceladoEn': FirestoreMapper.toTimestamp(canceladoEn),
+      'solicitadoEn': DateMapper.toIsoString(solicitadoEn),
+      'atendidoEn': DateMapper.toIsoString(atendidoEn),
+      'canceladoEn': DateMapper.toIsoString(canceladoEn),
     };
   }
 

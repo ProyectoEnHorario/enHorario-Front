@@ -1,4 +1,4 @@
-import 'package:enhorario/features/establishments/data/repositories/firestore_establishment_repository.dart';
+import 'package:enhorario/features/establishments/data/repositories/local_establishment_repository.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/establishments_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/establishment_search_field.dart';
 import 'package:flutter/material.dart';
@@ -10,7 +10,7 @@ class RealEstablishmentSearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => EstablishmentsCubit(FirestoreEstablishmentRepository()),
+      create: (_) => EstablishmentsCubit(LocalEstablishmentRepository()),
       child: const _RealEstablishmentSearchView(),
     );
   }
