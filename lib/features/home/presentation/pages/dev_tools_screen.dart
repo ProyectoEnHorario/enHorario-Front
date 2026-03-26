@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:enhorario/core/api/api_client.dart';
+import 'package:enhorario/core/errors/api_exception.dart';
 import 'package:flutter/material.dart';
 
 class DevToolsScreen extends StatefulWidget {
@@ -47,6 +48,11 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
     setState(() => _loading = true);
     try {
       await action();
+    } on ApiException catch (e) {
+      _appendLog(
+        'API error (${e.statusCode ?? 'sin status'}): ${e.message}\n'
+        'Tip: si login/register dan 400 sin detalle, revisa logs del backend en Railway.',
+      );
     } catch (e) {
       _appendLog('Error no controlado: $e');
     } finally {
@@ -85,10 +91,7 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
   Future<void> _login() async {
     final response = await _api.post<dynamic>(
       '/auth/login',
-      data: {
-        'email': _emailCtrl.text.trim(),
-        'password': _passwordCtrl.text,
-      },
+      data: {'email': _emailCtrl.text.trim(), 'password': _passwordCtrl.text},
     );
 
     if (response is Map<String, dynamic>) {
@@ -185,7 +188,7 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
             '2. Login/Register: valida autenticacion y token.\n'
             '3. Listar establecimientos: valida lectura de catalogo.\n'
             '4. Crear turno -> listar mis turnos -> actualizar estado -> cancelar.\n'
-            '5. Combina este panel con los CRUD locales para validar relaciones de datos.',
+            '5. Usa este panel para pruebas directas contra backend Railway.',
           ),
           const SizedBox(height: 16),
           TextField(
@@ -220,7 +223,8 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
           TextField(
             controller: _statusCtrl,
             decoration: const InputDecoration(
-              labelText: 'status para update (WAITING/CALLED/ATTENDED/CANCELLED)',
+              labelText:
+                  'status para update (WAITING/CALLED/ATTENDED/CANCELLED)',
             ),
           ),
           const SizedBox(height: 16),
