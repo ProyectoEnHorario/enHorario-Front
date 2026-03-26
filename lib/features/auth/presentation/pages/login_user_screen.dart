@@ -35,9 +35,9 @@ class _LoginUserScreenState extends State<LoginUserScreen> {
     }
 
     context.read<LoginUserCubit>().login(
-          email: _emailCtrl.text.trim(),
-          password: _passwordCtrl.text,
-        );
+      email: _emailCtrl.text.trim(),
+      password: _passwordCtrl.text,
+    );
   }
 
   @override
@@ -82,7 +82,8 @@ class _LoginUserScreenState extends State<LoginUserScreen> {
                       ),
                       validator: (value) =>
                           LoginFormValidators.validateEmail(value ?? ''),
-                      onChanged: (_) => context.read<LoginUserCubit>().clearError(),
+                      onChanged: (_) =>
+                          context.read<LoginUserCubit>().clearError(),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -96,7 +97,8 @@ class _LoginUserScreenState extends State<LoginUserScreen> {
                       ),
                       validator: (value) =>
                           LoginFormValidators.validatePassword(value ?? ''),
-                      onChanged: (_) => context.read<LoginUserCubit>().clearError(),
+                      onChanged: (_) =>
+                          context.read<LoginUserCubit>().clearError(),
                     ),
                     const SizedBox(height: 12),
                     if (state.generalError != null)
@@ -119,7 +121,9 @@ class _LoginUserScreenState extends State<LoginUserScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text('Iniciar sesion'),
                       ),

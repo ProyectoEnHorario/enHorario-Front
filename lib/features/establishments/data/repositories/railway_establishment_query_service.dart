@@ -47,7 +47,9 @@ class RailwayEstablishmentQueryService {
     }
   }
 
-  Future<Result<RailwayEstablishmentView>> fetchEstablishmentById(String id) async {
+  Future<Result<RailwayEstablishmentView>> fetchEstablishmentById(
+    String id,
+  ) async {
     try {
       final response = await _apiClient.get<dynamic>('/establishments/$id');
       if (response is! Map<String, dynamic>) {
