@@ -1,5 +1,6 @@
 import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
+import 'package:enhorario/features/establishments/presentation/pages/real_app_home_screen.dart';
 import 'package:enhorario/features/home/presentation/pages/user_profile_screen.dart';
 import 'package:enhorario/features/turns/presentation/pages/turns_screen.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
   static const List<String> _navigationTitles = [
+    'Establecimientos',
     'Mi Información',
     'Tickets',
   ];
@@ -46,6 +48,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         body: IndexedStack(
           index: _selectedIndex,
           children: const [
+            RealAppHomeScreen(),
             UserProfileScreen(),
             TurnsScreen(),
           ],
@@ -58,6 +61,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             });
           },
           destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home),
+              label: 'Establecimientos',
+            ),
             NavigationDestination(
               icon: Icon(Icons.person_outline),
               selectedIcon: Icon(Icons.person),
