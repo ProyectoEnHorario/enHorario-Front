@@ -1,5 +1,5 @@
-import 'package:enhorario/core/utils/string_normalizer.dart';
 import 'package:enhorario/features/establishments/data/models/railway_establishment_view.dart';
+import 'package:enhorario/features/establishments/domain/filters/establishment_filter_logic.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -7,6 +7,8 @@ class RealEstablishmentsState {
   const RealEstablishmentsState({
     this.items = const [],
     this.filtered = const [],
+    this.availableCategories = const [],
+    this.selectedCategoryKeys = const [],
     this.query = '',
     this.isLoading = true,
     this.isRefreshing = false,
@@ -16,15 +18,21 @@ class RealEstablishmentsState {
 
   final List<RailwayEstablishmentView> items;
   final List<RailwayEstablishmentView> filtered;
+  final List<EstablishmentCategoryOption> availableCategories;
+  final List<String> selectedCategoryKeys;
   final String query;
   final bool isLoading;
   final bool isRefreshing;
   final String? error;
   final DateTime? lastUpdated;
 
+  bool get hasActiveFilters => query.trim().isNotEmpty || selectedCategoryKeys.isNotEmpty;
+
   RealEstablishmentsState copyWith({
     List<RailwayEstablishmentView>? items,
     List<RailwayEstablishmentView>? filtered,
+    List<EstablishmentCategoryOption>? availableCategories,
+    List<String>? selectedCategoryKeys,
     String? query,
     bool? isLoading,
     bool? isRefreshing,
@@ -35,6 +43,8 @@ class RealEstablishmentsState {
     return RealEstablishmentsState(
       items: items ?? this.items,
       filtered: filtered ?? this.filtered,
+      availableCategories: availableCategories ?? this.availableCategories,
+      selectedCategoryKeys: selectedCategoryKeys ?? this.selectedCategoryKeys,
       query: query ?? this.query,
       isLoading: isLoading ?? this.isLoading,
       isRefreshing: isRefreshing ?? this.isRefreshing,
@@ -69,15 +79,23 @@ class RealEstablishmentsCubit extends Cubit<RealEstablishmentsState> {
           error: failure.message,
           items: const [],
           filtered: const [],
+          availableCategories: const [],
+          selectedCategoryKeys: const [],
         ),
       ),
       (items) {
-        final filtered = _applyFilter(items, state.query);
+        final categories = EstablishmentFilterLogic.buildCategoryOptions(items);
+        final filtered = EstablishmentFilterLogic.applyFilters(
+          items,
+          query: state.query,
+          selectedCategoryKeys: state.selectedCategoryKeys.toSet(),
+        );
         emit(
           state.copyWith(
             isLoading: false,
             items: items,
             filtered: filtered,
+            availableCategories: categories,
             clearError: true,
             lastUpdated: DateTime.now(),
           ),
@@ -102,12 +120,18 @@ class RealEstablishmentsCubit extends Cubit<RealEstablishmentsState> {
         ),
       ),
       (items) {
-        final filtered = _applyFilter(items, state.query);
+        final categories = EstablishmentFilterLogic.buildCategoryOptions(items);
+        final filtered = EstablishmentFilterLogic.applyFilters(
+          items,
+          query: state.query,
+          selectedCategoryKeys: state.selectedCategoryKeys.toSet(),
+        );
         emit(
           state.copyWith(
             isRefreshing: false,
             items: items,
             filtered: filtered,
+            availableCategories: categories,
             clearError: true,
             lastUpdated: DateTime.now(),
           ),
@@ -117,44 +141,58 @@ class RealEstablishmentsCubit extends Cubit<RealEstablishmentsState> {
   }
 
   void setQuery(String value) {
-    final nextQuery = value;
-    final normalizedCurrent = StringNormalizer.normalize(state.query);
-    final normalizedNext = StringNormalizer.normalize(nextQuery);
-
-    if (normalizedCurrent == normalizedNext) {
-      if (state.query != nextQuery) {
-        emit(state.copyWith(query: nextQuery));
-      }
-      return;
-    }
-
     emit(
       state.copyWith(
-        query: nextQuery,
-        filtered: _applyFilter(state.items, nextQuery),
+        query: value,
+        filtered: EstablishmentFilterLogic.applyFilters(
+          state.items,
+          query: value,
+          selectedCategoryKeys: state.selectedCategoryKeys.toSet(),
+        ),
       ),
     );
   }
 
-  List<RailwayEstablishmentView> _applyFilter(
-    List<RailwayEstablishmentView> items,
-    String query,
-  ) {
-    final normalizedQuery = StringNormalizer.normalize(query);
-    if (normalizedQuery.isEmpty) return items;
+  void toggleCategory(String categoryKey) {
+    final selected = {...state.selectedCategoryKeys};
+    if (selected.contains(categoryKey)) {
+      selected.remove(categoryKey);
+    } else {
+      selected.add(categoryKey);
+    }
 
-    return items.where((item) {
-      final byName = StringNormalizer.normalize(item.name).contains(
-        normalizedQuery,
-      );
-      final byCategory =
-          StringNormalizer.normalize(item.categoryName ?? '').contains(
-            normalizedQuery,
-          );
-      final byCity = StringNormalizer.normalize(item.city).contains(
-        normalizedQuery,
-      );
-      return byName || byCategory || byCity;
-    }).toList();
+    emit(
+      state.copyWith(
+        selectedCategoryKeys: selected.toList(),
+        filtered: EstablishmentFilterLogic.applyFilters(
+          state.items,
+          query: state.query,
+          selectedCategoryKeys: selected,
+        ),
+      ),
+    );
+  }
+
+  void clearCategoryFilters() {
+    emit(
+      state.copyWith(
+        selectedCategoryKeys: const [],
+        filtered: EstablishmentFilterLogic.applyFilters(
+          state.items,
+          query: state.query,
+          selectedCategoryKeys: const <String>{},
+        ),
+      ),
+    );
+  }
+
+  void clearAllFilters() {
+    emit(
+      state.copyWith(
+        query: '',
+        selectedCategoryKeys: const [],
+        filtered: state.items,
+      ),
+    );
   }
 }
