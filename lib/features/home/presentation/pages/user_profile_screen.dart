@@ -1,4 +1,5 @@
 import 'package:enhorario/core/api/api_client.dart';
+import 'package:enhorario/core/config/app_config.dart';
 import 'package:enhorario/features/auth/data/repositories/account_deletion_service.dart';
 import 'package:enhorario/features/auth/presentation/bloc/delete_account_cubit.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
@@ -26,7 +27,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   Future<void> _loadUserData() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final email = prefs.getString('user_email');
+      final email = prefs.getString(AppConfig.userKey);
       setState(() {
         _userEmail = email ?? 'Sin información';
         _isLoading = false;
