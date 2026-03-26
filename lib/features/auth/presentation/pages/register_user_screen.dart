@@ -1,4 +1,5 @@
-import 'package:enhorario/features/auth/data/repositories/mock_register_account_service.dart';
+import 'package:enhorario/core/api/api_client.dart';
+import 'package:enhorario/features/auth/data/repositories/railway_register_account_service.dart';
 import 'package:enhorario/features/auth/domain/repositories/register_account_service.dart';
 import 'package:enhorario/features/auth/presentation/bloc/register_user_cubit.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_placeholder_page.dart';
@@ -15,6 +16,9 @@ class RegisterUserScreen extends StatefulWidget {
 
 class _RegisterUserScreenState extends State<RegisterUserScreen> {
   final _formKey = GlobalKey<FormState>();
+  final RegisterAccountService _registerService = RailwayRegisterAccountService(
+    ApiClient(),
+  );
 
   final _nombreCtrl = TextEditingController();
   final _apellidoCtrl = TextEditingController();
@@ -63,15 +67,15 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => RegisterUserCubit(MockRegisterAccountService()),
+      create: (_) => RegisterUserCubit(_registerService),
       child: Scaffold(
         appBar: AppBar(title: const Text('Registro de usuarios')),
         body: BlocConsumer<RegisterUserCubit, RegisterUserState>(
           listener: (context, state) {
             if (state.successMessage != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.successMessage!)),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(state.successMessage!)));
 
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute<void>(
@@ -100,10 +104,10 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                         labelText: 'Nombre',
                         hintText: 'Ejemplo: Ana',
                       ),
-                      validator: (value) => RegisterFormValidators.validateNombre(
-                        value ?? '',
-                      ),
-                      onChanged: (_) => context.read<RegisterUserCubit>().clearFeedback(),
+                      validator: (value) =>
+                          RegisterFormValidators.validateNombre(value ?? ''),
+                      onChanged: (_) =>
+                          context.read<RegisterUserCubit>().clearFeedback(),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -113,10 +117,10 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                         labelText: 'Apellido',
                         hintText: 'Ejemplo: Perez',
                       ),
-                      validator: (value) => RegisterFormValidators.validateApellido(
-                        value ?? '',
-                      ),
-                      onChanged: (_) => context.read<RegisterUserCubit>().clearFeedback(),
+                      validator: (value) =>
+                          RegisterFormValidators.validateApellido(value ?? ''),
+                      onChanged: (_) =>
+                          context.read<RegisterUserCubit>().clearFeedback(),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -128,10 +132,10 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                         hintText: 'correo@dominio.com',
                         errorText: state.emailError,
                       ),
-                      validator: (value) => RegisterFormValidators.validateEmail(
-                        value ?? '',
-                      ),
-                      onChanged: (_) => context.read<RegisterUserCubit>().clearFeedback(),
+                      validator: (value) =>
+                          RegisterFormValidators.validateEmail(value ?? ''),
+                      onChanged: (_) =>
+                          context.read<RegisterUserCubit>().clearFeedback(),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -144,10 +148,10 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                         labelText: 'Contrasena',
                         hintText: 'Minimo 8 caracteres',
                       ),
-                      validator: (value) => RegisterFormValidators.validatePassword(
-                        value ?? '',
-                      ),
-                      onChanged: (_) => context.read<RegisterUserCubit>().clearFeedback(),
+                      validator: (value) =>
+                          RegisterFormValidators.validatePassword(value ?? ''),
+                      onChanged: (_) =>
+                          context.read<RegisterUserCubit>().clearFeedback(),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -161,10 +165,11 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                       ),
                       validator: (value) =>
                           RegisterFormValidators.validateConfirmPassword(
-                        password: _passwordCtrl.text,
-                        confirmPassword: value ?? '',
-                      ),
-                      onChanged: (_) => context.read<RegisterUserCubit>().clearFeedback(),
+                            password: _passwordCtrl.text,
+                            confirmPassword: value ?? '',
+                          ),
+                      onChanged: (_) =>
+                          context.read<RegisterUserCubit>().clearFeedback(),
                     ),
                     const SizedBox(height: 10),
                     CheckboxListTile(
@@ -200,7 +205,9 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : const Text('Registrarme'),
                       ),
