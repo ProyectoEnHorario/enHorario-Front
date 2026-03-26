@@ -1,5 +1,9 @@
+import 'dart:convert';
+
+import 'package:enhorario/core/config/app_config.dart';
 import 'package:enhorario/features/turns/data/models/turn_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class UserTicketsState {
   const UserTicketsState({
@@ -42,14 +46,42 @@ class UserTicketsState {
 class UserTicketsCubit extends Cubit<UserTicketsState> {
   UserTicketsCubit() : super(const UserTicketsState());
 
-  /// Simular carga de tickets del usuario desde localStorage o API
+  static const String _ticketsKeyPrefix = 'user_tickets_';
+
+  Future<String> _buildStorageKey(SharedPreferences prefs) async {
+    final email = prefs.getString(AppConfig.userKey) ?? 'anon';
+    return '$_ticketsKeyPrefix$email';
+  }
+
+  Future<void> _persistTickets(List<TurnModel> tickets) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = await _buildStorageKey(prefs);
+    final payload = tickets.map((ticket) => ticket.toMap()).toList();
+    await prefs.setString(key, jsonEncode(payload));
+  }
+
+  /// Cargar tickets persistidos del usuario
   Future<void> loadUserTickets() async {
     emit(state.copyWith(isLoading: true, clearError: true));
     try {
-      // TODO: Implementar carga real desde API
-      // Por ahora, simular con lista vacía
+      final prefs = await SharedPreferences.getInstance();
+      final key = await _buildStorageKey(prefs);
+      final encoded = prefs.getString(key);
+
+      final List<TurnModel> tickets;
+      if (encoded == null || encoded.trim().isEmpty) {
+        tickets = const <TurnModel>[];
+      } else {
+        final decoded = jsonDecode(encoded) as List<dynamic>;
+        tickets = decoded.map((item) {
+          final map = Map<String, dynamic>.from(item as Map);
+          final id = (map['id'] ?? DateTime.now().millisecondsSinceEpoch.toString()).toString();
+          return TurnModel.fromMap(map, id: id);
+        }).toList();
+      }
+
       emit(state.copyWith(
-        tickets: [],
+        tickets: tickets,
         isLoading: false,
       ));
     } catch (e) {
@@ -60,7 +92,7 @@ class UserTicketsCubit extends Cubit<UserTicketsState> {
     }
   }
 
-  /// Crear un nuevo ticket (turno)
+  /// Crear un nuevo ticket (turno) y persistirlo
   Future<void> createTurn({
     required String establishmentId,
     required bool isPriority,
@@ -82,6 +114,7 @@ class UserTicketsCubit extends Cubit<UserTicketsState> {
       );
 
       final updatedTickets = [...state.tickets, newTurn];
+      await _persistTickets(updatedTickets);
       emit(state.copyWith(
         tickets: updatedTickets,
         isCreatingTurn: false,
@@ -96,14 +129,14 @@ class UserTicketsCubit extends Cubit<UserTicketsState> {
     }
   }
 
-  /// Eliminar un ticket
+  /// Eliminar un ticket y persistir cambios
   Future<void> deleteTurn(String turnId) async {
     emit(state.copyWith(isDeletingTurn: true, clearError: true));
     try {
-      // TODO: Implementar eliminación real en API
       final updatedTickets = state.tickets
           .where((turn) => turn.id != turnId)
           .toList();
+      await _persistTickets(updatedTickets);
 
       emit(state.copyWith(
         tickets: updatedTickets,
