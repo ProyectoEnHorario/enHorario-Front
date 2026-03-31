@@ -245,3 +245,6 @@ Prioridades inmediatas:
 
 Documento mantenido por el equipo de EnHorario.
 Actualizar este README en cada cambio arquitectonico relevante o ajuste de flujo de ramas.
+
+
+modificacion de prueba para el uso de jira con github 
