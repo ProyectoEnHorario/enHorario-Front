@@ -11,6 +11,8 @@ class EstablishmentMapView extends StatefulWidget {
     required this.onMarkerTap,
     required this.markerColorResolver,
     this.autoRecenter = false,
+    this.centerChangeToken = 0,
+    this.onUserGesture,
     this.userPosition,
     this.userTrail = const [],
     this.nearbyRadiusKm,
@@ -22,6 +24,8 @@ class EstablishmentMapView extends StatefulWidget {
   final ValueChanged<RailwayEstablishmentView> onMarkerTap;
   final Color Function(RailwayEstablishmentView item) markerColorResolver;
   final bool autoRecenter;
+  final int centerChangeToken;
+  final VoidCallback? onUserGesture;
   final LatLng? userPosition;
   final List<LatLng> userTrail;
   final double? nearbyRadiusKm;
@@ -39,15 +43,25 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
   bool _mapReady = false;
   double _lastZoom = 14;
 
+  void _moveToCenter() {
+    try {
+      _mapController.move(widget.center, _lastZoom);
+    } catch (_) {
+      // Ignora errores transitorios cuando el mapa cambia de estado de montaje.
+    }
+  }
+
   @override
   void didUpdateWidget(covariant EstablishmentMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.center != widget.center && _mapReady && widget.autoRecenter) {
-      try {
-        _mapController.move(widget.center, _lastZoom);
-      } catch (_) {
-        // Ignora errores transitorios cuando el mapa cambia de estado de montaje.
-      }
+    if (!_mapReady) return;
+
+    final shouldForceMove =
+        oldWidget.centerChangeToken != widget.centerChangeToken;
+    final shouldAutoMove =
+        oldWidget.center != widget.center && widget.autoRecenter;
+    if (shouldForceMove || shouldAutoMove) {
+      _moveToCenter();
     }
   }
 
@@ -87,9 +101,13 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
         maxZoom: 19,
         onMapReady: () {
           _mapReady = true;
+          _moveToCenter();
         },
         onPositionChanged: (position, hasGesture) {
           _lastZoom = position.zoom;
+          if (hasGesture) {
+            widget.onUserGesture?.call();
+          }
         },
       ),
       children: [

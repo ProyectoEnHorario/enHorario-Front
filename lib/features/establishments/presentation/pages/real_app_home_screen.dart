@@ -48,6 +48,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
   double? _userLatitude;
   double? _userLongitude;
   LatLng? _mapFocus;
+  int _centerChangeToken = 0;
   RailwayEstablishmentView? _selectedEstablishment;
   StreamSubscription<Position>? _positionSubscription;
   final List<LatLng> _userTrail = <LatLng>[];
@@ -107,6 +108,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
         }
         if (_followMyLocation) {
           _mapFocus = point;
+          _centerChangeToken++;
         }
       });
     });
@@ -177,13 +179,17 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: ListTile(
-        onTap: () {
-          Navigator.of(context).push(
+        onTap: () async {
+          await Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (_) =>
                   EstablishmentWaitTimeDetailScreen(establishmentId: item.id),
             ),
           );
+          if (!mounted) return;
+          setState(() {
+            _selectedEstablishment = null;
+          });
         },
         title: Text(item.name),
         subtitle: Text(
@@ -203,11 +209,13 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
     BuildContext context,
     List<RailwayEstablishmentView> visible,
   ) async {
-    final sortedVisible = [...visible]..sort(
-      (a, b) => _distanceKmFromCenter(a, _mapCenter).compareTo(
-        _distanceKmFromCenter(b, _mapCenter),
-      ),
-    );
+    final sortedVisible = [...visible]
+      ..sort(
+        (a, b) => _distanceKmFromCenter(
+          a,
+          _mapCenter,
+        ).compareTo(_distanceKmFromCenter(b, _mapCenter)),
+      );
 
     await showModalBottomSheet<void>(
       context: context,
@@ -259,11 +267,13 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                     Expanded(
                       child: sortedVisible.isEmpty
                           ? const Center(
-                              child: Text('No hay locales con el filtro actual.'),
+                              child: Text(
+                                'No hay locales con el filtro actual.',
+                              ),
                             )
                           : ListView.separated(
                               itemCount: sortedVisible.length,
-                              separatorBuilder: (_, __) =>
+                              separatorBuilder: (_, index) =>
                                   const SizedBox(height: 6),
                               itemBuilder: (context, index) {
                                 final item = sortedVisible[index];
@@ -271,22 +281,42 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                                   item,
                                   _mapCenter,
                                 );
+                                final afluencia = _afluenciaLabel(item);
 
                                 return Card(
+                                  elevation: 0,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHighest,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
                                   child: ListTile(
-                                    dense: true,
-                                    title: Text(item.name),
-                                    subtitle: Text(
-                                      '${item.city} - ${distance.toStringAsFixed(2)} km',
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
                                     ),
-                                    trailing: Container(
-                                      width: 12,
-                                      height: 12,
+                                    leading: Container(
+                                      width: 36,
+                                      height: 36,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
+                                        color: _afluenciaColor(
+                                          item,
+                                        ).withValues(alpha: 0.18),
+                                      ),
+                                      child: Icon(
+                                        Icons.store_mall_directory,
                                         color: _afluenciaColor(item),
+                                        size: 20,
                                       ),
                                     ),
+                                    title: Text(item.name),
+                                    subtitle: Text(
+                                      '${item.city} - ${distance.toStringAsFixed(2)} km\n$afluencia',
+                                    ),
+                                    isThreeLine: true,
+                                    trailing: const Icon(Icons.chevron_right),
                                     onTap: () {
                                       setState(() {
                                         _selectedEstablishment = item;
@@ -294,6 +324,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                                           item.latitude!,
                                           item.longitude!,
                                         );
+                                        _centerChangeToken++;
                                       });
                                       Navigator.pop(sheetContext);
                                     },
@@ -334,6 +365,13 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                 establishments: visibleItems,
                 center: _mapCenter,
                 autoRecenter: _followMyLocation,
+                centerChangeToken: _centerChangeToken,
+                onUserGesture: () {
+                  if (!_followMyLocation) return;
+                  setState(() {
+                    _followMyLocation = false;
+                  });
+                },
                 userPosition: userPosition,
                 userTrail: _userTrail,
                 nearbyRadiusKm: _showOnlyNearby ? _nearbyRadiusKm : null,
@@ -409,6 +447,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                               _userLatitude != null &&
                               _userLongitude != null) {
                             _mapFocus = LatLng(_userLatitude!, _userLongitude!);
+                            _centerChangeToken++;
                           }
                         });
                       },
