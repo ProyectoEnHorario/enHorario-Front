@@ -13,7 +13,6 @@ class EstablishmentMapView extends StatefulWidget {
     this.autoRecenter = false,
     this.centerChangeToken = 0,
     this.onUserGesture,
-    this.onMapTap,
     this.userPosition,
     this.userTrail = const [],
     this.nearbyRadiusKm,
@@ -27,7 +26,6 @@ class EstablishmentMapView extends StatefulWidget {
   final bool autoRecenter;
   final int centerChangeToken;
   final VoidCallback? onUserGesture;
-  final VoidCallback? onMapTap;
   final LatLng? userPosition;
   final List<LatLng> userTrail;
   final double? nearbyRadiusKm;
@@ -101,7 +99,6 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
         initialZoom: 14,
         minZoom: 3,
         maxZoom: 19,
-        onTap: (_, point) => widget.onMapTap?.call(),
         onMapReady: () {
           _mapReady = true;
           _moveToCenter();

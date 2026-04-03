@@ -219,184 +219,125 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
 
     await showModalBottomSheet<void>(
       context: context,
-      isScrollControlled: true,
       showDragHandle: true,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
-            return DraggableScrollableSheet(
-              expand: false,
-              initialChildSize: 0.45,
-              minChildSize: 0.25,
-              maxChildSize: 0.92,
-              builder: (context, scrollController) {
-                return SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Establecimientos cercanos',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        SwitchListTile(
-                          contentPadding: EdgeInsets.zero,
-                          value: _showOnlyNearby,
-                          title: const Text('Filtrar por radio'),
-                          subtitle: Text(
-                            _showOnlyNearby
-                                ? 'Mostrando solo cercanos'
-                                : 'Mostrando todos en el mapa',
-                          ),
-                          onChanged: (value) {
-                            setState(() => _showOnlyNearby = value);
-                            setSheetState(() {});
-                          },
-                        ),
-                        Text('Radio: ${_nearbyRadiusKm.toStringAsFixed(1)} km'),
-                        Slider(
-                          value: _nearbyRadiusKm,
-                          min: 0.5,
-                          max: 30,
-                          divisions: 59,
-                          label: '${_nearbyRadiusKm.toStringAsFixed(1)} km',
-                          onChanged: (value) {
-                            setState(() => _nearbyRadiusKm = value);
-                            setSheetState(() {});
-                          },
-                        ),
-                        const SizedBox(height: 4),
-                        Text('Locales visibles ahora: ${visible.length}'),
-                        const SizedBox(height: 8),
-                        Expanded(
-                          child: sortedVisible.isEmpty
-                              ? const Center(
-                                  child: Text(
-                                    'No hay locales con el filtro actual.',
-                                  ),
-                                )
-                              : ListView.separated(
-                                  controller: scrollController,
-                                  itemCount: sortedVisible.length,
-                                    separatorBuilder: (_, index) =>
-                                      const SizedBox(height: 6),
-                                  itemBuilder: (context, index) {
-                                    final item = sortedVisible[index];
-                                    final distance = _distanceKmFromCenter(
-                                      item,
-                                      _mapCenter,
-                                    );
-                                    final afluencia = _afluenciaLabel(item);
-
-                                    return Card(
-                                      elevation: 0,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.surfaceContainerHighest,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      child: ListTile(
-                                        contentPadding:
-                                            const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 6,
-                                            ),
-                                        leading: Container(
-                                          width: 36,
-                                          height: 36,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: _afluenciaColor(
-                                              item,
-                                            ).withValues(alpha: 0.18),
-                                          ),
-                                          child: Icon(
-                                            Icons.store_mall_directory,
-                                            color: _afluenciaColor(item),
-                                            size: 20,
-                                          ),
-                                        ),
-                                        title: Text(item.name),
-                                        subtitle: Text(
-                                          '${item.city} - ${distance.toStringAsFixed(2)} km\n$afluencia',
-                                        ),
-                                        isThreeLine: true,
-                                        trailing: const Icon(
-                                          Icons.chevron_right,
-                                        ),
-                                        onTap: () {
-                                          setState(() {
-                                            _selectedEstablishment = item;
-                                            _mapFocus = LatLng(
-                                              item.latitude!,
-                                              item.longitude!,
-                                            );
-                                            _centerChangeToken++;
-                                          });
-                                          Navigator.pop(sheetContext);
-                                        },
-                                      ),
-                                    );
-                                  },
-                                ),
-                        ),
-                      ],
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.max,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Establecimientos cercanos',
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                  ),
-                );
-              },
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Future<void> _openSearchSheet() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 8,
-              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-            ),
-            child: TextField(
-              controller: _searchController,
-              autofocus: true,
-              onChanged: (value) {
-                setState(() {
-                  _mapQuery = value;
-                });
-              },
-              decoration: InputDecoration(
-                hintText: 'Buscar establecimientos',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _mapQuery.isEmpty
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _mapQuery = '';
-                          });
-                        },
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: _showOnlyNearby,
+                      title: const Text('Filtrar por radio'),
+                      subtitle: Text(
+                        _showOnlyNearby
+                            ? 'Mostrando solo cercanos'
+                            : 'Mostrando todos en el mapa',
                       ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
+                      onChanged: (value) {
+                        setState(() => _showOnlyNearby = value);
+                        setSheetState(() {});
+                      },
+                    ),
+                    Text('Radio: ${_nearbyRadiusKm.toStringAsFixed(1)} km'),
+                    Slider(
+                      value: _nearbyRadiusKm,
+                      min: 0.5,
+                      max: 30,
+                      divisions: 59,
+                      label: '${_nearbyRadiusKm.toStringAsFixed(1)} km',
+                      onChanged: (value) {
+                        setState(() => _nearbyRadiusKm = value);
+                        setSheetState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 4),
+                    Text('Locales visibles ahora: ${visible.length}'),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: sortedVisible.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'No hay locales con el filtro actual.',
+                              ),
+                            )
+                          : ListView.separated(
+                              itemCount: sortedVisible.length,
+                              separatorBuilder: (_, index) =>
+                                  const SizedBox(height: 6),
+                              itemBuilder: (context, index) {
+                                final item = sortedVisible[index];
+                                final distance = _distanceKmFromCenter(
+                                  item,
+                                  _mapCenter,
+                                );
+                                final afluencia = _afluenciaLabel(item);
+
+                                return Card(
+                                  elevation: 0,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.surfaceContainerHighest,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 6,
+                                    ),
+                                    leading: Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: _afluenciaColor(
+                                          item,
+                                        ).withValues(alpha: 0.18),
+                                      ),
+                                      child: Icon(
+                                        Icons.store_mall_directory,
+                                        color: _afluenciaColor(item),
+                                        size: 20,
+                                      ),
+                                    ),
+                                    title: Text(item.name),
+                                    subtitle: Text(
+                                      '${item.city} - ${distance.toStringAsFixed(2)} km\n$afluencia',
+                                    ),
+                                    isThreeLine: true,
+                                    trailing: const Icon(Icons.chevron_right),
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedEstablishment = item;
+                                        _mapFocus = LatLng(
+                                          item.latitude!,
+                                          item.longitude!,
+                                        );
+                                        _centerChangeToken++;
+                                      });
+                                      Navigator.pop(sheetContext);
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ),
+            );
+          },
         );
       },
     );
@@ -431,9 +372,6 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                     _followMyLocation = false;
                   });
                 },
-                onMapTap: () {
-                  FocusScope.of(context).unfocus();
-                },
                 userPosition: userPosition,
                 userTrail: _userTrail,
                 nearbyRadiusKm: _showOnlyNearby ? _nearbyRadiusKm : null,
@@ -448,33 +386,32 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
               SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
-                  child: Material(
-                    color: Colors.white.withValues(alpha: 0.96),
-                    borderRadius: BorderRadius.circular(16),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: _openSearchSheet,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 14,
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.search),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                _mapQuery.isEmpty
-                                    ? 'Buscar establecimientos sobre el mapa'
-                                    : _mapQuery,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _mapQuery = value;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Buscar establecimientos sobre el mapa',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _mapQuery.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _mapQuery = '';
+                                });
+                              },
                             ),
-                            const Icon(Icons.tune, size: 18),
-                          ],
-                        ),
+                      filled: true,
+                      fillColor: Colors.white.withValues(alpha: 0.96),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
                       ),
                     ),
                   ),
