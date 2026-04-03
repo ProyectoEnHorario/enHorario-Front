@@ -40,8 +40,8 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
 
   bool _permissionDenied = false;
   String? _locationMessage;
-  bool _followMyLocation = true;
-  bool _showOnlyNearby = true;
+  bool _followMyLocation = false;
+  bool _showOnlyNearby = false;
   double _nearbyRadiusKm = 5;
   String _mapQuery = '';
 

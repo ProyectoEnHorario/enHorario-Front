@@ -31,7 +31,6 @@ class EstablishmentMapView extends StatefulWidget {
 
 class _EstablishmentMapViewState extends State<EstablishmentMapView> {
   static const int _maxMarkers = 120;
-  static const double _nearbyThresholdMeters = 15000;
 
   final MapController _mapController = MapController();
   final Distance _distance = const Distance();
@@ -63,18 +62,8 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
       return distanceA.compareTo(distanceB);
     });
 
-    final nearby = validItems.where((item) {
-      final itemDistance = _distance.as(
-        LengthUnit.Meter,
-        widget.center,
-        LatLng(item.latitude!, item.longitude!),
-      );
-      return itemDistance <= _nearbyThresholdMeters;
-    }).toList();
-
-    final source = nearby.isNotEmpty ? nearby : validItems;
-    if (source.length <= _maxMarkers) return source;
-    return source.take(_maxMarkers).toList();
+    if (validItems.length <= _maxMarkers) return validItems;
+    return validItems.take(_maxMarkers).toList();
   }
 
   @override
