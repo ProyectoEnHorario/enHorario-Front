@@ -203,6 +203,12 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
     BuildContext context,
     List<RailwayEstablishmentView> visible,
   ) async {
+    final sortedVisible = [...visible]..sort(
+      (a, b) => _distanceKmFromCenter(a, _mapCenter).compareTo(
+        _distanceKmFromCenter(b, _mapCenter),
+      ),
+    );
+
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
@@ -213,7 +219,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisSize: MainAxisSize.max,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
@@ -249,6 +255,53 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                     ),
                     const SizedBox(height: 4),
                     Text('Locales visibles ahora: ${visible.length}'),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: sortedVisible.isEmpty
+                          ? const Center(
+                              child: Text('No hay locales con el filtro actual.'),
+                            )
+                          : ListView.separated(
+                              itemCount: sortedVisible.length,
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(height: 6),
+                              itemBuilder: (context, index) {
+                                final item = sortedVisible[index];
+                                final distance = _distanceKmFromCenter(
+                                  item,
+                                  _mapCenter,
+                                );
+
+                                return Card(
+                                  child: ListTile(
+                                    dense: true,
+                                    title: Text(item.name),
+                                    subtitle: Text(
+                                      '${item.city} - ${distance.toStringAsFixed(2)} km',
+                                    ),
+                                    trailing: Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        color: _afluenciaColor(item),
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedEstablishment = item;
+                                        _mapFocus = LatLng(
+                                          item.latitude!,
+                                          item.longitude!,
+                                        );
+                                      });
+                                      Navigator.pop(sheetContext);
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
                   ],
                 ),
               ),
@@ -280,6 +333,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
               EstablishmentMapView(
                 establishments: visibleItems,
                 center: _mapCenter,
+                autoRecenter: _followMyLocation,
                 userPosition: userPosition,
                 userTrail: _userTrail,
                 nearbyRadiusKm: _showOnlyNearby ? _nearbyRadiusKm : null,

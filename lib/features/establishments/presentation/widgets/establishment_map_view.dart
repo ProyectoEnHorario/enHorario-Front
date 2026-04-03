@@ -10,6 +10,7 @@ class EstablishmentMapView extends StatefulWidget {
     required this.center,
     required this.onMarkerTap,
     required this.markerColorResolver,
+    this.autoRecenter = false,
     this.userPosition,
     this.userTrail = const [],
     this.nearbyRadiusKm,
@@ -20,6 +21,7 @@ class EstablishmentMapView extends StatefulWidget {
   final LatLng center;
   final ValueChanged<RailwayEstablishmentView> onMarkerTap;
   final Color Function(RailwayEstablishmentView item) markerColorResolver;
+  final bool autoRecenter;
   final LatLng? userPosition;
   final List<LatLng> userTrail;
   final double? nearbyRadiusKm;
@@ -40,7 +42,7 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
   @override
   void didUpdateWidget(covariant EstablishmentMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.center != widget.center && _mapReady) {
+    if (oldWidget.center != widget.center && _mapReady && widget.autoRecenter) {
       try {
         _mapController.move(widget.center, _lastZoom);
       } catch (_) {
