@@ -11,6 +11,8 @@ class RailwayEstablishmentView {
     required this.categoryName,
     required this.shortDescription,
     required this.updatedAt,
+    required this.latitude,
+    required this.longitude,
   });
 
   final String id;
@@ -22,8 +24,27 @@ class RailwayEstablishmentView {
   final String? categoryName;
   final String? shortDescription;
   final DateTime? updatedAt;
+  final double? latitude;
+  final double? longitude;
 
   bool get isOpen => status.trim().toUpperCase() == 'OPEN';
+
+  bool get hasValidCoordinates {
+    if (latitude == null || longitude == null) return false;
+    return latitude! >= -90 &&
+        latitude! <= 90 &&
+        longitude! >= -180 &&
+        longitude! <= 180;
+  }
+
+  int get occupancyLevel {
+    if (!isOpen) return 0;
+    final wait = averageWaitMinutes;
+    if (wait == null) return 1;
+    if (wait <= 5) return 1;
+    if (wait <= 15) return 2;
+    return 3;
+  }
 
   factory RailwayEstablishmentView.fromMap(Map<String, dynamic> map) {
     return RailwayEstablishmentView(
@@ -36,6 +57,8 @@ class RailwayEstablishmentView {
       categoryName: map['categoryName']?.toString(),
       shortDescription: map['shortDescription']?.toString(),
       updatedAt: DateMapper.toDateTime(map['updatedAt']),
+      latitude: _toDouble(map['latitude']),
+      longitude: _toDouble(map['longitude']),
     );
   }
 
@@ -44,5 +67,12 @@ class RailwayEstablishmentView {
     if (value is int) return value;
     if (value is num) return value.round();
     return int.tryParse(value.toString());
+  }
+
+  static double? _toDouble(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString());
   }
 }
