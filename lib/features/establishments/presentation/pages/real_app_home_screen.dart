@@ -1,13 +1,17 @@
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
+import 'package:enhorario/features/establishments/data/models/railway_establishment_view.dart';
+import 'package:enhorario/features/establishments/data/repositories/user_location_service.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/pages/establishment_wait_time_detail_screen.dart';
+import 'package:enhorario/features/establishments/presentation/widgets/establishment_map_view.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/category_filter_section.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/establishment_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:latlong2/latlong.dart';
 
 class RealAppHomeScreen extends StatelessWidget {
   const RealAppHomeScreen({super.key});
@@ -31,10 +35,43 @@ class _RealAppHomeView extends StatefulWidget {
 }
 
 class _RealAppHomeViewState extends State<_RealAppHomeView> {
+  final UserLocationService _locationService = UserLocationService();
+
+  bool _isLoadingLocation = true;
+  bool _permissionDenied = false;
+  String? _locationMessage;
+  double? _userLatitude;
+  double? _userLongitude;
+  RailwayEstablishmentView? _selectedEstablishment;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserLocation();
+  }
+
   @override
   void dispose() {
     context.read<RealEstablishmentsCubit>().clearAllFilters();
     super.dispose();
+  }
+
+  Future<void> _loadUserLocation() async {
+    setState(() {
+      _isLoadingLocation = true;
+      _locationMessage = null;
+    });
+
+    final result = await _locationService.getCurrentPosition();
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingLocation = false;
+      _permissionDenied = result.permissionDenied;
+      _locationMessage = result.message;
+      _userLatitude = result.position?.latitude;
+      _userLongitude = result.position?.longitude;
+    });
   }
 
   String _formatWaitLabel(int? minutes, bool isOpen) {
@@ -70,6 +107,62 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
     return 'No hay establecimientos disponibles.';
   }
 
+  LatLng get _mapCenter {
+    final latitude = _userLatitude ?? UserLocationService.fallbackLatitude;
+    final longitude = _userLongitude ?? UserLocationService.fallbackLongitude;
+    return LatLng(latitude, longitude);
+  }
+
+  String _afluenciaLabel(RailwayEstablishmentView item) {
+    if (!item.isOpen) return 'Cerrado';
+    final wait = item.averageWaitMinutes;
+    if (wait == null) return 'Afluencia desconocida';
+    if (wait <= 5) return 'Afluencia baja';
+    if (wait <= 15) return 'Afluencia media';
+    return 'Afluencia alta';
+  }
+
+  Color _afluenciaColor(RailwayEstablishmentView item) {
+    if (!item.isOpen) return Colors.blueGrey;
+    final wait = item.averageWaitMinutes;
+    if (wait == null) return Colors.amber;
+    if (wait <= 5) return Colors.green;
+    if (wait <= 15) return Colors.orange;
+    return Colors.red;
+  }
+
+  Widget _buildMarkerInfoCard(BuildContext context, RailwayEstablishmentView item) {
+    final color = _afluenciaColor(item);
+
+    return Card(
+      margin: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      child: ListTile(
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => EstablishmentWaitTimeDetailScreen(
+                establishmentId: item.id,
+              ),
+            ),
+          );
+        },
+        title: Text(item.name),
+        subtitle: Text(
+          '${item.categoryName ?? 'Sin categoria'}\n${_afluenciaLabel(item)}',
+        ),
+        isThreeLine: true,
+        trailing: Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,29 +187,8 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
       ),
       body: BlocBuilder<RealEstablishmentsCubit, RealEstablishmentsState>(
         builder: (context, state) {
-          if (state.isLoading) {
+          if (state.isLoading || _isLoadingLocation) {
             return const Center(child: CircularProgressIndicator());
-          }
-
-          if (state.error != null && state.items.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(state.error!, textAlign: TextAlign.center),
-                    const SizedBox(height: 12),
-                    FilledButton(
-                      onPressed: () => context
-                          .read<RealEstablishmentsCubit>()
-                          .loadInitial(),
-                      child: const Text('Reintentar'),
-                    ),
-                  ],
-                ),
-              ),
-            );
           }
 
           return Column(
@@ -149,14 +221,95 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                   ],
                 ),
               ),
-              if (state.error != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    state.error!,
-                    style: TextStyle(color: Theme.of(context).colorScheme.error),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _loadUserLocation,
+                    icon: const Icon(Icons.my_location),
+                    label: const Text('Actualizar mi ubicacion'),
                   ),
                 ),
+              ),
+              if (_locationMessage != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Material(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _permissionDenied ? Icons.location_off : Icons.info_outline,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _locationMessage!,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              if (state.error != null)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  child: Material(
+                    color: Theme.of(context).colorScheme.errorContainer,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              state.error!,
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.onErrorContainer,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () => context
+                                .read<RealEstablishmentsCubit>()
+                                .loadInitial(),
+                            child: const Text('Reintentar'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                child: SizedBox(
+                  height: 320,
+                  width: double.infinity,
+                  child: EstablishmentMapView(
+                    establishments: state.filtered,
+                    center: _mapCenter,
+                    showUserLocation: _userLatitude != null && _userLongitude != null,
+                    selectedEstablishmentId: _selectedEstablishment?.id,
+                    markerColorResolver: _afluenciaColor,
+                    onMarkerTap: (item) {
+                      setState(() {
+                        _selectedEstablishment = item;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              if (_selectedEstablishment != null)
+                _buildMarkerInfoCard(context, _selectedEstablishment!),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: EstablishmentSearchField(
@@ -188,12 +341,15 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                     : ListView.separated(
                         padding: const EdgeInsets.all(12),
                         itemCount: state.filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      separatorBuilder: (_, index) => const SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final item = state.filtered[index];
                           return Card(
                             child: ListTile(
                               onTap: () {
+                                setState(() {
+                                  _selectedEstablishment = item;
+                                });
                                 Navigator.of(context).push(
                                   MaterialPageRoute<void>(
                                     builder: (_) => EstablishmentWaitTimeDetailScreen(
@@ -207,7 +363,14 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                                 '${item.addressLine} - ${item.city}\n${_formatWaitLabel(item.averageWaitMinutes, item.isOpen)}',
                               ),
                               isThreeLine: true,
-                              trailing: const Icon(Icons.chevron_right),
+                              trailing: Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _afluenciaColor(item),
+                                ),
+                              ),
                             ),
                           );
                         },
