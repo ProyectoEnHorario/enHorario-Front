@@ -36,6 +36,7 @@ class _RealAppHomeView extends StatefulWidget {
 class _RealAppHomeViewState extends State<_RealAppHomeView> {
   final UserLocationService _locationService = UserLocationService();
   final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
   final Distance _distance = const Distance();
 
   bool _permissionDenied = false;
@@ -56,14 +57,22 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
   @override
   void initState() {
     super.initState();
+    _searchFocusNode.addListener(_onSearchFocusChanged);
     _loadUserLocation();
   }
 
   @override
   void dispose() {
     _positionSubscription?.cancel();
+    _searchFocusNode.removeListener(_onSearchFocusChanged);
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
+  }
+
+  void _onSearchFocusChanged() {
+    if (!mounted) return;
+    setState(() {});
   }
 
   Future<void> _loadUserLocation() async {
@@ -376,10 +385,12 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                 autoRecenter: _followMyLocation,
                 centerChangeToken: _centerChangeToken,
                 onUserGesture: () {
-                  if (!_followMyLocation) return;
-                  setState(() {
-                    _followMyLocation = false;
-                  });
+                  FocusScope.of(context).unfocus();
+                  if (_followMyLocation) {
+                    setState(() {
+                      _followMyLocation = false;
+                    });
+                  }
                 },
                 onMapTap: () {
                   FocusScope.of(context).unfocus();
@@ -395,11 +406,15 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                   });
                 },
               ),
-              SafeArea(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+              Positioned(
+                left: 12,
+                right: 12,
+                top: 10,
+                child: SafeArea(
+                  bottom: false,
                   child: TextField(
                     controller: _searchController,
+                    focusNode: _searchFocusNode,
                     onTapOutside: (_) => FocusScope.of(context).unfocus(),
                     onChanged: (value) {
                       setState(() {
@@ -430,7 +445,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                   ),
                 ),
               ),
-              if (_mapQuery.trim().isNotEmpty)
+              if (_mapQuery.trim().isNotEmpty && _searchFocusNode.hasFocus)
                 Positioned(
                   left: 12,
                   right: 12,
@@ -443,8 +458,11 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                       child: ListView.separated(
                         shrinkWrap: true,
                         padding: const EdgeInsets.symmetric(vertical: 6),
-                        itemCount: visibleItems.length > 6 ? 6 : visibleItems.length,
-                        separatorBuilder: (_, index) => const Divider(height: 1),
+                        itemCount: visibleItems.length > 6
+                            ? 6
+                            : visibleItems.length,
+                        separatorBuilder: (_, index) =>
+                            const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final item = visibleItems[index];
                           return ListTile(
@@ -453,7 +471,11 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                               Icons.location_on,
                               color: _afluenciaColor(item),
                             ),
-                            title: Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                            title: Text(
+                              item.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                             subtitle: Text(item.city),
                             onTap: () => _focusEstablishment(item),
                           );

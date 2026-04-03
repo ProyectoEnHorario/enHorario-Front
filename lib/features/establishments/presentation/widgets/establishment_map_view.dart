@@ -101,6 +101,9 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
         initialZoom: 14,
         minZoom: 3,
         maxZoom: 19,
+        interactionOptions: const InteractionOptions(
+          flags: InteractiveFlag.all,
+        ),
         onTap: (_, point) => widget.onMapTap?.call(),
         onMapReady: () {
           _mapReady = true;
