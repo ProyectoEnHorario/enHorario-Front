@@ -34,12 +34,18 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
 
   final MapController _mapController = MapController();
   final Distance _distance = const Distance();
+  bool _mapReady = false;
+  double _lastZoom = 14;
 
   @override
   void didUpdateWidget(covariant EstablishmentMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.center != widget.center) {
-      _mapController.move(widget.center, _mapController.camera.zoom);
+    if (oldWidget.center != widget.center && _mapReady) {
+      try {
+        _mapController.move(widget.center, _lastZoom);
+      } catch (_) {
+        // Ignora errores transitorios cuando el mapa cambia de estado de montaje.
+      }
     }
   }
 
@@ -79,6 +85,12 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
           initialZoom: 14,
           minZoom: 3,
           maxZoom: 19,
+          onMapReady: () {
+            _mapReady = true;
+          },
+          onPositionChanged: (position, hasGesture) {
+            _lastZoom = position.zoom;
+          },
         ),
         children: [
           TileLayer(
