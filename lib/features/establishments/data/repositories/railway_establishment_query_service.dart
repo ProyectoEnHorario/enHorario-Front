@@ -36,8 +36,15 @@ class RailwayEstablishmentQueryService {
           Failure('El servidor no esta disponible en este momento.'),
         );
       }
-      return const Left<Failure, List<RailwayEstablishmentView>>(
-        Failure('No fue posible consultar establecimientos.'),
+      if (e.message.toLowerCase().contains('application not found')) {
+        return const Left<Failure, List<RailwayEstablishmentView>>(
+          Failure(
+            'No fue posible conectar con el backend configurado. Verifica BACKEND_URL o el despliegue de Railway.',
+          ),
+        );
+      }
+      return Left<Failure, List<RailwayEstablishmentView>>(
+        Failure('No fue posible consultar establecimientos. Detalle: ${e.message}'),
       );
     } catch (_) {
       return const Left<Failure, List<RailwayEstablishmentView>>(

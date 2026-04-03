@@ -22,7 +22,8 @@ class UserLocationService {
       return const UserLocationResult(
         position: null,
         permissionDenied: false,
-        message: 'Activa el GPS para mostrar establecimientos cercanos con precision.',
+        message:
+            'Activa el GPS para mostrar establecimientos cercanos con precision.',
       );
     }
 
@@ -36,7 +37,8 @@ class UserLocationService {
       return const UserLocationResult(
         position: null,
         permissionDenied: true,
-        message: 'Permiso de ubicacion denegado. Se mostrara una ubicacion por defecto.',
+        message:
+            'Permiso de ubicacion denegado. Se mostrara una ubicacion por defecto.',
       );
     }
 
@@ -46,7 +48,7 @@ class UserLocationService {
           accuracy: LocationAccuracy.high,
           distanceFilter: 10,
         ),
-      );
+          ).timeout(const Duration(seconds: 8));
 
       return UserLocationResult(
         position: position,
@@ -57,7 +59,8 @@ class UserLocationService {
       return const UserLocationResult(
         position: null,
         permissionDenied: false,
-        message: 'No fue posible obtener la ubicacion actual. Se mostrara una ubicacion por defecto.',
+        message:
+            'No fue posible obtener la ubicacion actual. Se mostrara una ubicacion por defecto.',
       );
     }
   }

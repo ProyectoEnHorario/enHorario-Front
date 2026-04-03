@@ -186,7 +186,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
       ),
       body: BlocBuilder<RealEstablishmentsCubit, RealEstablishmentsState>(
         builder: (context, state) {
-          if (state.isLoading || _isLoadingLocation) {
+          if (state.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -205,6 +205,15 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ),
+                          if (_isLoadingLocation)
+                            const Padding(
+                              padding: EdgeInsets.only(right: 8),
+                              child: SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
                           FilledButton.icon(
                             onPressed: state.isRefreshing
                                 ? null
@@ -258,7 +267,9 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                                 Expanded(
                                   child: Text(
                                     _locationMessage!,
-                                    style: Theme.of(context).textTheme.bodySmall,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
                                   ),
                                 ),
                               ],
