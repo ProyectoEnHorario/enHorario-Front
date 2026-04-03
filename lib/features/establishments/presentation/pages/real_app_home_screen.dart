@@ -7,9 +7,9 @@ import 'package:enhorario/features/establishments/data/repositories/user_locatio
 import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/pages/establishment_wait_time_detail_screen.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/establishment_map_view.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 class RealAppHomeScreen extends StatelessWidget {
@@ -262,6 +262,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       body: BlocBuilder<RealEstablishmentsCubit, RealEstablishmentsState>(
         builder: (context, state) {
           if (state.isLoading) {
@@ -274,22 +275,21 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
               : null;
 
           return Stack(
+            fit: StackFit.expand,
             children: [
-              Positioned.fill(
-                child: EstablishmentMapView(
-                  establishments: visibleItems,
-                  center: _mapCenter,
-                  userPosition: userPosition,
-                  userTrail: _userTrail,
-                  nearbyRadiusKm: _showOnlyNearby ? _nearbyRadiusKm : null,
-                  selectedEstablishmentId: _selectedEstablishment?.id,
-                  markerColorResolver: _afluenciaColor,
-                  onMarkerTap: (item) {
-                    setState(() {
-                      _selectedEstablishment = item;
-                    });
-                  },
-                ),
+              EstablishmentMapView(
+                establishments: visibleItems,
+                center: _mapCenter,
+                userPosition: userPosition,
+                userTrail: _userTrail,
+                nearbyRadiusKm: _showOnlyNearby ? _nearbyRadiusKm : null,
+                selectedEstablishmentId: _selectedEstablishment?.id,
+                markerColorResolver: _afluenciaColor,
+                onMarkerTap: (item) {
+                  setState(() {
+                    _selectedEstablishment = item;
+                  });
+                },
               ),
               SafeArea(
                 child: Padding(
@@ -316,7 +316,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                               },
                             ),
                       filled: true,
-                      fillColor: Colors.white,
+                      fillColor: Colors.white.withValues(alpha: 0.96),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
@@ -439,7 +439,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                   ),
                 ),
               Positioned(
-                left: 12,
+                right: 12,
                 bottom: 18,
                 child: FilledButton.icon(
                   onPressed: () => _openNearbyPanel(context, visibleItems),

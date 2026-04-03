@@ -76,85 +76,82 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
   Widget build(BuildContext context) {
     final visibleItems = _buildDisplayItems();
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(16),
-      child: FlutterMap(
-        mapController: _mapController,
-        options: MapOptions(
-          initialCenter: widget.center,
-          initialZoom: 14,
-          minZoom: 3,
-          maxZoom: 19,
-          onMapReady: () {
-            _mapReady = true;
-          },
-          onPositionChanged: (position, hasGesture) {
-            _lastZoom = position.zoom;
-          },
-        ),
-        children: [
-          TileLayer(
-            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.enhorario',
-          ),
-          if (widget.userPosition != null && widget.nearbyRadiusKm != null)
-            CircleLayer(
-              circles: [
-                CircleMarker(
-                  point: widget.userPosition!,
-                  radius: widget.nearbyRadiusKm! * 1000,
-                  useRadiusInMeter: true,
-                  color: Colors.blue.withValues(alpha: 0.12),
-                  borderColor: Colors.blue.withValues(alpha: 0.7),
-                  borderStrokeWidth: 2,
-                ),
-              ],
-            ),
-          if (widget.userTrail.length > 1)
-            PolylineLayer(
-              polylines: [
-                Polyline(
-                  points: widget.userTrail,
-                  strokeWidth: 4,
-                  color: Colors.blue.withValues(alpha: 0.75),
-                ),
-              ],
-            ),
-          MarkerLayer(
-            markers: [
-              if (widget.userPosition != null)
-                Marker(
-                  point: widget.userPosition!,
-                  width: 48,
-                  height: 48,
-                  child: const _UserLocationMarker(),
-                ),
-              ...visibleItems.map((item) {
-                final isSelected = item.id == widget.selectedEstablishmentId;
-                final markerColor = widget.markerColorResolver(item);
-
-                return Marker(
-                  point: LatLng(item.latitude!, item.longitude!),
-                  width: 44,
-                  height: 44,
-                  child: GestureDetector(
-                    onTap: () => widget.onMarkerTap(item),
-                    child: _EstablishmentMarker(
-                      color: markerColor,
-                      selected: isSelected,
-                    ),
-                  ),
-                );
-              }),
-            ],
-          ),
-          RichAttributionWidget(
-            attributions: const [
-              TextSourceAttribution('OpenStreetMap contributors'),
-            ],
-          ),
-        ],
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: widget.center,
+        initialZoom: 14,
+        minZoom: 3,
+        maxZoom: 19,
+        onMapReady: () {
+          _mapReady = true;
+        },
+        onPositionChanged: (position, hasGesture) {
+          _lastZoom = position.zoom;
+        },
       ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.enhorario',
+        ),
+        if (widget.userPosition != null && widget.nearbyRadiusKm != null)
+          CircleLayer(
+            circles: [
+              CircleMarker(
+                point: widget.userPosition!,
+                radius: widget.nearbyRadiusKm! * 1000,
+                useRadiusInMeter: true,
+                color: Colors.blue.withValues(alpha: 0.12),
+                borderColor: Colors.blue.withValues(alpha: 0.7),
+                borderStrokeWidth: 2,
+              ),
+            ],
+          ),
+        if (widget.userTrail.length > 1)
+          PolylineLayer(
+            polylines: [
+              Polyline(
+                points: widget.userTrail,
+                strokeWidth: 4,
+                color: Colors.blue.withValues(alpha: 0.75),
+              ),
+            ],
+          ),
+        MarkerLayer(
+          markers: [
+            if (widget.userPosition != null)
+              Marker(
+                point: widget.userPosition!,
+                width: 48,
+                height: 48,
+                child: const _UserLocationMarker(),
+              ),
+            ...visibleItems.map((item) {
+              final isSelected = item.id == widget.selectedEstablishmentId;
+              final markerColor = widget.markerColorResolver(item);
+
+              return Marker(
+                point: LatLng(item.latitude!, item.longitude!),
+                width: 44,
+                height: 44,
+                child: GestureDetector(
+                  onTap: () => widget.onMarkerTap(item),
+                  child: _EstablishmentMarker(
+                    color: markerColor,
+                    selected: isSelected,
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+        RichAttributionWidget(
+          attributions: const [
+            TextSourceAttribution('OpenStreetMap contributors'),
+          ],
+        ),
+      ],
     );
   }
 }
