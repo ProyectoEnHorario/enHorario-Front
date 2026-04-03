@@ -343,6 +343,15 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
     );
   }
 
+  void _focusEstablishment(RailwayEstablishmentView item) {
+    setState(() {
+      _selectedEstablishment = item;
+      _mapFocus = LatLng(item.latitude!, item.longitude!);
+      _centerChangeToken++;
+    });
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -372,6 +381,9 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                     _followMyLocation = false;
                   });
                 },
+                onMapTap: () {
+                  FocusScope.of(context).unfocus();
+                },
                 userPosition: userPosition,
                 userTrail: _userTrail,
                 nearbyRadiusKm: _showOnlyNearby ? _nearbyRadiusKm : null,
@@ -388,6 +400,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                   padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
                   child: TextField(
                     controller: _searchController,
+                    onTapOutside: (_) => FocusScope.of(context).unfocus(),
                     onChanged: (value) {
                       setState(() {
                         _mapQuery = value;
@@ -417,6 +430,38 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                   ),
                 ),
               ),
+              if (_mapQuery.trim().isNotEmpty)
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  top: 72,
+                  child: Material(
+                    elevation: 6,
+                    borderRadius: BorderRadius.circular(14),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 260),
+                      child: ListView.separated(
+                        shrinkWrap: true,
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        itemCount: visibleItems.length > 6 ? 6 : visibleItems.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final item = visibleItems[index];
+                          return ListTile(
+                            dense: true,
+                            leading: Icon(
+                              Icons.location_on,
+                              color: _afluenciaColor(item),
+                            ),
+                            title: Text(item.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                            subtitle: Text(item.city),
+                            onTap: () => _focusEstablishment(item),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ),
               Positioned(
                 right: 12,
                 top: 90,
