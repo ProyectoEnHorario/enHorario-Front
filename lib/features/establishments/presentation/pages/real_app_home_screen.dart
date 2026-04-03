@@ -42,14 +42,16 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
   bool _permissionDenied = false;
   String? _locationMessage;
   bool _followMyLocation = false;
-  bool _showOnlyNearby = false;
   double _nearbyRadiusKm = 5;
   String _mapQuery = '';
+  String? _selectedCategory;
 
   double? _userLatitude;
   double? _userLongitude;
   LatLng? _mapFocus;
   int _centerChangeToken = 0;
+  int _zoomChangeToken = 0;
+  static const double _recenterZoomLevel = 16.5;
   RailwayEstablishmentView? _selectedEstablishment;
   StreamSubscription<Position>? _positionSubscription;
   final List<LatLng> _userTrail = <LatLng>[];
@@ -132,6 +134,13 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
     return LatLng(latitude, longitude);
   }
 
+  LatLng get _distanceReferenceCenter {
+    if (_userLatitude != null && _userLongitude != null) {
+      return LatLng(_userLatitude!, _userLongitude!);
+    }
+    return _mapCenter;
+  }
+
   double _distanceKmFromCenter(RailwayEstablishmentView item, LatLng center) {
     if (!item.hasValidCoordinates) return double.infinity;
     return _distance.as(
@@ -141,12 +150,18 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
     );
   }
 
-  List<RailwayEstablishmentView> _visibleItems(RealEstablishmentsState state) {
-    final center = _mapCenter;
+  List<RailwayEstablishmentView> _visibleItemsFromList(
+    List<RailwayEstablishmentView> items,
+  ) {
+    final center = _distanceReferenceCenter;
     final q = _mapQuery.trim().toLowerCase();
 
-    return state.items.where((item) {
+    return items.where((item) {
       if (!item.hasValidCoordinates) return false;
+
+      if (_selectedCategory != null && item.categoryName != _selectedCategory) {
+        return false;
+      }
 
       if (q.isNotEmpty) {
         final haystack = '${item.name} ${item.categoryName ?? ''} ${item.city}'
@@ -154,11 +169,12 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
         if (!haystack.contains(q)) return false;
       }
 
-      if (_showOnlyNearby) {
-        return _distanceKmFromCenter(item, center) <= _nearbyRadiusKm;
-      }
-      return true;
+      return _distanceKmFromCenter(item, center) <= _nearbyRadiusKm;
     }).toList();
+  }
+
+  List<RailwayEstablishmentView> _visibleItems(RealEstablishmentsState state) {
+    return _visibleItemsFromList(state.items);
   }
 
   String _afluenciaLabel(RailwayEstablishmentView item) {
@@ -216,22 +232,23 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
 
   Future<void> _openNearbyPanel(
     BuildContext context,
-    List<RailwayEstablishmentView> visible,
+    List<RailwayEstablishmentView> sourceItems,
   ) async {
-    final sortedVisible = [...visible]
-      ..sort(
-        (a, b) => _distanceKmFromCenter(
-          a,
-          _mapCenter,
-        ).compareTo(_distanceKmFromCenter(b, _mapCenter)),
-      );
-
     await showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       builder: (sheetContext) {
         return StatefulBuilder(
           builder: (context, setSheetState) {
+            final visibleNow = _visibleItemsFromList(sourceItems);
+            final sortedVisible = [...visibleNow]
+              ..sort(
+                (a, b) => _distanceKmFromCenter(
+                  a,
+                  _distanceReferenceCenter,
+                ).compareTo(_distanceKmFromCenter(b, _distanceReferenceCenter)),
+              );
+
             return SafeArea(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
@@ -244,20 +261,6 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      value: _showOnlyNearby,
-                      title: const Text('Filtrar por radio'),
-                      subtitle: Text(
-                        _showOnlyNearby
-                            ? 'Mostrando solo cercanos'
-                            : 'Mostrando todos en el mapa',
-                      ),
-                      onChanged: (value) {
-                        setState(() => _showOnlyNearby = value);
-                        setSheetState(() {});
-                      },
-                    ),
                     Text('Radio: ${_nearbyRadiusKm.toStringAsFixed(1)} km'),
                     Slider(
                       value: _nearbyRadiusKm,
@@ -271,7 +274,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                       },
                     ),
                     const SizedBox(height: 4),
-                    Text('Locales visibles ahora: ${visible.length}'),
+                    Text('Locales visibles ahora: ${visibleNow.length}'),
                     const SizedBox(height: 8),
                     Expanded(
                       child: sortedVisible.isEmpty
@@ -288,7 +291,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                                 final item = sortedVisible[index];
                                 final distance = _distanceKmFromCenter(
                                   item,
-                                  _mapCenter,
+                                  _distanceReferenceCenter,
                                 );
                                 final afluencia = _afluenciaLabel(item);
 
@@ -354,6 +357,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
 
   void _focusEstablishment(RailwayEstablishmentView item) {
     setState(() {
+      _followMyLocation = false;
       _selectedEstablishment = item;
       _mapFocus = LatLng(item.latitude!, item.longitude!);
       _centerChangeToken++;
@@ -375,6 +379,14 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
           final userPosition = (_userLatitude != null && _userLongitude != null)
               ? LatLng(_userLatitude!, _userLongitude!)
               : null;
+          final categories = state.items
+              .map((item) => item.categoryName)
+              .whereType<String>()
+              .map((c) => c.trim())
+              .where((c) => c.isNotEmpty)
+              .toSet()
+              .toList()
+            ..sort();
 
           return Stack(
             fit: StackFit.expand,
@@ -397,11 +409,14 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                 },
                 userPosition: userPosition,
                 userTrail: _userTrail,
-                nearbyRadiusKm: _showOnlyNearby ? _nearbyRadiusKm : null,
+                nearbyRadiusKm: _nearbyRadiusKm,
                 selectedEstablishmentId: _selectedEstablishment?.id,
+                zoomChangeToken: _zoomChangeToken,
+                targetZoomOnToken: _recenterZoomLevel,
                 markerColorResolver: _afluenciaColor,
                 onMarkerTap: (item) {
                   setState(() {
+                    _followMyLocation = false;
                     _selectedEstablishment = item;
                   });
                 },
@@ -412,34 +427,36 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                 top: 10,
                 child: SafeArea(
                   bottom: false,
-                  child: TextField(
-                    controller: _searchController,
-                    focusNode: _searchFocusNode,
-                    onTapOutside: (_) => FocusScope.of(context).unfocus(),
-                    onChanged: (value) {
-                      setState(() {
-                        _mapQuery = value;
-                      });
-                    },
-                    decoration: InputDecoration(
-                      hintText: 'Buscar establecimientos sobre el mapa',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _mapQuery.isEmpty
-                          ? null
-                          : IconButton(
-                              icon: const Icon(Icons.close),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {
-                                  _mapQuery = '';
-                                });
-                              },
-                            ),
-                      filled: true,
-                      fillColor: Colors.white.withValues(alpha: 0.96),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(16),
-                        borderSide: BorderSide.none,
+                  child: TextFieldTapRegion(
+                    child: TextField(
+                      controller: _searchController,
+                      focusNode: _searchFocusNode,
+                      onTapOutside: (_) => FocusScope.of(context).unfocus(),
+                      onChanged: (value) {
+                        setState(() {
+                          _mapQuery = value;
+                        });
+                      },
+                      decoration: InputDecoration(
+                        hintText: 'Buscar establecimientos sobre el mapa',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _mapQuery.isEmpty
+                            ? null
+                            : IconButton(
+                                icon: const Icon(Icons.close),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {
+                                    _mapQuery = '';
+                                  });
+                                },
+                              ),
+                        filled: true,
+                        fillColor: Colors.white.withValues(alpha: 0.96),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
                       ),
                     ),
                   ),
@@ -449,41 +466,82 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                 Positioned(
                   left: 12,
                   right: 12,
-                  top: 72,
-                  child: Material(
-                    elevation: 6,
-                    borderRadius: BorderRadius.circular(14),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 260),
-                      child: ListView.separated(
-                        shrinkWrap: true,
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        itemCount: visibleItems.length > 6
-                            ? 6
-                            : visibleItems.length,
-                        separatorBuilder: (_, index) =>
-                            const Divider(height: 1),
-                        itemBuilder: (context, index) {
-                          final item = visibleItems[index];
-                          return ListTile(
-                            dense: true,
-                            leading: Icon(
-                              Icons.location_on,
-                              color: _afluenciaColor(item),
-                            ),
-                            title: Text(
-                              item.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            subtitle: Text(item.city),
-                            onTap: () => _focusEstablishment(item),
-                          );
-                        },
+                  top: 116,
+                  child: TextFieldTapRegion(
+                    child: Material(
+                      elevation: 6,
+                      borderRadius: BorderRadius.circular(14),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 260),
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          itemCount: visibleItems.length > 6
+                              ? 6
+                              : visibleItems.length,
+                          separatorBuilder: (_, index) =>
+                              const Divider(height: 1),
+                          itemBuilder: (context, index) {
+                            final item = visibleItems[index];
+                            return ListTile(
+                              dense: true,
+                              leading: Icon(
+                                Icons.location_on,
+                                color: _afluenciaColor(item),
+                              ),
+                              title: Text(
+                                item.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              subtitle: Text(item.city),
+                              onTap: () => _focusEstablishment(item),
+                            );
+                          },
+                        ),
                       ),
                     ),
                   ),
                 ),
+              Positioned(
+                left: 12,
+                right: 72,
+                top: 72,
+                child: SafeArea(
+                  top: false,
+                  bottom: false,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        ChoiceChip(
+                          label: const Text('Todas'),
+                          selected: _selectedCategory == null,
+                          onSelected: (_) {
+                            setState(() {
+                              _selectedCategory = null;
+                            });
+                          },
+                        ),
+                        ...categories.map(
+                          (category) => Padding(
+                            padding: const EdgeInsets.only(left: 8),
+                            child: ChoiceChip(
+                              label: Text(category),
+                              selected: _selectedCategory == category,
+                              onSelected: (_) {
+                                setState(() {
+                                  _selectedCategory = category;
+                                });
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
               Positioned(
                 right: 12,
                 top: 90,
@@ -508,14 +566,15 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                     FloatingActionButton.small(
                       heroTag: 'btn-follow',
                       onPressed: () {
+                        if (_userLatitude == null || _userLongitude == null) {
+                          return;
+                        }
                         setState(() {
-                          _followMyLocation = !_followMyLocation;
-                          if (_followMyLocation &&
-                              _userLatitude != null &&
-                              _userLongitude != null) {
-                            _mapFocus = LatLng(_userLatitude!, _userLongitude!);
-                            _centerChangeToken++;
-                          }
+                          _followMyLocation = true;
+                          _selectedEstablishment = null;
+                          _mapFocus = LatLng(_userLatitude!, _userLongitude!);
+                          _centerChangeToken++;
+                          _zoomChangeToken++;
                         });
                       },
                       child: Icon(
@@ -537,7 +596,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                 Positioned(
                   left: 12,
                   right: 70,
-                  top: 82,
+                  top: 130,
                   child: Material(
                     elevation: 2,
                     borderRadius: BorderRadius.circular(12),
@@ -573,7 +632,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                 Positioned(
                   left: 12,
                   right: 12,
-                  top: 140,
+                  top: 188,
                   child: Material(
                     elevation: 2,
                     borderRadius: BorderRadius.circular(12),

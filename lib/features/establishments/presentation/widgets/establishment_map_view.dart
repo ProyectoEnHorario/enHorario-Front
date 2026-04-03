@@ -18,6 +18,8 @@ class EstablishmentMapView extends StatefulWidget {
     this.userTrail = const [],
     this.nearbyRadiusKm,
     this.selectedEstablishmentId,
+    this.zoomChangeToken = 0,
+    this.targetZoomOnToken,
   });
 
   final List<RailwayEstablishmentView> establishments;
@@ -32,6 +34,8 @@ class EstablishmentMapView extends StatefulWidget {
   final List<LatLng> userTrail;
   final double? nearbyRadiusKm;
   final String? selectedEstablishmentId;
+  final int zoomChangeToken;
+  final double? targetZoomOnToken;
 
   @override
   State<EstablishmentMapView> createState() => _EstablishmentMapViewState();
@@ -53,6 +57,15 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
     }
   }
 
+  void _moveToCenterWithZoom(double zoom) {
+    try {
+      _lastZoom = zoom;
+      _mapController.move(widget.center, zoom);
+    } catch (_) {
+      // Ignora errores transitorios cuando el mapa cambia de estado de montaje.
+    }
+  }
+
   @override
   void didUpdateWidget(covariant EstablishmentMapView oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -62,6 +75,15 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
         oldWidget.centerChangeToken != widget.centerChangeToken;
     final shouldAutoMove =
         oldWidget.center != widget.center && widget.autoRecenter;
+    final shouldChangeZoom =
+        oldWidget.zoomChangeToken != widget.zoomChangeToken &&
+        widget.targetZoomOnToken != null;
+
+    if (shouldChangeZoom) {
+      _moveToCenterWithZoom(widget.targetZoomOnToken!);
+      return;
+    }
+
     if (shouldForceMove || shouldAutoMove) {
       _moveToCenter();
     }
