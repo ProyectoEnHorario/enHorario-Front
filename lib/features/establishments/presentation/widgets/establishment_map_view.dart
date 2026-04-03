@@ -8,17 +8,21 @@ class EstablishmentMapView extends StatefulWidget {
     super.key,
     required this.establishments,
     required this.center,
-    required this.showUserLocation,
     required this.onMarkerTap,
     required this.markerColorResolver,
+    this.userPosition,
+    this.userTrail = const [],
+    this.nearbyRadiusKm,
     this.selectedEstablishmentId,
   });
 
   final List<RailwayEstablishmentView> establishments;
   final LatLng center;
-  final bool showUserLocation;
   final ValueChanged<RailwayEstablishmentView> onMarkerTap;
   final Color Function(RailwayEstablishmentView item) markerColorResolver;
+  final LatLng? userPosition;
+  final List<LatLng> userTrail;
+  final double? nearbyRadiusKm;
   final String? selectedEstablishmentId;
 
   @override
@@ -41,7 +45,9 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
   }
 
   List<RailwayEstablishmentView> _buildDisplayItems() {
-    final validItems = widget.establishments.where((item) => item.hasValidCoordinates).toList();
+    final validItems = widget.establishments
+        .where((item) => item.hasValidCoordinates)
+        .toList();
 
     validItems.sort((a, b) {
       final distanceA = _distance.as(
@@ -90,11 +96,34 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
             userAgentPackageName: 'com.enhorario',
           ),
+          if (widget.userPosition != null && widget.nearbyRadiusKm != null)
+            CircleLayer(
+              circles: [
+                CircleMarker(
+                  point: widget.userPosition!,
+                  radius: widget.nearbyRadiusKm! * 1000,
+                  useRadiusInMeter: true,
+                  color: Colors.blue.withValues(alpha: 0.12),
+                  borderColor: Colors.blue.withValues(alpha: 0.7),
+                  borderStrokeWidth: 2,
+                ),
+              ],
+            ),
+          if (widget.userTrail.length > 1)
+            PolylineLayer(
+              polylines: [
+                Polyline(
+                  points: widget.userTrail,
+                  strokeWidth: 4,
+                  color: Colors.blue.withValues(alpha: 0.75),
+                ),
+              ],
+            ),
           MarkerLayer(
             markers: [
-              if (widget.showUserLocation)
+              if (widget.userPosition != null)
                 Marker(
-                  point: widget.center,
+                  point: widget.userPosition!,
                   width: 48,
                   height: 48,
                   child: const _UserLocationMarker(),
@@ -153,10 +182,7 @@ class _UserLocationMarker extends StatelessWidget {
 }
 
 class _EstablishmentMarker extends StatelessWidget {
-  const _EstablishmentMarker({
-    required this.color,
-    required this.selected,
-  });
+  const _EstablishmentMarker({required this.color, required this.selected});
 
   final Color color;
   final bool selected;
@@ -170,16 +196,9 @@ class _EstablishmentMarker extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: color,
-        border: Border.all(
-          color: Colors.white,
-          width: selected ? 3 : 2,
-        ),
+        border: Border.all(color: Colors.white, width: selected ? 3 : 2),
         boxShadow: const [
-          BoxShadow(
-            color: Colors.black26,
-            blurRadius: 3,
-            offset: Offset(0, 1),
-          ),
+          BoxShadow(color: Colors.black26, blurRadius: 3, offset: Offset(0, 1)),
         ],
       ),
     );

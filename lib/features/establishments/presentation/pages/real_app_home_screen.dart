@@ -1,14 +1,13 @@
+import 'dart:async';
+
 import 'package:enhorario/core/api/api_client.dart';
-import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
-import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
 import 'package:enhorario/features/establishments/data/models/railway_establishment_view.dart';
-import 'package:enhorario/features/establishments/data/repositories/user_location_service.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
+import 'package:enhorario/features/establishments/data/repositories/user_location_service.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/pages/establishment_wait_time_detail_screen.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/establishment_map_view.dart';
-import 'package:enhorario/features/establishments/presentation/widgets/category_filter_section.dart';
-import 'package:enhorario/features/establishments/presentation/widgets/establishment_search_field.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:latlong2/latlong.dart';
@@ -36,13 +35,22 @@ class _RealAppHomeView extends StatefulWidget {
 
 class _RealAppHomeViewState extends State<_RealAppHomeView> {
   final UserLocationService _locationService = UserLocationService();
+  final TextEditingController _searchController = TextEditingController();
+  final Distance _distance = const Distance();
 
-  bool _isLoadingLocation = true;
   bool _permissionDenied = false;
   String? _locationMessage;
+  bool _followMyLocation = true;
+  bool _showOnlyNearby = true;
+  double _nearbyRadiusKm = 5;
+  String _mapQuery = '';
+
   double? _userLatitude;
   double? _userLongitude;
+  LatLng? _mapFocus;
   RailwayEstablishmentView? _selectedEstablishment;
+  StreamSubscription<Position>? _positionSubscription;
+  final List<LatLng> _userTrail = <LatLng>[];
 
   @override
   void initState() {
@@ -52,13 +60,13 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
 
   @override
   void dispose() {
-    context.read<RealEstablishmentsCubit>().clearAllFilters();
+    _positionSubscription?.cancel();
+    _searchController.dispose();
     super.dispose();
   }
 
   Future<void> _loadUserLocation() async {
     setState(() {
-      _isLoadingLocation = true;
       _locationMessage = null;
     });
 
@@ -66,51 +74,80 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
     if (!mounted) return;
 
     setState(() {
-      _isLoadingLocation = false;
       _permissionDenied = result.permissionDenied;
       _locationMessage = result.message;
       _userLatitude = result.position?.latitude;
       _userLongitude = result.position?.longitude;
+      if (result.position != null && (_followMyLocation || _mapFocus == null)) {
+        _mapFocus = LatLng(
+          result.position!.latitude,
+          result.position!.longitude,
+        );
+      }
+    });
+
+    if (result.position != null) {
+      _startTracking();
+    }
+  }
+
+  void _startTracking() {
+    _positionSubscription?.cancel();
+    _positionSubscription = _locationService.watchPositionStream().listen((
+      position,
+    ) {
+      if (!mounted) return;
+      final point = LatLng(position.latitude, position.longitude);
+      setState(() {
+        _userLatitude = position.latitude;
+        _userLongitude = position.longitude;
+        _userTrail.add(point);
+        if (_userTrail.length > 40) {
+          _userTrail.removeAt(0);
+        }
+        if (_followMyLocation) {
+          _mapFocus = point;
+        }
+      });
     });
   }
 
-  String _formatWaitLabel(int? minutes, bool isOpen) {
-    if (!isOpen) {
-      return 'Establecimiento cerrado';
-    }
-    if (minutes == null) {
-      return 'Tiempo de espera no disponible';
-    }
-    if (minutes <= 0) {
-      return 'Poco tiempo de espera';
-    }
-    return '~$minutes minutos';
-  }
-
-  String _formatLastUpdated(DateTime? dateTime) {
-    if (dateTime == null) return 'Sin actualizacion';
-    final hh = dateTime.hour.toString().padLeft(2, '0');
-    final mm = dateTime.minute.toString().padLeft(2, '0');
-    return 'Actualizado $hh:$mm';
-  }
-
-  String _buildEmptyMessage(RealEstablishmentsState state) {
-    final hasCategoryFilters = state.selectedCategoryKeys.isNotEmpty;
-    final hasQuery = state.query.trim().isNotEmpty;
-
-    if (hasCategoryFilters && !hasQuery) {
-      return 'No hay establecimientos en esta categoría';
-    }
-    if (hasCategoryFilters || hasQuery) {
-      return 'No hay resultados con los filtros aplicados';
-    }
-    return 'No hay establecimientos disponibles.';
-  }
-
   LatLng get _mapCenter {
+    if (_mapFocus != null) {
+      return _mapFocus!;
+    }
     final latitude = _userLatitude ?? UserLocationService.fallbackLatitude;
     final longitude = _userLongitude ?? UserLocationService.fallbackLongitude;
     return LatLng(latitude, longitude);
+  }
+
+  double _distanceKmFromCenter(RailwayEstablishmentView item, LatLng center) {
+    if (!item.hasValidCoordinates) return double.infinity;
+    return _distance.as(
+      LengthUnit.Kilometer,
+      center,
+      LatLng(item.latitude!, item.longitude!),
+    );
+  }
+
+  List<RailwayEstablishmentView> _visibleItems(RealEstablishmentsState state) {
+    final center = _mapCenter;
+    final q = _mapQuery.trim().toLowerCase();
+
+    return state.items.where((item) {
+      if (!item.hasValidCoordinates) return false;
+
+      if (q.isNotEmpty) {
+        final haystack = '${item.name} ${item.categoryName ?? ''} ${item.city}'
+            .toLowerCase();
+        if (!haystack.contains(q)) return false;
+      }
+
+      if (_showOnlyNearby) {
+        return _distanceKmFromCenter(item, center) <= _nearbyRadiusKm;
+      }
+      return true;
+    }).toList();
   }
 
   String _afluenciaLabel(RailwayEstablishmentView item) {
@@ -150,7 +187,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
         },
         title: Text(item.name),
         subtitle: Text(
-          '${item.categoryName ?? 'Sin categoria'}\n${_afluenciaLabel(item)}',
+          '${item.categoryName ?? 'Sin categoria'}\n${_afluenciaLabel(item)}\n${_distanceKmFromCenter(item, _mapCenter).toStringAsFixed(2)} km',
         ),
         isThreeLine: true,
         trailing: Container(
@@ -162,261 +199,260 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
     );
   }
 
+  Future<void> _openNearbyPanel(
+    BuildContext context,
+    List<RailwayEstablishmentView> visible,
+  ) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Establecimientos cercanos',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: _showOnlyNearby,
+                      title: const Text('Filtrar por radio'),
+                      subtitle: Text(
+                        _showOnlyNearby
+                            ? 'Mostrando solo cercanos'
+                            : 'Mostrando todos en el mapa',
+                      ),
+                      onChanged: (value) {
+                        setState(() => _showOnlyNearby = value);
+                        setSheetState(() {});
+                      },
+                    ),
+                    Text('Radio: ${_nearbyRadiusKm.toStringAsFixed(1)} km'),
+                    Slider(
+                      value: _nearbyRadiusKm,
+                      min: 0.5,
+                      max: 30,
+                      divisions: 59,
+                      label: '${_nearbyRadiusKm.toStringAsFixed(1)} km',
+                      onChanged: (value) {
+                        setState(() => _nearbyRadiusKm = value);
+                        setSheetState(() {});
+                      },
+                    ),
+                    const SizedBox(height: 4),
+                    Text('Locales visibles ahora: ${visible.length}'),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('App real - Establecimientos'),
-        actions: [
-          IconButton(
-            onPressed: () async {
-              await AuthSessionRepository().clearSession();
-              if (!context.mounted) return;
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute<void>(
-                  builder: (_) => const RealAppEntryScreen(),
-                ),
-                (_) => false,
-              );
-            },
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesion',
-          ),
-        ],
-      ),
       body: BlocBuilder<RealEstablishmentsCubit, RealEstablishmentsState>(
         builder: (context, state) {
           if (state.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          return CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
+          final visibleItems = _visibleItems(state);
+          final userPosition = (_userLatitude != null && _userLongitude != null)
+              ? LatLng(_userLatitude!, _userLongitude!)
+              : null;
+
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: EstablishmentMapView(
+                  establishments: visibleItems,
+                  center: _mapCenter,
+                  userPosition: userPosition,
+                  userTrail: _userTrail,
+                  nearbyRadiusKm: _showOnlyNearby ? _nearbyRadiusKm : null,
+                  selectedEstablishmentId: _selectedEstablishment?.id,
+                  markerColorResolver: _afluenciaColor,
+                  onMarkerTap: (item) {
+                    setState(() {
+                      _selectedEstablishment = item;
+                    });
+                  },
+                ),
+              ),
+              SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (value) {
+                      setState(() {
+                        _mapQuery = value;
+                      });
+                    },
+                    decoration: InputDecoration(
+                      hintText: 'Buscar establecimientos sobre el mapa',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _mapQuery.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: const Icon(Icons.close),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _mapQuery = '';
+                                });
+                              },
+                            ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 12,
+                top: 90,
                 child: Column(
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              _formatLastUpdated(state.lastUpdated),
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ),
-                          if (_isLoadingLocation)
-                            const Padding(
-                              padding: EdgeInsets.only(right: 8),
-                              child: SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ),
-                          FilledButton.icon(
-                            onPressed: state.isRefreshing
-                                ? null
-                                : () => context
-                                      .read<RealEstablishmentsCubit>()
-                                      .refreshTimes(),
-                            icon: state.isRefreshing
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.refresh),
-                            label: const Text('Recargar tiempos'),
-                          ),
-                        ],
+                    FloatingActionButton.small(
+                      heroTag: 'btn-refresh',
+                      onPressed: state.isRefreshing
+                          ? null
+                          : () => context
+                                .read<RealEstablishmentsCubit>()
+                                .refreshTimes(),
+                      child: state.isRefreshing
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.refresh),
+                    ),
+                    const SizedBox(height: 8),
+                    FloatingActionButton.small(
+                      heroTag: 'btn-follow',
+                      onPressed: () {
+                        setState(() {
+                          _followMyLocation = !_followMyLocation;
+                          if (_followMyLocation &&
+                              _userLatitude != null &&
+                              _userLongitude != null) {
+                            _mapFocus = LatLng(_userLatitude!, _userLongitude!);
+                          }
+                        });
+                      },
+                      child: Icon(
+                        _followMyLocation
+                            ? Icons.navigation
+                            : Icons.navigation_outlined,
                       ),
                     ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: _loadUserLocation,
-                          icon: const Icon(Icons.my_location),
-                          label: const Text('Actualizar mi ubicacion'),
-                        ),
-                      ),
-                    ),
-                    if (_locationMessage != null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                        child: Material(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.surfaceContainerHighest,
-                          borderRadius: BorderRadius.circular(10),
-                          child: Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _permissionDenied
-                                      ? Icons.location_off
-                                      : Icons.info_outline,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    _locationMessage!,
-                                    style: Theme.of(
-                                      context,
-                                    ).textTheme.bodySmall,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    if (state.error != null)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                        child: Material(
-                          color: Theme.of(context).colorScheme.errorContainer,
-                          borderRadius: BorderRadius.circular(10),
-                          child: Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.error_outline, size: 18),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    state.error!,
-                                    style: TextStyle(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onErrorContainer,
-                                    ),
-                                  ),
-                                ),
-                                TextButton(
-                                  onPressed: () => context
-                                      .read<RealEstablishmentsCubit>()
-                                      .loadInitial(),
-                                  child: const Text('Reintentar'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                      child: SizedBox(
-                        height: 320,
-                        width: double.infinity,
-                        child: EstablishmentMapView(
-                          establishments: state.filtered,
-                          center: _mapCenter,
-                          showUserLocation:
-                              _userLatitude != null && _userLongitude != null,
-                          selectedEstablishmentId: _selectedEstablishment?.id,
-                          markerColorResolver: _afluenciaColor,
-                          onMarkerTap: (item) {
-                            setState(() {
-                              _selectedEstablishment = item;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-                    if (_selectedEstablishment != null)
-                      _buildMarkerInfoCard(context, _selectedEstablishment!),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: EstablishmentSearchField(
-                        value: state.query,
-                        onChanged: context
-                            .read<RealEstablishmentsCubit>()
-                            .setQuery,
-                        onClear: context
-                            .read<RealEstablishmentsCubit>()
-                            .clearAllFilters,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                      child: CategoryFilterSection(
-                        options: state.availableCategories,
-                        selectedKeys: state.selectedCategoryKeys.toSet(),
-                        onToggleCategory: context
-                            .read<RealEstablishmentsCubit>()
-                            .toggleCategory,
-                        onClearAll: context
-                            .read<RealEstablishmentsCubit>()
-                            .clearAllFilters,
-                      ),
+                    const SizedBox(height: 8),
+                    FloatingActionButton.small(
+                      heroTag: 'btn-nearby',
+                      onPressed: () => _openNearbyPanel(context, visibleItems),
+                      child: const Icon(Icons.radar),
                     ),
                   ],
                 ),
               ),
-              if (state.filtered.isEmpty)
-                SliverFillRemaining(
-                  hasScrollBody: false,
-                  child: Center(
+              if (_locationMessage != null)
+                Positioned(
+                  left: 12,
+                  right: 70,
+                  top: 82,
+                  child: Material(
+                    elevation: 2,
+                    borderRadius: BorderRadius.circular(12),
+                    color: _permissionDenied
+                        ? Theme.of(context).colorScheme.errorContainer
+                        : Theme.of(context).colorScheme.surface,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: Text(
-                        _buildEmptyMessage(state),
-                        textAlign: TextAlign.center,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _permissionDenied
+                                ? Icons.location_off
+                                : Icons.my_location,
+                            size: 16,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _locationMessage!,
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                )
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final item = state.filtered[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: Card(
-                          child: ListTile(
-                            onTap: () {
-                              setState(() {
-                                _selectedEstablishment = item;
-                              });
-                              Navigator.of(context).push(
-                                MaterialPageRoute<void>(
-                                  builder: (_) =>
-                                      EstablishmentWaitTimeDetailScreen(
-                                        establishmentId: item.id,
-                                      ),
-                                ),
-                              );
-                            },
-                            title: Text(item.name),
-                            subtitle: Text(
-                              '${item.addressLine} - ${item.city}\n${_formatWaitLabel(item.averageWaitMinutes, item.isOpen)}',
-                            ),
-                            isThreeLine: true,
-                            trailing: Container(
-                              width: 14,
-                              height: 14,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: _afluenciaColor(item),
-                              ),
+                ),
+              if (state.error != null)
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  top: 140,
+                  child: Material(
+                    elevation: 2,
+                    borderRadius: BorderRadius.circular(12),
+                    color: Theme.of(context).colorScheme.errorContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, size: 16),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              state.error!,
+                              style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ),
-                        ),
-                      );
-                    }, childCount: state.filtered.length),
+                        ],
+                      ),
+                    ),
                   ),
+                ),
+              Positioned(
+                left: 12,
+                bottom: 18,
+                child: FilledButton.icon(
+                  onPressed: () => _openNearbyPanel(context, visibleItems),
+                  icon: const Icon(Icons.place),
+                  label: Text('Cercanos (${visibleItems.length})'),
+                ),
+              ),
+              if (_selectedEstablishment != null)
+                Positioned(
+                  left: 12,
+                  right: 12,
+                  bottom: 78,
+                  child: _buildMarkerInfoCard(context, _selectedEstablishment!),
                 ),
             ],
           );

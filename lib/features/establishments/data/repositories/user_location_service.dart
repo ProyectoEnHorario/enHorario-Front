@@ -16,6 +16,15 @@ class UserLocationService {
   static const double fallbackLatitude = 4.7110;
   static const double fallbackLongitude = -74.0721;
 
+  Stream<Position> watchPositionStream() {
+    return Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 8,
+      ),
+    );
+  }
+
   Future<UserLocationResult> getCurrentPosition() async {
     final serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -48,7 +57,7 @@ class UserLocationService {
           accuracy: LocationAccuracy.high,
           distanceFilter: 10,
         ),
-          ).timeout(const Duration(seconds: 8));
+      ).timeout(const Duration(seconds: 8));
 
       return UserLocationResult(
         position: position,
