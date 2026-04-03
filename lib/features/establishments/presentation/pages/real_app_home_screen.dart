@@ -131,7 +131,10 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
     return Colors.red;
   }
 
-  Widget _buildMarkerInfoCard(BuildContext context, RailwayEstablishmentView item) {
+  Widget _buildMarkerInfoCard(
+    BuildContext context,
+    RailwayEstablishmentView item,
+  ) {
     final color = _afluenciaColor(item);
 
     return Card(
@@ -140,9 +143,8 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
         onTap: () {
           Navigator.of(context).push(
             MaterialPageRoute<void>(
-              builder: (_) => EstablishmentWaitTimeDetailScreen(
-                establishmentId: item.id,
-              ),
+              builder: (_) =>
+                  EstablishmentWaitTimeDetailScreen(establishmentId: item.id),
             ),
           );
         },
@@ -154,10 +156,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
         trailing: Container(
           width: 14,
           height: 14,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color,
-          ),
+          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
         ),
       ),
     );
@@ -191,191 +190,223 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          return Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: Row(
+          return CustomScrollView(
+            slivers: [
+              SliverToBoxAdapter(
+                child: Column(
                   children: [
-                    Expanded(
-                      child: Text(
-                        _formatLastUpdated(state.lastUpdated),
-                        style: Theme.of(context).textTheme.bodySmall,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _formatLastUpdated(state.lastUpdated),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                          FilledButton.icon(
+                            onPressed: state.isRefreshing
+                                ? null
+                                : () => context
+                                      .read<RealEstablishmentsCubit>()
+                                      .refreshTimes(),
+                            icon: state.isRefreshing
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : const Icon(Icons.refresh),
+                            label: const Text('Recargar tiempos'),
+                          ),
+                        ],
                       ),
                     ),
-                    FilledButton.icon(
-                      onPressed: state.isRefreshing
-                          ? null
-                          : () => context
-                              .read<RealEstablishmentsCubit>()
-                              .refreshTimes(),
-                      icon: state.isRefreshing
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.refresh),
-                      label: const Text('Recargar tiempos'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: _loadUserLocation,
+                          icon: const Icon(Icons.my_location),
+                          label: const Text('Actualizar mi ubicacion'),
+                        ),
+                      ),
+                    ),
+                    if (_locationMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: Material(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  _permissionDenied
+                                      ? Icons.location_off
+                                      : Icons.info_outline,
+                                  size: 18,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    _locationMessage!,
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    if (state.error != null)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: Material(
+                          color: Theme.of(context).colorScheme.errorContainer,
+                          borderRadius: BorderRadius.circular(10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(10),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.error_outline, size: 18),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    state.error!,
+                                    style: TextStyle(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onErrorContainer,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: () => context
+                                      .read<RealEstablishmentsCubit>()
+                                      .loadInitial(),
+                                  child: const Text('Reintentar'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: SizedBox(
+                        height: 320,
+                        width: double.infinity,
+                        child: EstablishmentMapView(
+                          establishments: state.filtered,
+                          center: _mapCenter,
+                          showUserLocation:
+                              _userLatitude != null && _userLongitude != null,
+                          selectedEstablishmentId: _selectedEstablishment?.id,
+                          markerColorResolver: _afluenciaColor,
+                          onMarkerTap: (item) {
+                            setState(() {
+                              _selectedEstablishment = item;
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                    if (_selectedEstablishment != null)
+                      _buildMarkerInfoCard(context, _selectedEstablishment!),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: EstablishmentSearchField(
+                        value: state.query,
+                        onChanged: context
+                            .read<RealEstablishmentsCubit>()
+                            .setQuery,
+                        onClear: context
+                            .read<RealEstablishmentsCubit>()
+                            .clearAllFilters,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                      child: CategoryFilterSection(
+                        options: state.availableCategories,
+                        selectedKeys: state.selectedCategoryKeys.toSet(),
+                        onToggleCategory: context
+                            .read<RealEstablishmentsCubit>()
+                            .toggleCategory,
+                        onClearAll: context
+                            .read<RealEstablishmentsCubit>()
+                            .clearAllFilters,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _loadUserLocation,
-                    icon: const Icon(Icons.my_location),
-                    label: const Text('Actualizar mi ubicacion'),
-                  ),
-                ),
-              ),
-              if (_locationMessage != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Material(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(10),
+              if (state.filtered.isEmpty)
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _permissionDenied ? Icons.location_off : Icons.info_outline,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _locationMessage!,
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ),
-                        ],
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text(
+                        _buildEmptyMessage(state),
+                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),
-                ),
-              if (state.error != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Material(
-                    color: Theme.of(context).colorScheme.errorContainer,
-                    borderRadius: BorderRadius.circular(10),
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.error_outline, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              state.error!,
-                              style: TextStyle(
-                                color: Theme.of(context).colorScheme.onErrorContainer,
+                )
+              else
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final item = state.filtered[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 8),
+                        child: Card(
+                          child: ListTile(
+                            onTap: () {
+                              setState(() {
+                                _selectedEstablishment = item;
+                              });
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) =>
+                                      EstablishmentWaitTimeDetailScreen(
+                                        establishmentId: item.id,
+                                      ),
+                                ),
+                              );
+                            },
+                            title: Text(item.name),
+                            subtitle: Text(
+                              '${item.addressLine} - ${item.city}\n${_formatWaitLabel(item.averageWaitMinutes, item.isOpen)}',
+                            ),
+                            isThreeLine: true,
+                            trailing: Container(
+                              width: 14,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: _afluenciaColor(item),
                               ),
                             ),
-                          ),
-                          TextButton(
-                            onPressed: () => context
-                                .read<RealEstablishmentsCubit>()
-                                .loadInitial(),
-                            child: const Text('Reintentar'),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                child: SizedBox(
-                  height: 320,
-                  width: double.infinity,
-                  child: EstablishmentMapView(
-                    establishments: state.filtered,
-                    center: _mapCenter,
-                    showUserLocation: _userLatitude != null && _userLongitude != null,
-                    selectedEstablishmentId: _selectedEstablishment?.id,
-                    markerColorResolver: _afluenciaColor,
-                    onMarkerTap: (item) {
-                      setState(() {
-                        _selectedEstablishment = item;
-                      });
-                    },
-                  ),
-                ),
-              ),
-              if (_selectedEstablishment != null)
-                _buildMarkerInfoCard(context, _selectedEstablishment!),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: EstablishmentSearchField(
-                  value: state.query,
-                  onChanged: context.read<RealEstablishmentsCubit>().setQuery,
-                  onClear: context.read<RealEstablishmentsCubit>().clearAllFilters,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                child: CategoryFilterSection(
-                  options: state.availableCategories,
-                  selectedKeys: state.selectedCategoryKeys.toSet(),
-                  onToggleCategory: context.read<RealEstablishmentsCubit>().toggleCategory,
-                  onClearAll: context.read<RealEstablishmentsCubit>().clearAllFilters,
-                ),
-              ),
-              Expanded(
-                child: state.filtered.isEmpty
-                    ? Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 24),
-                          child: Text(
-                            _buildEmptyMessage(state),
-                            textAlign: TextAlign.center,
                           ),
                         ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: state.filtered.length,
-                      separatorBuilder: (_, index) => const SizedBox(height: 8),
-                        itemBuilder: (context, index) {
-                          final item = state.filtered[index];
-                          return Card(
-                            child: ListTile(
-                              onTap: () {
-                                setState(() {
-                                  _selectedEstablishment = item;
-                                });
-                                Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => EstablishmentWaitTimeDetailScreen(
-                                      establishmentId: item.id,
-                                    ),
-                                  ),
-                                );
-                              },
-                              title: Text(item.name),
-                              subtitle: Text(
-                                '${item.addressLine} - ${item.city}\n${_formatWaitLabel(item.averageWaitMinutes, item.isOpen)}',
-                              ),
-                              isThreeLine: true,
-                              trailing: Container(
-                                width: 14,
-                                height: 14,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: _afluenciaColor(item),
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-              ),
+                      );
+                    }, childCount: state.filtered.length),
+                  ),
+                ),
             ],
           );
         },
