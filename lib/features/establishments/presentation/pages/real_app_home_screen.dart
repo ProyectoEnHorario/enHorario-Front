@@ -444,7 +444,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
                         shrinkWrap: true,
                         padding: const EdgeInsets.symmetric(vertical: 6),
                         itemCount: visibleItems.length > 6 ? 6 : visibleItems.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        separatorBuilder: (_, index) => const Divider(height: 1),
                         itemBuilder: (context, index) {
                           final item = visibleItems[index];
                           return ListTile(
