@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:enhorario/core/api/api_client.dart';
+import 'package:enhorario/core/widgets/afluencia_indicator.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/establishment_wait_time_cubit.dart';
 import 'package:flutter/material.dart';
@@ -23,12 +24,23 @@ class _EstablishmentWaitTimeDetailScreenState
     extends State<EstablishmentWaitTimeDetailScreen> {
   Timer? _autoRefreshTimer;
 
+  // Máximo de minutos que consideramos 100% de afluencia
+  static const int _maxWaitMinutes = 15;
+
+  // Convierte averageWaitMinutes a valor 0.0 - 1.0 para AfluenciaIndicator
+  double _toAfluenciaValue({required bool isOpen, required int? minutes}) {
+    if (!isOpen || minutes == null) return 0.0;
+    return (minutes / _maxWaitMinutes).clamp(0.0, 1.0);
+  }
+
   @override
   void initState() {
     super.initState();
     _autoRefreshTimer = Timer.periodic(const Duration(seconds: 45), (_) {
       if (!mounted) return;
-      context.read<EstablishmentWaitTimeCubit>().refresh(widget.establishmentId);
+      context
+          .read<EstablishmentWaitTimeCubit>()
+          .refresh(widget.establishmentId);
     });
   }
 
@@ -38,18 +50,11 @@ class _EstablishmentWaitTimeDetailScreenState
     super.dispose();
   }
 
-  String _waitText({required bool isOpen, required int? minutes}) {
-    if (!isOpen) return 'Establecimiento cerrado';
-    if (minutes == null) return 'Tiempo de espera no disponible';
-    if (minutes <= 0) return 'Poco tiempo de espera';
-    return '~$minutes minutos';
-  }
-
   String _updatedLabel(DateTime? dateTime) {
-    if (dateTime == null) return 'Sin actualizacion';
+    if (dateTime == null) return 'Sin actualización';
     final hh = dateTime.hour.toString().padLeft(2, '0');
     final mm = dateTime.minute.toString().padLeft(2, '0');
-    return 'Ultima actualizacion: $hh:$mm';
+    return 'Última actualización: $hh:$mm';
   }
 
   @override
@@ -60,7 +65,7 @@ class _EstablishmentWaitTimeDetailScreenState
       )..load(widget.establishmentId),
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Detalle de espera'),
+          title: const Text('Detalle del establecimiento'),
           actions: [
             Builder(
               builder: (context) {
@@ -77,10 +82,13 @@ class _EstablishmentWaitTimeDetailScreenState
         ),
         body: BlocBuilder<EstablishmentWaitTimeCubit, EstablishmentWaitTimeState>(
           builder: (context, state) {
+
+            // ── Cargando por primera vez ──────────────────────────
             if (state.isLoading) {
               return const Center(child: CircularProgressIndicator());
             }
 
+            // ── Error sin datos previos ───────────────────────────
             if (state.error != null && state.item == null) {
               return Center(
                 child: Padding(
@@ -105,9 +113,15 @@ class _EstablishmentWaitTimeDetailScreenState
             final item = state.item;
             if (item == null) {
               return const Center(
-                child: Text('No hay informacion disponible.'),
+                child: Text('No hay información disponible.'),
               );
             }
+
+            // Calculamos el valor de afluencia con datos reales
+            final afluenciaValue = _toAfluenciaValue(
+              isOpen: item.isOpen,
+              minutes: item.averageWaitMinutes,
+            );
 
             return RefreshIndicator(
               onRefresh: () => context
@@ -116,62 +130,118 @@ class _EstablishmentWaitTimeDetailScreenState
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+
+                  // ── Nombre y ubicación ──────────────────────────
                   Text(
                     item.name,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  const SizedBox(height: 8),
-                  Text(item.addressLine),
                   const SizedBox(height: 4),
-                  Text(item.city),
-                  const SizedBox(height: 8),
-                  if (item.categoryName != null && item.categoryName!.isNotEmpty)
-                    Text('Categoria: ${item.categoryName}'),
-                  if (item.shortDescription != null &&
-                      item.shortDescription!.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8),
-                      child: Text(item.shortDescription!),
-                    ),
-                  const SizedBox(height: 20),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Tiempo estimado de espera',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _waitText(
-                              isOpen: item.isOpen,
-                              minutes: item.averageWaitMinutes,
-                            ),
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 8),
-                          Text(_updatedLabel(state.lastUpdated)),
-                          if (state.isRefreshing) ...[
-                            const SizedBox(height: 12),
-                            const LinearProgressIndicator(),
-                          ],
-                        ],
-                      ),
+                  Text(
+                    item.addressLine,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  Text(
+                    item.city,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade600,
                     ),
                   ),
-                  if (state.error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 12),
-                      child: Text(
-                        state.error!,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
+                  if (item.categoryName != null &&
+                      item.categoryName!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text('Categoría: ${item.categoryName}'),
+                  ],
+                  if (item.shortDescription != null &&
+                      item.shortDescription!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(item.shortDescription!),
+                  ],
+
+                  const SizedBox(height: 24),
+
+                  // ── Chip de estado abierto/cerrado ──────────────
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: item.isOpen
+                              ? Colors.green.withValues(alpha: 0.12)
+                              : Colors.red.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: item.isOpen
+                                ? Colors.green.withValues(alpha: 0.4)
+                                : Colors.red.withValues(alpha: 0.4),
+                          ),
+                        ),
+                        child: Text(
+                          item.isOpen ? 'Abierto' : 'Cerrado',
+                          style: TextStyle(
+                            color: item.isOpen ? Colors.green : Colors.red,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // ── Sección de afluencia con tu widget ──────────
+                  Text(
+                    'Afluencia actual',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // ← AQUÍ se usa tu AfluenciaIndicator con datos reales
+                  AfluenciaIndicator(value: afluenciaValue),
+
+                  const SizedBox(height: 6),
+                  Text(
+                    item.isOpen
+                        ? (item.averageWaitMinutes != null
+                        ? 'Tiempo estimado de espera: ~${item.averageWaitMinutes} min'
+                        : 'Tiempo de espera no disponible')
+                        : 'Establecimiento cerrado',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+
+                  const SizedBox(height: 6),
+                  Text(
+                    _updatedLabel(state.lastUpdated),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+
+                  // Barra de progreso de refresco automático
+                  if (state.isRefreshing) ...[
+                    const SizedBox(height: 12),
+                    const LinearProgressIndicator(),
+                  ],
+
+                  // Error secundario (ya hay datos, pero falló el refresh)
+                  if (state.error != null) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      state.error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             );
