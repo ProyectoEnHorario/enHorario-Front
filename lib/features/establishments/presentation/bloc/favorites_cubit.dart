@@ -31,18 +31,31 @@ class FavoritesCubit extends Cubit<FavoritesState> {
 
   Future<void> toggleFavorite(String id) async {
     final isFav = state.favoriteIds.contains(id);
-    
-    // Actualización optimista de la UI
-    final newFavorites = Set<String>.from(state.favoriteIds);
     if (isFav) {
-      newFavorites.remove(id);
-      emit(state.copyWith(favoriteIds: newFavorites));
-      await _repository.removeFavorite(id);
+      await removeFavorite(id);
     } else {
-      newFavorites.add(id);
-      emit(state.copyWith(favoriteIds: newFavorites));
-      await _repository.addFavorite(id);
+      await addFavorite(id);
     }
+  }
+
+  Future<void> addFavorite(String id) async {
+    if (state.favoriteIds.contains(id)) return;
+    
+    // Optimistic Update
+    final newFavorites = Set<String>.from(state.favoriteIds)..add(id);
+    emit(state.copyWith(favoriteIds: newFavorites));
+    
+    await _repository.addFavorite(id);
+  }
+
+  Future<void> removeFavorite(String id) async {
+    if (!state.favoriteIds.contains(id)) return;
+
+    // Optimistic Update
+    final newFavorites = Set<String>.from(state.favoriteIds)..remove(id);
+    emit(state.copyWith(favoriteIds: newFavorites));
+    
+    await _repository.removeFavorite(id);
   }
 
   bool isFavorite(String id) {
