@@ -6,6 +6,8 @@ import 'package:enhorario/features/establishments/data/repositories/railway_esta
 import 'package:enhorario/features/establishments/data/repositories/user_location_service.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/pages/establishment_wait_time_detail_screen.dart';
+import 'package:enhorario/core/widgets/favorite_button.dart';
+import 'package:enhorario/features/establishments/presentation/bloc/favorites_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/establishment_map_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -207,10 +209,26 @@ class _RealAppHomeScreenState extends State<RealAppHomeScreen> {
           '${item.categoryName ?? 'Sin categoria'}\n${_afluenciaLabel(item)}\n${_distanceKmFromCenter(item, _mapCenter).toStringAsFixed(2)} km',
         ),
         isThreeLine: true,
-        trailing: Container(
-          width: 14,
-          height: 14,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            BlocBuilder<FavoritesCubit, FavoritesState>(
+              builder: (context, favState) {
+                return FavoriteButton(
+                  isFavorite: favState.isFavorite(item.id),
+                  onToggle: () {
+                    context.read<FavoritesCubit>().toggleFavorite(item.id);
+                  },
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+            ),
+          ],
         ),
       ),
     );
