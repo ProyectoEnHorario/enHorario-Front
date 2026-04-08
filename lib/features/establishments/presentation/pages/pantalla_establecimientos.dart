@@ -1,26 +1,26 @@
 import 'package:enhorario/features/establishments/data/models/establishment_model.dart';
 import 'package:enhorario/features/establishments/data/repositories/local_establishment_repository.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/establishments_cubit.dart';
-import 'package:enhorario/features/establishments/presentation/pages/establishment_detail_screen.dart';
-import 'package:enhorario/features/establishments/presentation/pages/establishment_form_screen.dart';
+import 'package:enhorario/features/establishments/presentation/pages/pantalla_detalle_establecimiento.dart';
+import 'package:enhorario/features/establishments/presentation/pages/pantalla_formulario_establecimiento.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/establishment_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class EstablishmentsScreen extends StatelessWidget {
-  const EstablishmentsScreen({super.key});
+class PantallaEstablecimientos extends StatelessWidget {
+  const PantallaEstablecimientos({super.key});
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) => EstablishmentsCubit(LocalEstablishmentRepository()),
-      child: const _EstablishmentsView(),
+      child: const _VistaEstablecimientos(),
     );
   }
 }
 
-class _EstablishmentsView extends StatelessWidget {
-  const _EstablishmentsView();
+class _VistaEstablecimientos extends StatelessWidget {
+  const _VistaEstablecimientos();
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +30,7 @@ class _EstablishmentsView extends StatelessWidget {
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) => EstablishmentFormScreen(
+              builder: (_) => PantallaFormularioEstablecimiento(
                 onSave: context.read<EstablishmentsCubit>().create,
               ),
             ),
@@ -113,7 +113,7 @@ class _EstablishmentsView extends StatelessWidget {
                         Navigator.of(context).push(
                           MaterialPageRoute(
                             builder: (_) =>
-                                EstablishmentDetailScreen(item: item),
+                                PantallaDetalleEstablecimiento(item: item),
                           ),
                         );
                       },
@@ -125,7 +125,7 @@ class _EstablishmentsView extends StatelessWidget {
                             onPressed: () {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => EstablishmentFormScreen(
+                                  builder: (_) => PantallaFormularioEstablecimiento(
                                     initial: item,
                                     onSave: context
                                         .read<EstablishmentsCubit>()
