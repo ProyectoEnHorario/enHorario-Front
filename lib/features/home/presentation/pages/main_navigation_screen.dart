@@ -1,9 +1,14 @@
+import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
+import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
+import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
+import 'package:enhorario/features/establishments/presentation/pages/favorites_screen.dart';
 import 'package:enhorario/features/establishments/presentation/pages/real_app_home_screen.dart';
 import 'package:enhorario/features/home/presentation/pages/user_profile_screen.dart';
 import 'package:enhorario/features/turns/presentation/pages/turns_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -17,6 +22,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   static const List<String> _navigationTitles = [
     'Establecimientos',
+    'Favoritos',
     'Mi Información',
     'Tickets',
   ];
@@ -25,34 +31,39 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false, // Prevenir volver atrás accidentalmente
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(_navigationTitles[_selectedIndex]),
-          actions: [
-            IconButton(
-              onPressed: () async {
-                await AuthSessionRepository().clearSession();
-                if (!context.mounted) return;
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute<void>(
-                    builder: (_) => const RealAppEntryScreen(),
-                  ),
-                  (_) => false,
-                );
-              },
-              icon: const Icon(Icons.logout),
-              tooltip: 'Cerrar sesión',
-            ),
-          ],
+      child: BlocProvider(
+        create: (_) => RealEstablishmentsCubit(
+          RailwayEstablishmentQueryService(ApiClient()),
         ),
-        body: IndexedStack(
-          index: _selectedIndex,
-          children: const [
-            RealAppHomeScreen(),
-            UserProfileScreen(),
-            TurnsScreen(),
-          ],
-        ),
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(_navigationTitles[_selectedIndex]),
+            actions: [
+              IconButton(
+                onPressed: () async {
+                  await AuthSessionRepository().clearSession();
+                  if (!context.mounted) return;
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute<void>(
+                      builder: (_) => const RealAppEntryScreen(),
+                    ),
+                    (_) => false,
+                  );
+                },
+                icon: const Icon(Icons.logout),
+                tooltip: 'Cerrar sesión',
+              ),
+            ],
+          ),
+          body: IndexedStack(
+            index: _selectedIndex,
+            children: const [
+              RealAppHomeScreen(),
+              FavoritesScreen(),
+              UserProfileScreen(),
+              TurnsScreen(),
+            ],
+          ),
         bottomNavigationBar: NavigationBar(
           selectedIndex: _selectedIndex,
           onDestinationSelected: (int index) {
@@ -67,6 +78,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               label: 'Establecimientos',
             ),
             NavigationDestination(
+              icon: Icon(Icons.favorite_outline),
+              selectedIcon: Icon(Icons.favorite),
+              label: 'Favoritos',
+            ),
+            NavigationDestination(
               icon: Icon(Icons.person_outline),
               selectedIcon: Icon(Icons.person),
               label: 'Mi Información',
@@ -78,6 +94,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ),
           ],
         ),
+      ),
       ),
     );
   }

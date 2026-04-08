@@ -12,28 +12,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
-class RealAppHomeScreen extends StatelessWidget {
+class RealAppHomeScreen extends StatefulWidget {
   const RealAppHomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => RealEstablishmentsCubit(
-        RailwayEstablishmentQueryService(ApiClient()),
-      ),
-      child: const _RealAppHomeView(),
-    );
-  }
+  State<RealAppHomeScreen> createState() => _RealAppHomeScreenState();
 }
 
-class _RealAppHomeView extends StatefulWidget {
-  const _RealAppHomeView();
-
-  @override
-  State<_RealAppHomeView> createState() => _RealAppHomeViewState();
-}
-
-class _RealAppHomeViewState extends State<_RealAppHomeView> {
+class _RealAppHomeScreenState extends State<RealAppHomeScreen> {
   final UserLocationService _locationService = UserLocationService();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
