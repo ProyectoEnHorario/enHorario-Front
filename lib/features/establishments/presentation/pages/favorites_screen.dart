@@ -22,9 +22,64 @@ class FavoritesScreen extends StatelessWidget {
                 .where((item) => favState.isFavorite(item.id))
                 .toList();
 
-            if (favoriteItems.isEmpty) {
-              return const Center(
-                child: Text('Cero favoritos. ¡Empieza a descubrir lugares!'),
+            if (estState.error != null && favoriteItems.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Ocurrió un error al cargar tus favoritos:\n${estState.error}',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                      const SizedBox(height: 16),
+                      FilledButton.icon(
+                        onPressed: () {
+                          context.read<RealEstablishmentsCubit>().refreshTimes();
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Reintentar'),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+
+            if (favoriteItems.isEmpty && !estState.isLoading) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.favorite_border,
+                        size: 80,
+                        color: Colors.grey.withValues(alpha: 0.5),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Aún no tienes favoritos',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Colors.grey.shade700,
+                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Explora el mapa y pulsa el corazón para guardar los establecimientos que más te gusten.',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.grey.shade600,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
               );
             }
 
