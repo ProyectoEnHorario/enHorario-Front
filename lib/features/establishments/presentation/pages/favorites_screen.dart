@@ -154,7 +154,7 @@ class FavoritesScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  '${item.city} - $afluenciaLabel',
+                                  '${item.categoryName ?? 'Sin categoría'} • $afluenciaLabel\n${item.city}',
                                   style: Theme.of(context).textTheme.bodySmall,
                                 ),
                               ],
