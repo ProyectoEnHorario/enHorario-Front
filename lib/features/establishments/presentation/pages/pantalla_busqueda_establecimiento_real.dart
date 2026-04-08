@@ -1,13 +1,14 @@
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
-import 'package:enhorario/features/establishments/presentation/pages/establishment_wait_time_detail_screen.dart';
+import 'package:enhorario/features/establishments/presentation/pages/pantalla_detalle_tiempo_espera_establecimiento.dart';
+import 'package:enhorario/core/widgets/indicador_afluencia.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/establishment_search_field.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class RealEstablishmentSearchScreen extends StatelessWidget {
-  const RealEstablishmentSearchScreen({super.key});
+class PantallaBusquedaEstablecimientoReal extends StatelessWidget {
+  const PantallaBusquedaEstablecimientoReal({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,13 +16,13 @@ class RealEstablishmentSearchScreen extends StatelessWidget {
       create: (_) => RealEstablishmentsCubit(
         RailwayEstablishmentQueryService(ApiClient()),
       ),
-      child: const _RealEstablishmentSearchView(),
+      child: const _VistaBusquedaEstablecimientoReal(),
     );
   }
 }
 
-class _RealEstablishmentSearchView extends StatelessWidget {
-  const _RealEstablishmentSearchView();
+class _VistaBusquedaEstablecimientoReal extends StatelessWidget {
+  const _VistaBusquedaEstablecimientoReal();
 
   @override
   Widget build(BuildContext context) {
@@ -92,18 +93,37 @@ class _RealEstablishmentSearchView extends StatelessWidget {
                   separatorBuilder: (_, __) => const Divider(height: 1),
                   itemBuilder: (context, index) {
                     final item = state.filtered[index];
+                    final minutosMaximosEspera = 15.0;
+                    final double? valorAfluencia = (item.averageWaitMinutes == null)
+                        ? null
+                        : (item.averageWaitMinutes! / minutosMaximosEspera).clamp(0.0, 1.0);
+
                     return ListTile(
                       title: Text(item.name),
                       subtitle: Text('${item.city} - ${item.addressLine}'),
-                      trailing: Text(
-                        item.averageWaitMinutes == null
-                            ? 'N/D'
-                            : '~${item.averageWaitMinutes} min',
+                      trailing: SizedBox(
+                        width: 140,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              item.averageWaitMinutes == null
+                                  ? 'T. espera N/D'
+                                  : '~${item.averageWaitMinutes} min',
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                            const SizedBox(height: 4),
+                            IndicadorAfluencia(
+                              valor: valorAfluencia,
+                              abierto: item.isOpen,
+                            ),
+                          ],
+                        ),
                       ),
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
-                            builder: (_) => EstablishmentWaitTimeDetailScreen(
+                            builder: (_) => PantallaDetalleTiempoEsperaEstablecimiento(
                               establishmentId: item.id,
                             ),
                           ),
