@@ -107,6 +107,8 @@ class FavoritesScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   item.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
@@ -132,11 +134,15 @@ class FavoritesScreen extends StatelessWidget {
                                         fontSize: 12,
                                       ),
                                     ),
-                                    Text(
-                                      ' • ${item.categoryName ?? 'Tienda'}',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 12,
+                                    Expanded(
+                                      child: Text(
+                                        ' • ${item.categoryName ?? 'Tienda'}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: Colors.grey.shade600,
+                                          fontSize: 12,
+                                        ),
                                       ),
                                     ),
                                   ],

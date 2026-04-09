@@ -30,7 +30,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false, // Prevenir volver atrás accidentalmente
+      canPop: _selectedIndex == 0,
+      onPopInvokedWithResult: (bool didPop, dynamic result) {
+        if (!didPop && _selectedIndex != 0) {
+          setState(() {
+            _selectedIndex = 0;
+          });
+        }
+      },
       child: BlocProvider(
         create: (_) => RealEstablishmentsCubit(
           RailwayEstablishmentQueryService(ApiClient()),
@@ -38,6 +45,16 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         child: Scaffold(
           appBar: AppBar(
             title: Text(_navigationTitles[_selectedIndex]),
+            leading: _selectedIndex != 0
+                ? IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () {
+                      setState(() {
+                        _selectedIndex = 0;
+                      });
+                    },
+                  )
+                : null,
             actions: [
               IconButton(
                 onPressed: () async {
