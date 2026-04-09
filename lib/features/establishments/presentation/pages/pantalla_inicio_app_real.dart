@@ -5,15 +5,15 @@ import 'package:enhorario/features/establishments/data/models/railway_establishm
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 import 'package:enhorario/features/establishments/data/repositories/user_location_service.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
-import 'package:enhorario/features/establishments/presentation/pages/establishment_wait_time_detail_screen.dart';
+import 'package:enhorario/features/establishments/presentation/pages/pantalla_detalle_tiempo_espera_establecimiento.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/establishment_map_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
-class RealAppHomeScreen extends StatelessWidget {
-  const RealAppHomeScreen({super.key});
+class PantallaInicioAppReal extends StatelessWidget {
+  const PantallaInicioAppReal({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -21,19 +21,19 @@ class RealAppHomeScreen extends StatelessWidget {
       create: (_) => RealEstablishmentsCubit(
         RailwayEstablishmentQueryService(ApiClient()),
       ),
-      child: const _RealAppHomeView(),
+      child: const _VistaInicioAppReal(),
     );
   }
 }
 
-class _RealAppHomeView extends StatefulWidget {
-  const _RealAppHomeView();
+class _VistaInicioAppReal extends StatefulWidget {
+  const _VistaInicioAppReal();
 
   @override
-  State<_RealAppHomeView> createState() => _RealAppHomeViewState();
+  State<_VistaInicioAppReal> createState() => _VistaInicioAppRealState();
 }
 
-class _RealAppHomeViewState extends State<_RealAppHomeView> {
+class _VistaInicioAppRealState extends State<_VistaInicioAppReal> {
   final UserLocationService _locationService = UserLocationService();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -208,7 +208,7 @@ class _RealAppHomeViewState extends State<_RealAppHomeView> {
           await Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (_) =>
-                  EstablishmentWaitTimeDetailScreen(establishmentId: item.id),
+                  PantallaDetalleTiempoEsperaEstablecimiento(establishmentId: item.id),
             ),
           );
           if (!mounted) return;
