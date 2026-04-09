@@ -68,7 +68,7 @@ class _EstablishmentWaitTimeDetailScreenState
               builder: (context, favState) {
                 return FavoriteButton(
                   isFavorite: favState.isFavorite(widget.establishmentId),
-                  onToggle: () {
+                  onToggle: (value) {
                     context.read<FavoritesCubit>().toggleFavorite(widget.establishmentId);
                   },
                 );

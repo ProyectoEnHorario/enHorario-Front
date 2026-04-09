@@ -7,6 +7,7 @@ import 'package:enhorario/features/establishments/data/repositories/user_locatio
 import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/pages/establishment_wait_time_detail_screen.dart';
 import 'package:enhorario/core/widgets/favorite_button.dart';
+import 'package:enhorario/core/utils/afluencia_utils.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/favorites_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/establishment_map_view.dart';
 import 'package:flutter/material.dart';
@@ -166,21 +167,17 @@ class _RealAppHomeScreenState extends State<RealAppHomeScreen> {
   }
 
   String _afluenciaLabel(RailwayEstablishmentView item) {
-    if (!item.isOpen) return 'Cerrado';
-    final wait = item.averageWaitMinutes;
-    if (wait == null) return 'Afluencia desconocida';
-    if (wait <= 5) return 'Afluencia baja';
-    if (wait <= 15) return 'Afluencia media';
-    return 'Afluencia alta';
+    return AfluenciaUtils.getLabel(
+      isOpen: item.isOpen,
+      waitMinutes: item.averageWaitMinutes,
+    );
   }
 
   Color _afluenciaColor(RailwayEstablishmentView item) {
-    if (!item.isOpen) return Colors.blueGrey;
-    final wait = item.averageWaitMinutes;
-    if (wait == null) return Colors.amber;
-    if (wait <= 5) return Colors.green;
-    if (wait <= 15) return Colors.orange;
-    return Colors.red;
+    return AfluenciaUtils.getColor(
+      isOpen: item.isOpen,
+      waitMinutes: item.averageWaitMinutes,
+    );
   }
 
   Widget _buildMarkerInfoCard(
@@ -216,7 +213,7 @@ class _RealAppHomeScreenState extends State<RealAppHomeScreen> {
               builder: (context, favState) {
                 return FavoriteButton(
                   isFavorite: favState.isFavorite(item.id),
-                  onToggle: () {
+                  onToggle: (value) {
                     context.read<FavoritesCubit>().toggleFavorite(item.id);
                   },
                 );
