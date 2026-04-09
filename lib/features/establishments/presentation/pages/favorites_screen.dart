@@ -2,7 +2,7 @@ import 'package:enhorario/core/utils/afluencia_utils.dart';
 import 'package:enhorario/core/widgets/favorite_button.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/favorites_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
-import 'package:enhorario/features/establishments/presentation/pages/establishment_wait_time_detail_screen.dart';
+import 'package:enhorario/features/establishments/presentation/pages/pantalla_detalle_tiempo_espera_establecimiento.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 

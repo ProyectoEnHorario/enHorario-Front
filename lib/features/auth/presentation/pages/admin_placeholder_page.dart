@@ -2,7 +2,7 @@ import 'package:enhorario/features/afluencia_stats/presentation/pages/afluencia_
 import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
 import 'package:enhorario/features/categories/presentation/pages/categories_screen.dart';
-import 'package:enhorario/features/establishments/presentation/pages/establishments_screen.dart';
+import 'package:enhorario/features/establishments/presentation/pages/pantalla_establecimientos.dart';
 import 'package:flutter/material.dart';
 
 class AdminPlaceholderPage extends StatefulWidget {
@@ -156,7 +156,7 @@ class _AdminEntitiesHub extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => const EstablishmentsScreen(),
+                  builder: (_) => const PantallaEstablecimientos(),
                 ),
               );
             },

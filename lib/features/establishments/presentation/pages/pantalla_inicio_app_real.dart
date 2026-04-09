@@ -1,28 +1,38 @@
 import 'dart:async';
 
 import 'package:enhorario/core/api/api_client.dart';
+import 'package:enhorario/core/utils/afluencia_utils.dart';
+import 'package:enhorario/core/widgets/favorite_button.dart';
 import 'package:enhorario/features/establishments/data/models/railway_establishment_view.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 import 'package:enhorario/features/establishments/data/repositories/user_location_service.dart';
-import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
-import 'package:enhorario/features/establishments/presentation/pages/establishment_wait_time_detail_screen.dart';
-import 'package:enhorario/core/widgets/favorite_button.dart';
-import 'package:enhorario/core/utils/afluencia_utils.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/favorites_cubit.dart';
+import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
+import 'package:enhorario/features/establishments/presentation/pages/pantalla_detalle_tiempo_espera_establecimiento.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/establishment_map_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
-class RealAppHomeScreen extends StatefulWidget {
-  const RealAppHomeScreen({super.key});
+class PantallaInicioAppReal extends StatelessWidget {
+  const PantallaInicioAppReal({super.key});
 
   @override
-  State<RealAppHomeScreen> createState() => _RealAppHomeScreenState();
+  Widget build(BuildContext context) {
+    // La inyección de RealEstablishmentsCubit y FavoritesCubit ya se realiza en MainNavigationScreen
+    return const _VistaInicioAppReal();
+  }
 }
 
-class _RealAppHomeScreenState extends State<RealAppHomeScreen> {
+class _VistaInicioAppReal extends StatefulWidget {
+  const _VistaInicioAppReal();
+
+  @override
+  State<_VistaInicioAppReal> createState() => _VistaInicioAppRealState();
+}
+
+class _VistaInicioAppRealState extends State<_VistaInicioAppReal> {
   final UserLocationService _locationService = UserLocationService();
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
@@ -193,7 +203,7 @@ class _RealAppHomeScreenState extends State<RealAppHomeScreen> {
           await Navigator.of(context).push(
             MaterialPageRoute<void>(
               builder: (_) =>
-                  EstablishmentWaitTimeDetailScreen(establishmentId: item.id),
+                  PantallaDetalleTiempoEsperaEstablecimiento(establishmentId: item.id),
             ),
           );
           if (!mounted) return;
