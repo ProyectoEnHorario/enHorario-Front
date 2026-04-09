@@ -1,3 +1,4 @@
+import 'package:enhorario/core/utils/afluencia_utils.dart';
 import 'package:enhorario/core/widgets/favorite_button.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/favorites_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
@@ -14,7 +15,7 @@ class FavoritesScreen extends StatelessWidget {
       builder: (context, favState) {
         return BlocBuilder<RealEstablishmentsCubit, RealEstablishmentsState>(
           builder: (context, estState) {
-            if (estState.isLoading) {
+            if (estState.isLoading || favState.isLoading) {
               return const Center(child: CircularProgressIndicator());
             }
 
@@ -23,64 +24,22 @@ class FavoritesScreen extends StatelessWidget {
                 .toList();
 
             if (estState.error != null && favoriteItems.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Ocurrió un error al cargar tus favoritos:\n${estState.error}',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                      const SizedBox(height: 16),
-                      FilledButton.icon(
-                        onPressed: () {
-                          context.read<RealEstablishmentsCubit>().refreshTimes();
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Reintentar'),
-                      ),
-                    ],
-                  ),
-                ),
+              return _ErrorState(
+                message: estState.error!,
+                onRetry: () => context.read<RealEstablishmentsCubit>().refreshTimes(),
               );
             }
 
-            if (favoriteItems.isEmpty && !estState.isLoading) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.favorite_border,
-                        size: 80,
-                        color: Colors.grey.withValues(alpha: 0.5),
-                      ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Aún no tienes favoritos',
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: Colors.grey.shade700,
-                            ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Explora el mapa y pulsa el corazón para guardar los establecimientos que más te gusten.',
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.grey.shade600,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
+            if (favState.error != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(favState.error!)),
+                );
+              });
+            }
+
+            if (favoriteItems.isEmpty) {
+              return const _EmptyState();
             }
 
             return ListView.separated(
@@ -89,34 +48,23 @@ class FavoritesScreen extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final item = favoriteItems[index];
-
-                // Extraemos colores de lógica (ej. afluencia)
-                Color afluenciaColor = Colors.blueGrey;
-                String afluenciaLabel = 'Cerrado';
-                if (item.isOpen) {
-                  final wait = item.averageWaitMinutes;
-                  if (wait == null) {
-                    afluenciaColor = Colors.amber;
-                    afluenciaLabel = 'Afluencia desconocida';
-                  } else if (wait <= 5) {
-                    afluenciaColor = Colors.green;
-                    afluenciaLabel = 'Afluencia baja';
-                  } else if (wait <= 15) {
-                    afluenciaColor = Colors.orange;
-                    afluenciaLabel = 'Afluencia media';
-                  } else {
-                    afluenciaColor = Colors.red;
-                    afluenciaLabel = 'Afluencia alta';
-                  }
-                }
+                final color = AfluenciaUtils.getColor(
+                  isOpen: item.isOpen,
+                  waitMinutes: item.averageWaitMinutes,
+                );
+                final label = AfluenciaUtils.getLabel(
+                  isOpen: item.isOpen,
+                  waitMinutes: item.averageWaitMinutes,
+                );
 
                 return Card(
-                  elevation: 2,
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
+                    side: BorderSide(color: Colors.grey.shade200),
                   ),
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(20),
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
@@ -131,15 +79,15 @@ class FavoritesScreen extends StatelessWidget {
                       child: Row(
                         children: [
                           Container(
-                            width: 50,
-                            height: 50,
+                            width: 56,
+                            height: 56,
                             decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: afluenciaColor.withValues(alpha: 0.15),
+                              color: color.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(16),
                             ),
                             child: Icon(
-                              Icons.storefront,
-                              color: afluenciaColor,
+                              Icons.storefront_rounded,
+                              color: color,
                               size: 28,
                             ),
                           ),
@@ -150,19 +98,46 @@ class FavoritesScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   item.name,
-                                  style: Theme.of(context).textTheme.titleMedium,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
-                                Text(
-                                  '${item.categoryName ?? 'Sin categoría'} • $afluenciaLabel\n${item.city}',
-                                  style: Theme.of(context).textTheme.bodySmall,
+                                Row(
+                                  children: [
+                                    Container(
+                                      width: 8,
+                                      height: 8,
+                                      decoration: BoxDecoration(
+                                        color: color,
+                                        shape: BoxShape.circle,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      label,
+                                      style: TextStyle(
+                                        color: color,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      ' • ${item.categoryName ?? 'Tienda'}',
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
                           ),
                           FavoriteButton(
                             isFavorite: true,
-                            onToggle: () {
+                            onToggle: (value) {
                               context.read<FavoritesCubit>().toggleFavorite(item.id);
                             },
                           ),
@@ -179,3 +154,92 @@ class FavoritesScreen extends StatelessWidget {
     );
   }
 }
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.red.withValues(alpha: 0.05),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.favorite_rounded,
+                size: 64,
+                color: Colors.red.withValues(alpha: 0.2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Tu lista está vacía',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Guarda tus lugares favoritos para ver su estado de afluencia rápidamente.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 15,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorState extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _ErrorState({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.cloud_off_rounded, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Reintentar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black87,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
