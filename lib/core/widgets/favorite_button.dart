@@ -31,11 +31,11 @@ class _FavoriteButtonState extends State<FavoriteButton>
 
     _scaleAnimation = TweenSequence<double>([
       TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 1.3).chain(CurveTween(curve: Curves.easeOut)),
+        tween: Tween(begin: 1.0, end: 1.3).chain(CurveTween(curve: Curves.easeOutQuart)),
         weight: 50,
       ),
       TweenSequenceItem(
-        tween: Tween(begin: 1.3, end: 1.0).chain(CurveTween(curve: Curves.easeIn)),
+        tween: Tween(begin: 1.3, end: 1.0).chain(CurveTween(curve: Curves.easeInQuart)),
         weight: 50,
       ),
     ]).animate(_controller);
@@ -63,9 +63,12 @@ class _FavoriteButtonState extends State<FavoriteButton>
       onPressed: _handleTap,
       icon: ScaleTransition(
         scale: _scaleAnimation,
-        child: Icon(
-          widget.isFavorite ? Icons.favorite : Icons.favorite_border,
-          color: widget.isFavorite ? Colors.red : Theme.of(context).disabledColor,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          child: Icon(
+            widget.isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: widget.isFavorite ? const Color(0xFFFF4B4B) : Colors.grey.shade400,
+          ),
         ),
       ),
     );
