@@ -59,14 +59,14 @@ class FavoritesCubit extends Cubit<FavoritesState> {
   Future<void> addFavorite(String id) async {
     // ENH-178: Validar que no se agreguen duplicados si ya existe en el Set
     if (state.favoriteIds.contains(id)) return;
-
+ 
     final oldFavorites = state.favoriteIds;
     // Optimistic Update
     final newFavorites = Set<String>.from(state.favoriteIds)..add(id);
     emit(state.copyWith(favoriteIds: newFavorites, error: null));
-
+ 
     try {
-      await _repository.saveFavorites(newFavorites);
+      await _repository.addFavorite(id);
     } catch (e) {
       // Rollback
       emit(state.copyWith(
@@ -78,14 +78,14 @@ class FavoritesCubit extends Cubit<FavoritesState> {
 
   Future<void> removeFavorite(String id) async {
     if (!state.favoriteIds.contains(id)) return;
-
+ 
     final oldFavorites = state.favoriteIds;
     // Optimistic Update
     final newFavorites = Set<String>.from(state.favoriteIds)..remove(id);
     emit(state.copyWith(favoriteIds: newFavorites, error: null));
-
+ 
     try {
-      await _repository.saveFavorites(newFavorites);
+      await _repository.removeFavorite(id);
     } catch (e) {
       // Rollback
       emit(state.copyWith(

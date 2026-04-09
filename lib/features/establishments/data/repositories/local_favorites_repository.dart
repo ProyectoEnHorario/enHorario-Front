@@ -13,11 +13,19 @@ class LocalFavoritesRepository implements FavoritesRepository {
     return list.toSet().toList();
   }
 
-  /// Persiste el Set completo de favoritos de forma atómica para evitar desincronización
-  /// por llamadas concurrentes.
   @override
-  Future<void> saveFavorites(Set<String> favorites) async {
+  Future<void> addFavorite(String id) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_key, favorites.toList());
+    final list = prefs.getStringList(_key) ?? [];
+    final set = list.toSet()..add(id);
+    await prefs.setStringList(_key, set.toList());
+  }
+
+  @override
+  Future<void> removeFavorite(String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final list = prefs.getStringList(_key) ?? [];
+    final set = list.toSet()..remove(id);
+    await prefs.setStringList(_key, set.toList());
   }
 }

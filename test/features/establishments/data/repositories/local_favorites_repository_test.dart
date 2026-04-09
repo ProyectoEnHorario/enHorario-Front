@@ -13,8 +13,8 @@ void main() {
 
     test('should persist favorites between different repository instances', () async {
       // 1. Guardar favoritos en la primera instancia
-      final initialFavorites = {'est_1', 'est_2'};
-      await repository.saveFavorites(initialFavorites);
+      await repository.addFavorite('est_1');
+      await repository.addFavorite('est_2');
 
       // 2. Simular "reinicio" creando una nueva instancia del repositorio
       final newRepository = LocalFavoritesRepository();
