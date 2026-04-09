@@ -57,6 +57,7 @@ class FavoritesCubit extends Cubit<FavoritesState> {
   }
 
   Future<void> addFavorite(String id) async {
+    // ENH-178: Validar que no se agreguen duplicados si ya existe en el Set
     if (state.favoriteIds.contains(id)) return;
 
     final oldFavorites = state.favoriteIds;

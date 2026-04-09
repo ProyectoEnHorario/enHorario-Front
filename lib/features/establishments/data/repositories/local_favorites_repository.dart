@@ -8,7 +8,9 @@ class LocalFavoritesRepository implements FavoritesRepository {
   @override
   Future<List<String>> getFavorites() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(_key) ?? [];
+    final list = prefs.getStringList(_key) ?? [];
+    // ENH-178: Validar que no se dupliquen favoritos al leerlo de persistencia
+    return list.toSet().toList();
   }
 
   /// Persiste el Set completo de favoritos de forma atómica para evitar desincronización
