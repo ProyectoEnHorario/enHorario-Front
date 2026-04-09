@@ -89,7 +89,7 @@ class FavoritesCubit extends Cubit<FavoritesState> {
       // Rollback
       emit(state.copyWith(
         favoriteIds: oldFavorites,
-        error: 'Error al eliminar de favoritos',
+        error: 'No se pudo eliminar el establecimiento de favoritos',
       ));
     }
   }
