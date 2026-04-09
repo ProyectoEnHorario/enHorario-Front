@@ -11,22 +11,8 @@ class LocalFavoritesRepository implements FavoritesRepository {
   }
 
   @override
-  Future<void> addFavorite(String id) async {
+  Future<void> saveFavorites(Set<String> favorites) async {
     final prefs = await SharedPreferences.getInstance();
-    final list = prefs.getStringList(_key) ?? [];
-    if (!list.contains(id)) {
-      list.add(id);
-      await prefs.setStringList(_key, list);
-    }
-  }
-
-  @override
-  Future<void> removeFavorite(String id) async {
-    final prefs = await SharedPreferences.getInstance();
-    final list = prefs.getStringList(_key) ?? [];
-    if (list.contains(id)) {
-      list.remove(id);
-      await prefs.setStringList(_key, list);
-    }
+    await prefs.setStringList(_key, favorites.toList());
   }
 }
