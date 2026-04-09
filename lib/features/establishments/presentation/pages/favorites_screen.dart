@@ -16,7 +16,16 @@ class FavoritesScreen extends StatelessWidget {
         return BlocBuilder<RealEstablishmentsCubit, RealEstablishmentsState>(
           builder: (context, estState) {
             if (estState.isLoading || favState.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Buscando tus favoritos...'),
+                  ],
+                ),
+              );
             }
 
             final favoriteItems = estState.items
@@ -174,25 +183,28 @@ class _EmptyState extends StatelessWidget {
               ),
               child: Icon(
                 Icons.favorite_rounded,
-                size: 64,
-                color: Colors.red.withValues(alpha: 0.2),
+                size: 80,
+                color: Colors.red.withValues(alpha: 0.15),
               ),
             ),
             const SizedBox(height: 24),
             const Text(
-              'Tu lista está vacía',
+              '¿Aún no tienes favoritos?',
+              textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
+                letterSpacing: -0.5,
               ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Guarda tus lugares favoritos para ver su estado de afluencia rápidamente.',
+              'Marca los lugares que más visitas para tener su estado siempre a mano.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.grey.shade600,
-                fontSize: 15,
+                fontSize: 16,
+                height: 1.4,
               ),
             ),
           ],

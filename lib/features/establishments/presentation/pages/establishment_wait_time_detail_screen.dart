@@ -90,23 +90,43 @@ class _EstablishmentWaitTimeDetailScreenState
         body: BlocBuilder<EstablishmentWaitTimeCubit, EstablishmentWaitTimeState>(
           builder: (context, state) {
             if (state.isLoading) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 16),
+                    Text('Cargando información...'),
+                  ],
+                ),
+              );
             }
 
             if (state.error != null && state.item == null) {
               return Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(state.error!, textAlign: TextAlign.center),
-                      const SizedBox(height: 12),
-                      FilledButton(
+                      const Icon(
+                        Icons.error_outline_rounded,
+                        size: 64,
+                        color: Colors.redAccent,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        state.error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton.icon(
                         onPressed: () => context
                             .read<EstablishmentWaitTimeCubit>()
                             .load(widget.establishmentId),
-                        child: const Text('Reintentar'),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Reintentar'),
                       ),
                     ],
                   ),
@@ -117,7 +137,14 @@ class _EstablishmentWaitTimeDetailScreenState
             final item = state.item;
             if (item == null) {
               return const Center(
-                child: Text('No hay informacion disponible.'),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.info_outline_rounded, size: 64, color: Colors.grey),
+                    SizedBox(height: 16),
+                    Text('No hay información disponible.'),
+                  ],
+                ),
               );
             }
 
