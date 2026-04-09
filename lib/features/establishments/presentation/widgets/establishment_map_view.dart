@@ -20,6 +20,7 @@ class EstablishmentMapView extends StatefulWidget {
     this.selectedEstablishmentId,
     this.zoomChangeToken = 0,
     this.targetZoomOnToken,
+    this.favoriteIds = const {},
   });
 
   final List<RailwayEstablishmentView> establishments;
@@ -36,6 +37,7 @@ class EstablishmentMapView extends StatefulWidget {
   final String? selectedEstablishmentId;
   final int zoomChangeToken;
   final double? targetZoomOnToken;
+  final Set<String> favoriteIds;
 
   @override
   State<EstablishmentMapView> createState() => _EstablishmentMapViewState();
@@ -188,6 +190,7 @@ class _EstablishmentMapViewState extends State<EstablishmentMapView> {
                   child: _EstablishmentMarker(
                     color: markerColor,
                     selected: isSelected,
+                    isFavorite: widget.favoriteIds.contains(item.id),
                   ),
                 ),
               );
@@ -228,17 +231,22 @@ class _UserLocationMarker extends StatelessWidget {
 }
 
 class _EstablishmentMarker extends StatelessWidget {
-  const _EstablishmentMarker({required this.color, required this.selected});
+  const _EstablishmentMarker({
+    required this.color,
+    required this.selected,
+    this.isFavorite = false,
+  });
 
   final Color color;
   final bool selected;
+  final bool isFavorite;
 
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 160),
-      width: selected ? 24 : 20,
-      height: selected ? 24 : 20,
+      width: selected ? 32 : (isFavorite ? 28 : 22),
+      height: selected ? 32 : (isFavorite ? 28 : 22),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: color,
@@ -247,6 +255,15 @@ class _EstablishmentMarker extends StatelessWidget {
           BoxShadow(color: Colors.black26, blurRadius: 3, offset: Offset(0, 1)),
         ],
       ),
+      child: isFavorite
+          ? const Center(
+              child: Icon(
+                Icons.favorite,
+                color: Colors.white,
+                size: 14,
+              ),
+            )
+          : null,
     );
   }
 }

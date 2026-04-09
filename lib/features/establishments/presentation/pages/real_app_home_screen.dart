@@ -392,34 +392,39 @@ class _RealAppHomeScreenState extends State<RealAppHomeScreen> {
           return Stack(
             fit: StackFit.expand,
             children: [
-              EstablishmentMapView(
-                establishments: visibleItems,
-                center: _mapCenter,
-                autoRecenter: _followMyLocation,
-                centerChangeToken: _centerChangeToken,
-                onUserGesture: () {
-                  FocusScope.of(context).unfocus();
-                  if (_followMyLocation) {
-                    setState(() {
-                      _followMyLocation = false;
-                    });
-                  }
-                },
-                onMapTap: () {
-                  FocusScope.of(context).unfocus();
-                },
-                userPosition: userPosition,
-                userTrail: _userTrail,
-                nearbyRadiusKm: _nearbyRadiusKm,
-                selectedEstablishmentId: _selectedEstablishment?.id,
-                zoomChangeToken: _zoomChangeToken,
-                targetZoomOnToken: _recenterZoomLevel,
-                markerColorResolver: _afluenciaColor,
-                onMarkerTap: (item) {
-                  setState(() {
-                    _followMyLocation = false;
-                    _selectedEstablishment = item;
-                  });
+              BlocBuilder<FavoritesCubit, FavoritesState>(
+                builder: (context, favState) {
+                  return EstablishmentMapView(
+                    establishments: visibleItems,
+                    center: _mapCenter,
+                    autoRecenter: _followMyLocation,
+                    centerChangeToken: _centerChangeToken,
+                    onUserGesture: () {
+                      FocusScope.of(context).unfocus();
+                      if (_followMyLocation) {
+                        setState(() {
+                          _followMyLocation = false;
+                        });
+                      }
+                    },
+                    onMapTap: () {
+                      FocusScope.of(context).unfocus();
+                    },
+                    userPosition: userPosition,
+                    userTrail: _userTrail,
+                    nearbyRadiusKm: _nearbyRadiusKm,
+                    selectedEstablishmentId: _selectedEstablishment?.id,
+                    zoomChangeToken: _zoomChangeToken,
+                    targetZoomOnToken: _recenterZoomLevel,
+                    markerColorResolver: _afluenciaColor,
+                    favoriteIds: favState.favoriteIds,
+                    onMarkerTap: (item) {
+                      setState(() {
+                        _followMyLocation = false;
+                        _selectedEstablishment = item;
+                      });
+                    },
+                  );
                 },
               ),
               Positioned(
