@@ -72,7 +72,6 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
             BlocBuilder<FavoritesCubit, FavoritesState>(
               builder: (context, state) {
                 return FavoriteButton(
-                  isLight: false,
                   isFavorite: state.isFavorite(widget.establishmentId),
                   onToggle: (value) {
                     context

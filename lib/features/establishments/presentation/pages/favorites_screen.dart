@@ -77,7 +77,7 @@ class FavoritesScreen extends StatelessWidget {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute<void>(
-                          builder: (_) => EstablishmentWaitTimeDetailScreen(
+                          builder: (_) => PantallaDetalleTiempoEsperaEstablecimiento(
                             establishmentId: item.id,
                           ),
                         ),
