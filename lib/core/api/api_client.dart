@@ -10,7 +10,7 @@ class ApiClient {
         baseUrl: AppConfig.backendBaseUrl,
         connectTimeout: AppConfig.connectionTimeout,
         receiveTimeout: AppConfig.receiveTimeout,
-        contentType: 'application/json',
+        // No definimos contentType global para que Dio lo maneje dinámicamente
       ),
     );
 
@@ -33,7 +33,9 @@ class ApiClient {
     String? token,
   }) async {
     try {
-      final options = Options(headers: _headers(token));
+      final options = Options(
+        headers: _headers(token),
+      );
       final response = await _dio.get(
         path,
         queryParameters: queryParameters,
@@ -52,7 +54,10 @@ class ApiClient {
     String? token,
   }) async {
     try {
-      final options = Options(headers: _headers(token));
+      final options = Options(
+        headers: _headers(token),
+        contentType: 'application/json',
+      );
       final response = await _dio.post(
         path,
         data: data,
@@ -95,10 +100,13 @@ class ApiClient {
   }
 
   Map<String, String> _headers(String? token) {
-    if (token == null || token.trim().isEmpty) {
-      return {};
+    final headers = <String, String>{
+      'Accept': 'application/json',
+    };
+    if (token != null && token.trim().isNotEmpty) {
+      headers['Authorization'] = 'Bearer ${token.trim()}';
     }
-    return {'Authorization': 'Bearer ${token.trim()}'};
+    return headers;
   }
 
   ApiException _handleError(DioException error) {

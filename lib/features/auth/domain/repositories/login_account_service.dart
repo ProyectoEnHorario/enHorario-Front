@@ -12,11 +12,13 @@ class LoginAccountSuccess {
     required this.token,
     required this.email,
     this.role,
+    this.userId,
   });
 
   final String token;
   final String email;
   final String? role;
+  final String? userId;
 }
 
 abstract class LoginAccountService {

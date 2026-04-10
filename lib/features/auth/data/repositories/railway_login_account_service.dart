@@ -34,12 +34,14 @@ class RailwayLoginAccountService implements LoginAccountService {
       }
 
       final role = _extractRole(response);
+      final userId = _extractUserId(response);
 
       return Right<Failure, LoginAccountSuccess>(
         LoginAccountSuccess(
           token: token,
           email: request.email.trim().toLowerCase(),
           role: role,
+          userId: userId,
         ),
       );
     } on ApiException catch (e) {
@@ -76,6 +78,17 @@ class RailwayLoginAccountService implements LoginAccountService {
       final nestedRole = user['rol']?.toString() ?? user['role']?.toString();
       if (nestedRole != null && nestedRole.trim().isNotEmpty) {
         return nestedRole.trim();
+      }
+    }
+    return null;
+  }
+
+  String? _extractUserId(Map<String, dynamic> payload) {
+    final user = payload['user'];
+    if (user is Map<String, dynamic>) {
+      final id = user['id']?.toString();
+      if (id != null && id.trim().isNotEmpty) {
+        return id.trim();
       }
     }
     return null;

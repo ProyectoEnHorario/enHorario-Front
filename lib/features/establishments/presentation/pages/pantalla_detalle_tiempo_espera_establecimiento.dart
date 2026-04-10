@@ -3,6 +3,8 @@ import 'package:enhorario/core/widgets/indicador_afluencia.dart';
 
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
+import 'package:enhorario/features/establishments/presentation/bloc/favorites_cubit.dart';
+import 'package:enhorario/core/widgets/favorite_button.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/establishment_wait_time_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -67,6 +69,18 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
         appBar: AppBar(
           title: const Text('Detalle del establecimiento'),
           actions: [
+            BlocBuilder<FavoritesCubit, FavoritesState>(
+              builder: (context, state) {
+                return FavoriteButton(
+                  isFavorite: state.isFavorite(widget.establishmentId),
+                  onToggle: (value) {
+                    context
+                        .read<FavoritesCubit>()
+                        .toggleFavorite(widget.establishmentId);
+                  },
+                );
+              },
+            ),
             Builder(
               builder: (context) {
                 return IconButton(
