@@ -41,7 +41,7 @@ class FavoritesCubit extends Cubit<FavoritesState> {
       emit(state.copyWith(favoriteIds: list.toSet(), isLoading: false));
     } catch (e) {
       emit(state.copyWith(
-        error: 'No se pudieron cargar los favoritos',
+        error: e is Exception ? e.toString().replaceAll('Exception: ', '') : 'No se pudieron cargar los favoritos',
         isLoading: false,
       ));
     }
