@@ -16,4 +16,8 @@ class AppConfig {
   static const String authTokenKey = 'auth_token';
   static const String userKey = 'current_user';
   static const String userRoleKey = 'current_user_role';
+
+  // Notification Settings Keys
+  static const String notificationsEnabledKey = 'notifications_enabled';
+  static const String notificationCooldownKey = 'notification_cooldown_minutes';
 }
