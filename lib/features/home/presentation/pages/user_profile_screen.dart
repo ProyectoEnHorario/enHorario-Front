@@ -87,6 +87,22 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
     }
   }
 
+  Future<void> _sendTestNotification() async {
+    final payload = NotificationPayload(
+      establishmentId: 'test-id',
+      establishmentName: 'Establecimiento de Prueba',
+      afluenciaLevel: 10,
+    );
+
+    await NotificationService().showNotification(payload);
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Notificación de prueba enviada.')),
+      );
+    }
+  }
+
   Future<void> _updateCooldown(double value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(AppConfig.notificationCooldownKey, value.round());
@@ -424,6 +440,15 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 max: 300,
                 divisions: 59, // Pasos de 5 minutos
                 onChanged: _updateCooldown,
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: _sendTestNotification,
+                  icon: const Icon(Icons.notifications_active_outlined),
+                  label: const Text('Enviar notificación de prueba'),
+                ),
               ),
             ],
           ],
