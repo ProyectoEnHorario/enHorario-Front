@@ -5,7 +5,8 @@ class RailwayFavoritesRepository implements FavoritesRepository {
   final ApiClient _apiClient;
   
   // ENH-10: Usuario de prueba para el header Authorization
-  static const _testUserId = 'usr-tester';
+  // ENH-10: Usuario de prueba para el header Authorization (Debe ser un UUID valido para el backend)
+  static const _testUserId = '00000000-0000-0000-0000-000000000000';
 
   RailwayFavoritesRepository(this._apiClient);
 
@@ -30,7 +31,7 @@ class RailwayFavoritesRepository implements FavoritesRepository {
   Future<void> addFavorite(String id) async {
     await _apiClient.post<void>(
       '/favorites/$id',
-      data: {}, // El endpoint no requiere body segun la definicion
+      data: null, // Algunos backends fallan con {} si no esperan body
       token: _testUserId,
     );
   }
