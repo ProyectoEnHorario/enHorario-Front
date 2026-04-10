@@ -1,6 +1,8 @@
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/core/config/app_config.dart';
 import 'package:enhorario/core/services/afluencia_monitor_service.dart';
+import 'package:enhorario/core/services/notification_payload.dart';
+import 'package:enhorario/core/services/notification_service.dart';
 import 'package:enhorario/features/auth/data/repositories/account_deletion_service.dart';
 import 'package:enhorario/features/auth/presentation/bloc/delete_account_cubit.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
@@ -55,9 +57,25 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 
   Future<void> _toggleNotifications(bool value) async {
+    if (value) {
+      // Solicitar permisos al activar (ENH-155)
+      final granted = await NotificationService().requestPermissions();
+      if (!granted && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Permisos de notificación denegados. Por favor, actívalos en los ajustes del sistema.',
+            ),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        return;
+      }
+    }
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(AppConfig.notificationsEnabledKey, value);
-    
+
     setState(() {
       _notificationsEnabled = value;
     });
