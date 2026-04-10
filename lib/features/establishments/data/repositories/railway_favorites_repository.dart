@@ -1,21 +1,20 @@
 import 'package:enhorario/core/api/api_client.dart';
+import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
 import 'package:enhorario/features/establishments/domain/repositories/favorites_repository.dart';
 
 class RailwayFavoritesRepository implements FavoritesRepository {
   final ApiClient _apiClient;
-  
-  // ENH-10: Usuario de prueba para el header Authorization
-  // ENH-10: Usuario de prueba para el header Authorization (Se usa el patron de correo visto en Auth)
-  static const _testUserId = 'admin@enhorario.com';
+  final AuthSessionRepository _sessionRepository;
 
-  RailwayFavoritesRepository(this._apiClient);
+  RailwayFavoritesRepository(this._apiClient) : _sessionRepository = AuthSessionRepository();
 
   @override
   Future<List<String>> getFavorites() async {
     try {
+      final token = await _sessionRepository.getAuthToken();
       final response = await _apiClient.get<List<dynamic>>(
         '/favorites/my-favorites',
-        token: _testUserId,
+        token: token,
       );
       
       return response
@@ -29,18 +28,20 @@ class RailwayFavoritesRepository implements FavoritesRepository {
 
   @override
   Future<void> addFavorite(String id) async {
+    final token = await _sessionRepository.getAuthToken();
     await _apiClient.post<void>(
       '/favorites/$id',
-      data: {}, // Re-intentamos con {} ya que null tambien dio 400
-      token: _testUserId,
+      data: null, // El endpoint no requiere body segun curl -X POST
+      token: token,
     );
   }
 
   @override
   Future<void> removeFavorite(String id) async {
+    final token = await _sessionRepository.getAuthToken();
     await _apiClient.delete(
       '/favorites/$id',
-      token: _testUserId,
+      token: token,
     );
   }
 }
