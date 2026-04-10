@@ -35,7 +35,7 @@ class NotificationService {
 
     // Inicializar el plugin
     await flutterLocalNotificationsPlugin.initialize(
-      initializationSettings,
+      settings: initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse notificationResponse) async {
         // Aquí manejaremos la acción cuando el usuario haga tap en la notificación (ENH-153)
       },
