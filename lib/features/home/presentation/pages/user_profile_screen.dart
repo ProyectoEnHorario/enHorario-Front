@@ -459,7 +459,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
 
   Widget _buildDangerZoneCard() {
     return Card(
-      color: Colors.red.withOpacity(0.05),
+      color: Colors.red.withValues(alpha: 0.05),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
