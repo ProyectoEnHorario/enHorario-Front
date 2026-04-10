@@ -1,5 +1,8 @@
+import 'package:enhorario/app/app.dart';
 import 'package:enhorario/core/services/notification_payload.dart';
+import 'package:enhorario/features/establishments/presentation/pages/pantalla_detalle_tiempo_espera_establecimiento.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
@@ -39,7 +42,17 @@ class NotificationService {
       settings: initializationSettings,
       onDidReceiveNotificationResponse:
           (NotificationResponse notificationResponse) async {
-        // Aquí manejaremos la acción cuando el usuario haga tap en la notificación (ENH-153)
+        final String? payload = notificationResponse.payload;
+        if (payload != null && payload.isNotEmpty) {
+          // Navegar al detalle del establecimiento (ENH-153)
+          EnHorarioApp.navigatorKey.currentState?.push(
+            MaterialPageRoute(
+              builder: (context) => PantallaDetalleTiempoEsperaEstablecimiento(
+                establishmentId: payload,
+              ),
+            ),
+          );
+        }
       },
     );
   }
