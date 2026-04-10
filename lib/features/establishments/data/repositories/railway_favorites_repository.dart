@@ -12,36 +12,71 @@ class RailwayFavoritesRepository implements FavoritesRepository {
   Future<List<String>> getFavorites() async {
     try {
       final token = await _sessionRepository.getAuthToken();
-      final response = await _apiClient.get<List<dynamic>>(
+      
+      if (token == null || token.isEmpty) {
+        print('[FavoritesRepo] Error: Token no encontrado en SharedPreferences');
+        throw Exception('Inicia sesión para ver tus favoritos');
+      }
+
+      // Usamos dynamic para manejar respuestas paginadas o listas directas
+      final response = await _apiClient.get<dynamic>(
         '/favorites/my-favorites',
         token: token,
       );
       
-      return response
-          .map((item) => item['id'].toString())
+      final items = _extractList(response);
+      
+      return items
+          .whereType<Map<String, dynamic>>()
+          .map((item) => item['id']?.toString() ?? '')
+          .where((id) => id.isNotEmpty)
           .toList();
     } catch (e) {
-      // Si hay error en la red o servidor, propagamos para que el Cubit lo maneje
+      print('[FavoritesRepo] Error en getFavorites: $e');
       rethrow;
     }
   }
 
   @override
   Future<void> addFavorite(String id) async {
-    final token = await _sessionRepository.getAuthToken();
-    await _apiClient.post<void>(
-      '/favorites/$id',
-      data: null, // El endpoint no requiere body segun curl -X POST
-      token: token,
-    );
+    try {
+      final token = await _sessionRepository.getAuthToken();
+      if (token == null || token.isEmpty) throw Exception('Sesión expirada');
+
+      await _apiClient.post<void>(
+        '/favorites/$id',
+        data: {}, // Enviamos {} por compatibilidad con algunos backends
+        token: token,
+      );
+    } catch (e) {
+      print('[FavoritesRepo] Error en addFavorite ($id): $e');
+      rethrow;
+    }
   }
 
   @override
   Future<void> removeFavorite(String id) async {
-    final token = await _sessionRepository.getAuthToken();
-    await _apiClient.delete(
-      '/favorites/$id',
-      token: token,
-    );
+    try {
+      final token = await _sessionRepository.getAuthToken();
+      if (token == null || token.isEmpty) throw Exception('Sesión expirada');
+
+      await _apiClient.delete(
+        '/favorites/$id',
+        token: token,
+      );
+    } catch (e) {
+      print('[FavoritesRepo] Error en removeFavorite ($id): $e');
+      rethrow;
+    }
+  }
+
+  List<dynamic> _extractList(dynamic response) {
+    if (response is List) return response;
+    if (response is Map<String, dynamic>) {
+      // Manejo de respuesta paginada tipo { "content": [...] }
+      final content = response['content'];
+      if (content is List) return content;
+    }
+    return const [];
   }
 }
