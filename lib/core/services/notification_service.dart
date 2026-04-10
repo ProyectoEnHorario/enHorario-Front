@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 class NotificationService {
@@ -41,4 +42,30 @@ class NotificationService {
       },
     );
   }
+
+  /// Solicita permisos de notificación al usuario.
+  /// Retorna [true] si el usuario concedió el permiso, [false] si lo denegó.
+  Future<bool> requestPermissions() async {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      final AndroidFlutterLocalNotificationsPlugin? androidPlugin =
+          flutterLocalNotificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                  AndroidFlutterLocalNotificationsPlugin>();
+      final bool? granted = await androidPlugin?.requestNotificationsPermission();
+      return granted ?? false;
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+      final IOSFlutterLocalNotificationsPlugin? iosPlugin =
+          flutterLocalNotificationsPlugin
+              .resolvePlatformSpecificImplementation<
+                  IOSFlutterLocalNotificationsPlugin>();
+      final bool? granted = await iosPlugin?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      return granted ?? false;
+    }
+    return false;
+  }
 }
+
