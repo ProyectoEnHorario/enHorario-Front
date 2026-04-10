@@ -11,17 +11,17 @@ class RailwayFavoritesRepository implements FavoritesRepository {
   @override
   Future<List<String>> getFavorites() async {
     try {
-      final token = await _sessionRepository.getAuthToken();
+      final userId = await _sessionRepository.getCurrentUserId();
       
-      if (token == null || token.isEmpty) {
-        print('[FavoritesRepo] Error: Token no encontrado en SharedPreferences');
+      if (userId == null || userId.isEmpty) {
+        print('[FavoritesRepo] Error: UserId no encontrado en SharedPreferences');
         throw Exception('Inicia sesión para ver tus favoritos');
       }
 
       // Usamos dynamic para manejar respuestas paginadas o listas directas
       final response = await _apiClient.get<dynamic>(
         '/favorites/my-favorites',
-        token: token,
+        token: userId,
       );
       
       final items = _extractList(response);
@@ -40,13 +40,13 @@ class RailwayFavoritesRepository implements FavoritesRepository {
   @override
   Future<void> addFavorite(String id) async {
     try {
-      final token = await _sessionRepository.getAuthToken();
-      if (token == null || token.isEmpty) throw Exception('Sesión expirada');
+      final userId = await _sessionRepository.getCurrentUserId();
+      if (userId == null || userId.isEmpty) throw Exception('Sesión expirada');
 
       await _apiClient.post<void>(
         '/favorites/$id',
         data: {}, // Enviamos {} por compatibilidad con algunos backends
-        token: token,
+        token: userId,
       );
     } catch (e) {
       print('[FavoritesRepo] Error en addFavorite ($id): $e');
@@ -57,12 +57,12 @@ class RailwayFavoritesRepository implements FavoritesRepository {
   @override
   Future<void> removeFavorite(String id) async {
     try {
-      final token = await _sessionRepository.getAuthToken();
-      if (token == null || token.isEmpty) throw Exception('Sesión expirada');
+      final userId = await _sessionRepository.getCurrentUserId();
+      if (userId == null || userId.isEmpty) throw Exception('Sesión expirada');
 
       await _apiClient.delete(
         '/favorites/$id',
-        token: token,
+        token: userId,
       );
     } catch (e) {
       print('[FavoritesRepo] Error en removeFavorite ($id): $e');

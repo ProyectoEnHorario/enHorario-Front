@@ -70,6 +70,7 @@ class LoginUserCubit extends Cubit<LoginUserState> {
             token: successData.token,
             email: successData.email,
             role: successData.role,
+            userId: successData.userId,
           );
 
           emit(

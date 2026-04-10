@@ -1,5 +1,8 @@
 import 'package:enhorario/core/api/api_client.dart';
+import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
+import 'package:enhorario/features/auth/data/repositories/railway_login_account_service.dart';
 import 'package:enhorario/features/auth/data/repositories/railway_register_account_service.dart';
+import 'package:enhorario/features/auth/domain/repositories/login_account_service.dart';
 import 'package:enhorario/features/auth/domain/repositories/register_account_service.dart';
 import 'package:enhorario/features/auth/presentation/bloc/register_user_cubit.dart';
 import 'package:enhorario/features/auth/presentation/pages/login_user_screen.dart';
@@ -17,9 +20,10 @@ class RegisterUserScreen extends StatefulWidget {
 
 class _RegisterUserScreenState extends State<RegisterUserScreen> {
   final _formKey = GlobalKey<FormState>();
-  final RegisterAccountService _registerService = RailwayRegisterAccountService(
-    ApiClient(),
-  );
+  late final ApiClient _apiClient;
+  late final RegisterAccountService _registerService;
+  late final LoginAccountService _loginService;
+  final AuthSessionRepository _sessionRepository = AuthSessionRepository();
 
   final _nombreCtrl = TextEditingController();
   final _apellidoCtrl = TextEditingController();
@@ -28,6 +32,14 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
   final _confirmPasswordCtrl = TextEditingController();
 
   bool _acceptTerms = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _apiClient = ApiClient();
+    _registerService = RailwayRegisterAccountService(_apiClient);
+    _loginService = RailwayLoginAccountService(_apiClient);
+  }
 
   @override
   void dispose() {
@@ -68,7 +80,11 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => RegisterUserCubit(_registerService),
+      create: (_) => RegisterUserCubit(
+        _registerService,
+        _loginService,
+        _sessionRepository,
+      ),
       child: Scaffold(
         appBar: AppBar(title: const Text('Registro de usuarios')),
         body: BlocConsumer<RegisterUserCubit, RegisterUserState>(
