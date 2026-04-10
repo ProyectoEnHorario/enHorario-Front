@@ -26,15 +26,7 @@ class RailwayLoginAccountService implements LoginAccountService {
         );
       }
 
-      final user = response['user'];
-      String token = response['token']?.toString() ?? '';
-      
-      // Si el backend incluye el objeto usuario con su ID, usamos ese ID como "token"
-      // ya que los controladores de favoritos/turnos esperan el UUID directamente.
-      if (user is Map<String, dynamic> && user['id'] != null) {
-        token = user['id'].toString();
-      }
-
+      final token = response['token']?.toString() ?? '';
       if (token.isEmpty) {
         return const Left<Failure, LoginAccountSuccess>(
           Failure('No fue posible iniciar sesion. Intenta nuevamente.'),
