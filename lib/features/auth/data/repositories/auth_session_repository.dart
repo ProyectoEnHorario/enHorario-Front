@@ -6,11 +6,13 @@ class AuthSessionRepository {
   static String? _tokenFallback;
   static String? _userFallback;
   static String? _roleFallback;
+  static String? _userIdFallback;
 
   Future<void> saveSession({
     required String token,
     required String email,
     String? role,
+    String? userId,
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -19,17 +21,23 @@ class AuthSessionRepository {
       if (role != null && role.trim().isNotEmpty) {
         await prefs.setString(AppConfig.userRoleKey, role.trim());
       }
+      if (userId != null && userId.trim().isNotEmpty) {
+        await prefs.setString('user_id', userId.trim());
+      }
       _tokenFallback = token;
       _userFallback = email;
       _roleFallback = role?.trim();
+      _userIdFallback = userId?.trim();
     } on MissingPluginException {
       _tokenFallback = token;
       _userFallback = email;
       _roleFallback = role?.trim();
+      _userIdFallback = userId?.trim();
     } on PlatformException {
       _tokenFallback = token;
       _userFallback = email;
       _roleFallback = role?.trim();
+      _userIdFallback = userId?.trim();
     }
   }
 
@@ -55,11 +63,13 @@ class AuthSessionRepository {
     _tokenFallback = null;
     _userFallback = null;
     _roleFallback = null;
+    _userIdFallback = null;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(AppConfig.authTokenKey);
       await prefs.remove(AppConfig.userKey);
       await prefs.remove(AppConfig.userRoleKey);
+      await prefs.remove('user_id');
     } on MissingPluginException {
       return;
     } on PlatformException {
@@ -97,6 +107,17 @@ class AuthSessionRepository {
       return _roleFallback;
     } on PlatformException {
       return _roleFallback;
+    }
+  }
+
+  Future<String?> getCurrentUserId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getString('user_id') ?? _userIdFallback;
+    } on MissingPluginException {
+      return _userIdFallback;
+    } on PlatformException {
+      return _userIdFallback;
     }
   }
 

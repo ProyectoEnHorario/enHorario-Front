@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:enhorario/core/api/api_client.dart';
+import 'package:enhorario/core/utils/afluencia_utils.dart';
+import 'package:enhorario/core/widgets/favorite_button.dart';
 import 'package:enhorario/features/establishments/data/models/railway_establishment_view.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 import 'package:enhorario/features/establishments/data/repositories/user_location_service.dart';
+import 'package:enhorario/features/establishments/presentation/bloc/favorites_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/pages/pantalla_detalle_tiempo_espera_establecimiento.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/establishment_map_view.dart';
@@ -17,12 +20,8 @@ class PantallaInicioAppReal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => RealEstablishmentsCubit(
-        RailwayEstablishmentQueryService(ApiClient()),
-      ),
-      child: const _VistaInicioAppReal(),
-    );
+    // La inyección de RealEstablishmentsCubit y FavoritesCubit ya se realiza en MainNavigationScreen
+    return const _VistaInicioAppReal();
   }
 }
 
@@ -178,21 +177,17 @@ class _VistaInicioAppRealState extends State<_VistaInicioAppReal> {
   }
 
   String _afluenciaLabel(RailwayEstablishmentView item) {
-    if (!item.isOpen) return 'Cerrado';
-    final wait = item.averageWaitMinutes;
-    if (wait == null) return 'Afluencia desconocida';
-    if (wait <= 5) return 'Afluencia baja';
-    if (wait <= 15) return 'Afluencia media';
-    return 'Afluencia alta';
+    return AfluenciaUtils.getLabel(
+      isOpen: item.isOpen,
+      waitMinutes: item.averageWaitMinutes,
+    );
   }
 
   Color _afluenciaColor(RailwayEstablishmentView item) {
-    if (!item.isOpen) return Colors.blueGrey;
-    final wait = item.averageWaitMinutes;
-    if (wait == null) return Colors.amber;
-    if (wait <= 5) return Colors.green;
-    if (wait <= 15) return Colors.orange;
-    return Colors.red;
+    return AfluenciaUtils.getColor(
+      isOpen: item.isOpen,
+      waitMinutes: item.averageWaitMinutes,
+    );
   }
 
   Widget _buildMarkerInfoCard(
@@ -221,10 +216,26 @@ class _VistaInicioAppRealState extends State<_VistaInicioAppReal> {
           '${item.categoryName ?? 'Sin categoria'}\n${_afluenciaLabel(item)}\n${_distanceKmFromCenter(item, _mapCenter).toStringAsFixed(2)} km',
         ),
         isThreeLine: true,
-        trailing: Container(
-          width: 14,
-          height: 14,
-          decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            BlocBuilder<FavoritesCubit, FavoritesState>(
+              builder: (context, favState) {
+                return FavoriteButton(
+                  isFavorite: favState.isFavorite(item.id),
+                  onToggle: (value) {
+                    context.read<FavoritesCubit>().toggleFavorite(item.id);
+                  },
+                );
+              },
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 14,
+              height: 14,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: color),
+            ),
+          ],
         ),
       ),
     );
@@ -391,34 +402,39 @@ class _VistaInicioAppRealState extends State<_VistaInicioAppReal> {
           return Stack(
             fit: StackFit.expand,
             children: [
-              EstablishmentMapView(
-                establishments: visibleItems,
-                center: _mapCenter,
-                autoRecenter: _followMyLocation,
-                centerChangeToken: _centerChangeToken,
-                onUserGesture: () {
-                  FocusScope.of(context).unfocus();
-                  if (_followMyLocation) {
-                    setState(() {
-                      _followMyLocation = false;
-                    });
-                  }
-                },
-                onMapTap: () {
-                  FocusScope.of(context).unfocus();
-                },
-                userPosition: userPosition,
-                userTrail: _userTrail,
-                nearbyRadiusKm: _nearbyRadiusKm,
-                selectedEstablishmentId: _selectedEstablishment?.id,
-                zoomChangeToken: _zoomChangeToken,
-                targetZoomOnToken: _recenterZoomLevel,
-                markerColorResolver: _afluenciaColor,
-                onMarkerTap: (item) {
-                  setState(() {
-                    _followMyLocation = false;
-                    _selectedEstablishment = item;
-                  });
+              BlocBuilder<FavoritesCubit, FavoritesState>(
+                builder: (context, favState) {
+                  return EstablishmentMapView(
+                    establishments: visibleItems,
+                    center: _mapCenter,
+                    autoRecenter: _followMyLocation,
+                    centerChangeToken: _centerChangeToken,
+                    onUserGesture: () {
+                      FocusScope.of(context).unfocus();
+                      if (_followMyLocation) {
+                        setState(() {
+                          _followMyLocation = false;
+                        });
+                      }
+                    },
+                    onMapTap: () {
+                      FocusScope.of(context).unfocus();
+                    },
+                    userPosition: userPosition,
+                    userTrail: _userTrail,
+                    nearbyRadiusKm: _nearbyRadiusKm,
+                    selectedEstablishmentId: _selectedEstablishment?.id,
+                    zoomChangeToken: _zoomChangeToken,
+                    targetZoomOnToken: _recenterZoomLevel,
+                    markerColorResolver: _afluenciaColor,
+                    favoriteIds: favState.favoriteIds,
+                    onMarkerTap: (item) {
+                      setState(() {
+                        _followMyLocation = false;
+                        _selectedEstablishment = item;
+                      });
+                    },
+                  );
                 },
               ),
               Positioned(
