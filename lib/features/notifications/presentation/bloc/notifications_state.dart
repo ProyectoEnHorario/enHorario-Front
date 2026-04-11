@@ -12,26 +12,26 @@ enum NotificationStatus {
 class NotificationsState extends Equatable {
   const NotificationsState({
     this.status = NotificationStatus.initial,
-    this.notificationsEnabled = true, // Configuración de la App
+    this.isNotificationsEnabled = true, // Configuración de la App
     this.errorMessage,
   });
 
   final NotificationStatus status;
-  final bool notificationsEnabled;
+  final bool isNotificationsEnabled;
   final String? errorMessage;
 
   NotificationsState copyWith({
     NotificationStatus? status,
-    bool? notificationsEnabled,
+    bool? isNotificationsEnabled,
     String? errorMessage,
   }) {
     return NotificationsState(
       status: status ?? this.status,
-      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      isNotificationsEnabled: isNotificationsEnabled ?? this.isNotificationsEnabled,
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 
   @override
-  List<Object?> get props => [status, notificationsEnabled, errorMessage];
+  List<Object?> get props => [status, isNotificationsEnabled, errorMessage];
 }

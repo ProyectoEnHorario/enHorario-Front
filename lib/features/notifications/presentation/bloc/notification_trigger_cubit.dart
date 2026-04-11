@@ -1,6 +1,7 @@
 import 'package:enhorario/features/notifications/data/services/low_afluencia_service.dart';
 import 'package:enhorario/features/notifications/domain/entities/app_notification.dart';
 import 'package:enhorario/features/notifications/domain/repositories/notification_repository.dart';
+import 'package:enhorario/features/notifications/presentation/bloc/notifications_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class NotificationTriggerState {
@@ -12,12 +13,15 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
   NotificationTriggerCubit({
     required LowAfluenciaService lowAfluenciaService,
     required NotificationRepository notificationRepository,
+    required NotificationsCubit notificationsCubit,
   })  : _lowAfluenciaService = lowAfluenciaService,
         _notificationRepository = notificationRepository,
+        _notificationsCubit = notificationsCubit,
         super(const NotificationTriggerState());
 
   final LowAfluenciaService _lowAfluenciaService;
   final NotificationRepository _notificationRepository;
+  final NotificationsCubit _notificationsCubit;
 
   // Mapa para rastrear cuándo se envió la última notificación por establecimiento
   final Map<String, DateTime> _lastSentNotifications = {};
@@ -26,6 +30,12 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
   static const Duration _cooldownDuration = Duration(hours: 1);
 
   Future<void> checkAndNotify() async {
+    // Verificar si las notificaciones están habilitadas por el usuario
+    if (!_notificationsCubit.state.isNotificationsEnabled) {
+      print('[Trigger] Notificaciones desactivadas por el usuario. Saltando chequeo.');
+      return;
+    }
+
     if (state.isChecking) return;
 
     emit(const NotificationTriggerState(isChecking: true));
@@ -34,7 +44,6 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
 
     result.fold(
       (failure) {
-        // En una app real podríamos loguear esto.
         print('Error chequeando afluencia: ${failure.message}');
       },
       (establishments) async {

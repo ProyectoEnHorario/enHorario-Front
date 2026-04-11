@@ -286,6 +286,44 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ),
             ),
             const SizedBox(height: 32),
+            // Configuración de notificaciones
+            BlocBuilder<NotificationsCubit, NotificationsState>(
+              builder: (context, state) {
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                          child: Text(
+                            'Notificaciones',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        SwitchListTile(
+                          title: const Text('Baja afluencia en favoritos'),
+                          subtitle: const Text(
+                            'Recibe alertas cuando un lugar que te gusta tenga poca fila.',
+                            style: TextStyle(fontSize: 12),
+                          ),
+                          secondary: const Icon(Icons.notifications_active_outlined),
+                          value: state.isNotificationsEnabled,
+                          onChanged: (value) {
+                            context.read<NotificationsCubit>().toggleNotifications(value);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 32),
             // Sección de peligro - Eliminar cuenta
             Card(
               color: Colors.red.withOpacity(0.05),

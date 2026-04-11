@@ -57,6 +57,7 @@ class EnHorarioApp extends StatelessWidget {
             create: (context) => NotificationTriggerCubit(
               lowAfluenciaService: context.read<LowAfluenciaService>(),
               notificationRepository: context.read<NotificationRepository>(),
+              notificationsCubit: context.read<NotificationsCubit>(),
             ),
           ),
         ],
