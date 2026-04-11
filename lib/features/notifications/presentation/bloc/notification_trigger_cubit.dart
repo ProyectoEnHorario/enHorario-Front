@@ -19,6 +19,12 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
   final LowAfluenciaService _lowAfluenciaService;
   final NotificationRepository _notificationRepository;
 
+  // Mapa para rastrear cuándo se envió la última notificación por establecimiento
+  final Map<String, DateTime> _lastSentNotifications = {};
+
+  // Tiempo mínimo entre notificaciones para el mismo establecimiento (1 hora)
+  static const Duration _cooldownDuration = Duration(hours: 1);
+
   Future<void> checkAndNotify() async {
     if (state.isChecking) return;
 
@@ -32,15 +38,27 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
         print('Error chequeando afluencia: ${failure.message}');
       },
       (establishments) async {
+        final now = DateTime.now();
+
         for (final est in establishments) {
+          // Verificar cooldown
+          final lastSent = _lastSentNotifications[est.id];
+          if (lastSent != null && now.difference(lastSent) < _cooldownDuration) {
+            print('Omitiendo notificación para ${est.name} (en periodo de cooldown)');
+            continue;
+          }
+
           final notification = AppNotification.lowAfluencia(
-            id: est.id.hashCode, // Generamos un ID único para la notificación
+            id: est.id.hashCode,
             establishmentName: est.name,
             establishmentId: est.id,
             afluenciaLevel: 'Baja',
           );
 
           await _notificationRepository.showAppNotification(notification);
+          
+          // Registrar envío
+          _lastSentNotifications[est.id] = now;
         }
       },
     );
