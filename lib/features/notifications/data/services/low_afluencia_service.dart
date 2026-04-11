@@ -44,4 +44,21 @@ class LowAfluenciaService {
       return Left(Failure('Error al consultar datos de afluencia: $e'));
     }
   }
+
+  /// Detecta cuáles establecimientos favoritos tienen actualmente baja afluencia.
+  Future<Result<List<RailwayEstablishmentView>>> getLowAfluenciaAlerts() async {
+    final result = await getFavoritesAfluencia();
+
+    return result.fold(
+      (failure) => Left(failure),
+      (favorites) {
+        // Filtramos solo los establecimientos que están abiertos y tienen nivel 1 (Baja)
+        final lowAfluenciaItems = favorites
+            .where((e) => e.isOpen && e.occupancyLevel == 1)
+            .toList();
+
+        return Right(lowAfluenciaItems);
+      },
+    );
+  }
 }
