@@ -23,19 +23,29 @@ class NotificationsCubit extends Cubit<NotificationsState> {
 
   Future<void> checkStatus() async {
     final isEnabled = await _repository.isEnabled();
-    emit(state.copyWith(
-      status: isEnabled ? NotificationStatus.granted : NotificationStatus.denied,
-    ));
+    
+    // Si no está habilitado, verificamos más a fondo si fue denegado permanentemente
+    if (!isEnabled) {
+      emit(state.copyWith(status: NotificationStatus.denied));
+    } else {
+      emit(state.copyWith(status: NotificationStatus.granted));
+    }
   }
 
   Future<void> requestPermissions() async {
-    emit(state.copyWith(status: NotificationStatus.loading));
+    emit(state.copyWith(status: NotificationStatus.loading, errorMessage: null));
     
     final granted = await _repository.requestPermissions();
     
-    emit(state.copyWith(
-      status: granted ? NotificationStatus.granted : NotificationStatus.denied,
-    ));
+    if (granted) {
+      emit(state.copyWith(status: NotificationStatus.granted));
+    } else {
+      // Intento fallido o denegado
+      emit(state.copyWith(
+        status: NotificationStatus.denied,
+        errorMessage: 'Los permisos de notificación fueron denegados.',
+      ));
+    }
   }
 
   Future<void> toggleNotifications(bool value) async {

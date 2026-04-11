@@ -44,9 +44,19 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
 
     result.fold(
       (failure) {
-        print('Error chequeando afluencia: ${failure.message}');
+        print('[Trigger Error] Fallo al consultar afluencia: ${failure.message}');
+        if (failure.message.contains('404')) {
+          print('[Trigger Error] Sugerencia: El establecimiento podría haber sido eliminado.');
+        } else if (failure.message.contains('500')) {
+          print('[Trigger Error] Sugerencia: Error interno del servidor Railway.');
+        }
       },
       (establishments) async {
+        if (establishments.isEmpty) {
+          print('[Trigger] No se detectaron establecimientos con baja afluencia actualmente.');
+          return;
+        }
+
         final now = DateTime.now();
 
         for (final est in establishments) {
