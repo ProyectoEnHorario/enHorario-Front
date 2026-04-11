@@ -6,7 +6,18 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   final notificationRepo = LocalNotificationRepository();
-  await notificationRepo.initialize();
+  final result = await notificationRepo.initialize();
   
+  result.fold(
+    (failure) {
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: failure.message,
+        library: 'Notificaciones',
+        context: ErrorDescription('Falló la inicialización de notificaciones locales'),
+      ));
+    },
+    (_) {},
+  );
+
   runApp(EnHorarioApp(notificationRepository: notificationRepo));
 }

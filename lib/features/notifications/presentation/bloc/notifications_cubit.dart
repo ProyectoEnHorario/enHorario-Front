@@ -61,7 +61,11 @@ class NotificationsCubit extends Cubit<NotificationsState> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_notificationsPrefsKey, value);
     } catch (_) {
-      // Log error in real app
+      // Loguear error en una app real
+    }
+
+    if (value) {
+      await requestPermissions();
     }
   }
 }

@@ -16,13 +16,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Solicitar permisos al iniciar la App solo si están habilitados por el usuario
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final cubit = context.read<NotificationsCubit>();
-      if (cubit.state.isNotificationsEnabled) {
-        cubit.requestPermissions();
-      }
-    });
   }
 
   @override

@@ -44,6 +44,19 @@ class LocalNotificationRepository implements NotificationRepository {
         onDidReceiveNotificationResponse: _onDidReceiveNotificationResponse,
       );
 
+      final androidPlugin = _plugin.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+      
+      if (androidPlugin != null) {
+        const AndroidNotificationChannel channel = AndroidNotificationChannel(
+          _channelId,
+          _channelName,
+          description: _channelDescription,
+          importance: Importance.max,
+        );
+        await androidPlugin.createNotificationChannel(channel);
+      }
+
       return const Right(null);
     } catch (e) {
       return Left(Failure('Error al inicializar notificaciones: $e'));
