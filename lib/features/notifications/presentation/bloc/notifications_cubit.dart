@@ -66,17 +66,27 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }
 
   Future<void> toggleNotifications(bool value) async {
-    emit(state.copyWith(isNotificationsEnabled: value));
-    
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool(_notificationsPrefsKey, value);
-    } catch (_) {
-      // Loguear error en una app real
+    if (!value) {
+      // Deshabilitar: actualizar estado y preferencias de inmediato
+      emit(state.copyWith(isNotificationsEnabled: false));
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool(_notificationsPrefsKey, false);
+      } catch (_) {}
+      return;
     }
 
-    if (value) {
-      await requestPermissions();
+    // Habilitar: solicitar permisos primero y solo activar si son concedidos
+    await requestPermissions();
+
+    final granted = state.status == NotificationStatus.granted;
+    emit(state.copyWith(isNotificationsEnabled: granted));
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_notificationsPrefsKey, granted);
+    } catch (_) {
+      // Loguear error en una app real
     }
   }
 }

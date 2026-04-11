@@ -19,27 +19,25 @@ class LowAfluenciaService {
     try {
       // 1. Obtener IDs de favoritos
       final favoriteIds = await _favoritesRepository.getFavorites();
-      
+
       if (favoriteIds.isEmpty) {
         return const Right([]);
       }
 
-      // 2. Obtener todos los establecimientos desde la API
-      // Nota: En una API real idealmente filtraríamos por IDs, 
-      // pero usamos la infraestructura existente.
-      final result = await _queryService.fetchEstablishments();
+      // 2. Consultar cada favorito por ID para evitar depender de paginación
+      final futures = favoriteIds
+          .map((id) => _queryService.fetchEstablishmentById(id));
+      final results = await Future.wait(futures);
 
-      return result.fold(
-        (failure) => Left(failure),
-        (allEstablishments) {
-          // 3. Filtrar solo los que son favoritos
-          final favoritesData = allEstablishments
-              .where((e) => favoriteIds.contains(e.id))
-              .toList();
-          
-          return Right(favoritesData);
-        },
-      );
+      final establishments = <RailwayEstablishmentView>[];
+      for (final result in results) {
+        result.fold(
+          (_) {}, // Ignorar errores individuales (ej. establecimiento eliminado)
+          establishments.add,
+        );
+      }
+
+      return Right(establishments);
     } catch (e) {
       return Left(Failure('Error al consultar datos de afluencia: $e'));
     }
