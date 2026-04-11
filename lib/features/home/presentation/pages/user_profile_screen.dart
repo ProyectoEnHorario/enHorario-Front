@@ -3,6 +3,8 @@ import 'package:enhorario/core/config/app_config.dart';
 import 'package:enhorario/features/auth/data/repositories/account_deletion_service.dart';
 import 'package:enhorario/features/auth/presentation/bloc/delete_account_cubit.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
+import 'package:enhorario/features/notifications/presentation/bloc/notifications_cubit.dart';
+import 'package:enhorario/features/notifications/presentation/bloc/notifications_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
