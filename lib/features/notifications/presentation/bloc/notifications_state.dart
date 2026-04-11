@@ -24,11 +24,12 @@ class NotificationsState extends Equatable {
     NotificationStatus? status,
     bool? isNotificationsEnabled,
     String? errorMessage,
+    bool clearErrorMessage = false,
   }) {
     return NotificationsState(
       status: status ?? this.status,
       isNotificationsEnabled: isNotificationsEnabled ?? this.isNotificationsEnabled,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: clearErrorMessage ? null : (errorMessage ?? this.errorMessage),
     );
   }
 
