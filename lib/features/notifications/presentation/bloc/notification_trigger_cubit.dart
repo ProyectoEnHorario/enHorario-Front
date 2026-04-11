@@ -30,6 +30,15 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
   // Tiempo mínimo entre notificaciones para el mismo establecimiento (1 hora)
   static const Duration _cooldownDuration = Duration(hours: 1);
 
+  int _generateNotificationId(String id) {
+    int hash = 0x811c9dc5;
+    for (int i = 0; i < id.length; i++) {
+      hash ^= id.codeUnitAt(i);
+      hash = (hash * 0x01000193) & 0xFFFFFFFF;
+    }
+    return hash.abs() & 0x7FFFFFFF;
+  }
+
   Future<void> checkAndNotify() async {
     // Verificar si las notificaciones están habilitadas por el usuario
     if (!_notificationsCubit.state.isNotificationsEnabled) {
@@ -70,7 +79,7 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
             }
 
             final notification = AppNotification.lowAfluencia(
-              id: est.id.hashCode.abs(),
+              id: _generateNotificationId(est.id),
               establishmentName: est.name,
               establishmentId: est.id,
               afluenciaLevel: 'Baja',
