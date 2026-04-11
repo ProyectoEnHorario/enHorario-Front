@@ -30,19 +30,26 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   Future<void> requestPermissions() async {
     emit(state.copyWith(status: NotificationStatus.loading, errorMessage: null));
     
-    final status = await _repository.requestStatus();
-    
-    if (status == NotificationStatus.granted) {
-      emit(state.copyWith(status: status));
-    } else if (status == NotificationStatus.permanentlyDenied) {
+    try {
+      final status = await _repository.requestStatus();
+      
+      if (status == NotificationStatus.granted) {
+        emit(state.copyWith(status: status));
+      } else if (status == NotificationStatus.permanentlyDenied) {
+        emit(state.copyWith(
+          status: status,
+          errorMessage: 'Permisos bloqueados permanentemente. Por favor, habilítalos en ajustes.',
+        ));
+      } else {
+        emit(state.copyWith(
+          status: status,
+          errorMessage: 'Los permisos de notificación fueron denegados.',
+        ));
+      }
+    } catch (e) {
       emit(state.copyWith(
-        status: status,
-        errorMessage: 'Permisos bloqueados permanentemente. Por favor, habilítalos en ajustes.',
-      ));
-    } else {
-      emit(state.copyWith(
-        status: status,
-        errorMessage: 'Los permisos de notificación fueron denegados.',
+        status: NotificationStatus.error,
+        errorMessage: 'Error inesperado al solicitar permisos: $e',
       ));
     }
   }
