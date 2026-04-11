@@ -46,6 +46,12 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
       return;
     }
 
+    // Verificar también el permiso real del sistema antes de intentar notificar
+    final systemNotificationsEnabled = await _notificationRepository.isEnabled();
+    if (!systemNotificationsEnabled) {
+      debugPrint('[Trigger] Permiso de notificaciones no concedido por el sistema. Saltando chequeo.');
+      return;
+    }
     if (state.isChecking) return;
 
     emit(const NotificationTriggerState(isChecking: true));
