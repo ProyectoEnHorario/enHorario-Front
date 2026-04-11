@@ -1,8 +1,8 @@
+import 'package:enhorario/features/notifications/domain/entities/notification_status.dart';
 import 'package:enhorario/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:enhorario/features/notifications/presentation/bloc/notifications_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class NotificationsCubit extends Cubit<NotificationsState> {
   NotificationsCubit(this._repository) : super(const NotificationsState()) {
@@ -23,32 +23,25 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }
 
   Future<void> checkStatus() async {
-    final status = await Permission.notification.status;
-    
-    if (status.isGranted) {
-      emit(state.copyWith(status: NotificationStatus.granted));
-    } else if (status.isPermanentlyDenied) {
-      emit(state.copyWith(status: NotificationStatus.permanentlyDenied));
-    } else {
-      emit(state.copyWith(status: NotificationStatus.denied));
-    }
+    final status = await _repository.getStatus();
+    emit(state.copyWith(status: status));
   }
 
   Future<void> requestPermissions() async {
     emit(state.copyWith(status: NotificationStatus.loading, errorMessage: null));
     
-    final status = await Permission.notification.request();
+    final status = await _repository.requestStatus();
     
-    if (status.isGranted) {
-      emit(state.copyWith(status: NotificationStatus.granted));
-    } else if (status.isPermanentlyDenied) {
+    if (status == NotificationStatus.granted) {
+      emit(state.copyWith(status: status));
+    } else if (status == NotificationStatus.permanentlyDenied) {
       emit(state.copyWith(
-        status: NotificationStatus.permanentlyDenied,
+        status: status,
         errorMessage: 'Permisos bloqueados permanentemente. Por favor, habilítalos en ajustes.',
       ));
     } else {
       emit(state.copyWith(
-        status: NotificationStatus.denied,
+        status: status,
         errorMessage: 'Los permisos de notificación fueron denegados.',
       ));
     }
