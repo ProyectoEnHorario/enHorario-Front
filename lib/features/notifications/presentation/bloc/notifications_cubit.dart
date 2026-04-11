@@ -28,17 +28,28 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }
 
   Future<void> requestPermissions() async {
-    emit(state.copyWith(status: NotificationStatus.loading, errorMessage: null));
-    
+    emit(
+      state.copyWith(
+        status: NotificationStatus.loading,
+        clearErrorMessage: true,
+      ),
+    );
+
     try {
       final status = await _repository.requestStatus();
-      
+
       if (status == NotificationStatus.granted) {
-        emit(state.copyWith(status: status));
+        emit(
+          state.copyWith(
+            status: status,
+            clearErrorMessage: true,
+          ),
+        );
       } else if (status == NotificationStatus.permanentlyDenied) {
         emit(state.copyWith(
           status: status,
-          errorMessage: 'Permisos bloqueados permanentemente. Por favor, habilítalos en ajustes.',
+          errorMessage:
+              'Permisos bloqueados permanentemente. Por favor, habilítalos en ajustes.',
         ));
       } else {
         emit(state.copyWith(
