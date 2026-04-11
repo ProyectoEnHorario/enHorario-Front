@@ -2,6 +2,7 @@ import 'package:enhorario/features/notifications/domain/repositories/notificatio
 import 'package:enhorario/features/notifications/presentation/bloc/notifications_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class NotificationsCubit extends Cubit<NotificationsState> {
   NotificationsCubit(this._repository) : super(const NotificationsState()) {
@@ -22,25 +23,30 @@ class NotificationsCubit extends Cubit<NotificationsState> {
   }
 
   Future<void> checkStatus() async {
-    final isEnabled = await _repository.isEnabled();
+    final status = await Permission.notification.status;
     
-    // Si no está habilitado, verificamos más a fondo si fue denegado permanentemente
-    if (!isEnabled) {
-      emit(state.copyWith(status: NotificationStatus.denied));
-    } else {
+    if (status.isGranted) {
       emit(state.copyWith(status: NotificationStatus.granted));
+    } else if (status.isPermanentlyDenied) {
+      emit(state.copyWith(status: NotificationStatus.permanentlyDenied));
+    } else {
+      emit(state.copyWith(status: NotificationStatus.denied));
     }
   }
 
   Future<void> requestPermissions() async {
     emit(state.copyWith(status: NotificationStatus.loading, errorMessage: null));
     
-    final granted = await _repository.requestPermissions();
+    final status = await Permission.notification.request();
     
-    if (granted) {
+    if (status.isGranted) {
       emit(state.copyWith(status: NotificationStatus.granted));
+    } else if (status.isPermanentlyDenied) {
+      emit(state.copyWith(
+        status: NotificationStatus.permanentlyDenied,
+        errorMessage: 'Permisos bloqueados permanentemente. Por favor, habilítalos en ajustes.',
+      ));
     } else {
-      // Intento fallido o denegado
       emit(state.copyWith(
         status: NotificationStatus.denied,
         errorMessage: 'Los permisos de notificación fueron denegados.',
