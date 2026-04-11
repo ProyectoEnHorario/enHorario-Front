@@ -11,7 +11,7 @@ void main() async {
   result.fold(
     (failure) {
       FlutterError.reportError(FlutterErrorDetails(
-        exception: failure.message,
+        exception: failure,
         library: 'Notificaciones',
         context: ErrorDescription('Falló la inicialización de notificaciones locales'),
       ));
