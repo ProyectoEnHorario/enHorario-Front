@@ -1,5 +1,6 @@
 import 'package:enhorario/app/theme/app_theme.dart';
 import 'package:enhorario/core/api/api_client.dart';
+import 'package:enhorario/core/navigation/navigation_service.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_favorites_repository.dart';
 import 'package:enhorario/features/establishments/domain/repositories/favorites_repository.dart';
@@ -60,6 +61,7 @@ class EnHorarioApp extends StatelessWidget {
           ),
         ],
         child: MaterialApp(
+          navigatorKey: NavigationService.navigatorKey,
           title: 'EnHorario',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,

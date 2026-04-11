@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:enhorario/core/errors/failure.dart';
+import 'package:enhorario/core/navigation/navigation_service.dart';
 import 'package:enhorario/core/results/result.dart';
+import 'package:enhorario/features/establishments/presentation/pages/pantalla_detalle_tiempo_espera_establecimiento.dart';
 import 'package:enhorario/features/notifications/domain/entities/app_notification.dart';
 import 'package:enhorario/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -48,8 +50,12 @@ class LocalNotificationRepository implements NotificationRepository {
   }
 
   void _onDidReceiveNotificationResponse(NotificationResponse response) {
-    // TODO: Implementar navegación (Subtarea 8)
-    print('Notificación tocada: ${response.payload}');
+    final payload = response.payload;
+    if (payload != null && payload.isNotEmpty) {
+      NavigationService.navigateTo(
+        PantallaDetalleTiempoEsperaEstablecimiento(establishmentId: payload),
+      );
+    }
   }
 
   @override
