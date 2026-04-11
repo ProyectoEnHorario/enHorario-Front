@@ -1,5 +1,4 @@
 import 'package:enhorario/core/results/result.dart';
-import 'package:enhorario/core/errors/failure.dart';
 import 'package:enhorario/features/notifications/domain/entities/app_notification.dart';
 
 abstract class NotificationRepository {
