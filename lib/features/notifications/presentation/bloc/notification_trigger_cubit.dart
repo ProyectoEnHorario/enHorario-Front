@@ -2,6 +2,7 @@ import 'package:enhorario/features/notifications/data/services/low_afluencia_ser
 import 'package:enhorario/features/notifications/domain/entities/app_notification.dart';
 import 'package:enhorario/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:enhorario/features/notifications/presentation/bloc/notifications_cubit.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class NotificationTriggerState {
@@ -32,7 +33,7 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
   Future<void> checkAndNotify() async {
     // Verificar si las notificaciones están habilitadas por el usuario
     if (!_notificationsCubit.state.isNotificationsEnabled) {
-      print('[Trigger] Notificaciones desactivadas por el usuario. Saltando chequeo.');
+      debugPrint('[Trigger] Notificaciones desactivadas por el usuario. Saltando chequeo.');
       return;
     }
 
@@ -40,51 +41,55 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
 
     emit(const NotificationTriggerState(isChecking: true));
 
-    final result = await _lowAfluenciaService.getLowAfluenciaAlerts();
+    try {
+      final result = await _lowAfluenciaService.getLowAfluenciaAlerts();
 
-    await result.fold(
-      (failure) async {
-        print('[Trigger Error] Fallo al consultar afluencia: ${failure.message}');
-        if (failure.message.contains('404')) {
-          print('[Trigger Error] Sugerencia: El establecimiento podría haber sido eliminado.');
-        } else if (failure.message.contains('500')) {
-          print('[Trigger Error] Sugerencia: Error interno del servidor Railway.');
-        }
-      },
-      (establishments) async {
-        if (establishments.isEmpty) {
-          print('[Trigger] No se detectaron establecimientos con baja afluencia actualmente.');
-          return;
-        }
-
-        final now = DateTime.now();
-
-        for (final est in establishments) {
-          // Verificar cooldown
-          final lastSent = _lastSentNotifications[est.id];
-          if (lastSent != null && now.difference(lastSent) < _cooldownDuration) {
-            print('Omitiendo notificación para ${est.name} (en periodo de cooldown)');
-            continue;
+      await result.fold(
+        (failure) async {
+          debugPrint('[Trigger Error] Fallo al consultar afluencia: ${failure.message}');
+          if (failure.message.contains('404')) {
+            debugPrint('[Trigger Error] Sugerencia: El establecimiento podría haber sido eliminado.');
+          } else if (failure.message.contains('500')) {
+            debugPrint('[Trigger Error] Sugerencia: Error interno del servidor Railway.');
+          }
+        },
+        (establishments) async {
+          if (establishments.isEmpty) {
+            debugPrint('[Trigger] No se detectaron establecimientos con baja afluencia actualmente.');
+            return;
           }
 
-          final notification = AppNotification.lowAfluencia(
-            id: est.id.hashCode.abs(),
-            establishmentName: est.name,
-            establishmentId: est.id,
-            afluenciaLevel: 'Baja',
-          );
+          final now = DateTime.now();
 
-          final result = await _notificationRepository.showAppNotification(notification);
-          
-          // Registrar envío solo si tuvo éxito
-          result.fold(
-            (failure) => print('Error al mostrar notificación: ${failure.message}'),
-            (_) => _lastSentNotifications[est.id] = now,
-          );
-        }
-      },
-    );
+          for (final est in establishments) {
+            // Verificar cooldown
+            final lastSent = _lastSentNotifications[est.id];
+            if (lastSent != null && now.difference(lastSent) < _cooldownDuration) {
+              debugPrint('Omitiendo notificación para ${est.name} (en periodo de cooldown)');
+              continue;
+            }
 
-    emit(const NotificationTriggerState(isChecking: false));
+            final notification = AppNotification.lowAfluencia(
+              id: est.id.hashCode.abs(),
+              establishmentName: est.name,
+              establishmentId: est.id,
+              afluenciaLevel: 'Baja',
+            );
+
+            final result = await _notificationRepository.showAppNotification(notification);
+            
+            // Registrar envío solo si tuvo éxito
+            result.fold(
+              (failure) => debugPrint('Error al mostrar notificación: ${failure.message}'),
+              (_) => _lastSentNotifications[est.id] = now,
+            );
+          }
+        },
+      );
+    } catch (e) {
+      debugPrint('[Trigger Error] Error inesperado en el chequeo: $e');
+    } finally {
+      emit(const NotificationTriggerState(isChecking: false));
+    }
   }
 }
