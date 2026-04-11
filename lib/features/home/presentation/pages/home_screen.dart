@@ -1,9 +1,7 @@
 import 'package:enhorario/features/auth/presentation/pages/admin_placeholder_page.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
 import 'package:enhorario/features/home/presentation/pages/dev_tools_screen.dart';
-import 'package:enhorario/features/notifications/presentation/bloc/notifications_cubit.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
