@@ -8,6 +8,8 @@ import 'package:enhorario/app/theme/app_theme.dart';
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/notifications/domain/repositories/notification_repository.dart';
 
+import 'package:enhorario/features/notifications/presentation/bloc/notifications_cubit.dart';
+
 class EnHorarioApp extends StatelessWidget {
   const EnHorarioApp({
     required this.notificationRepository,
@@ -32,8 +34,15 @@ class EnHorarioApp extends StatelessWidget {
           ),
         ),
       ],
-      child: BlocProvider<FavoritesCubit>(
-        create: (context) => FavoritesCubit(context.read<FavoritesRepository>()),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<FavoritesCubit>(
+            create: (context) => FavoritesCubit(context.read<FavoritesRepository>()),
+          ),
+          BlocProvider<NotificationsCubit>(
+            create: (context) => NotificationsCubit(context.read<NotificationRepository>()),
+          ),
+        ],
         child: MaterialApp(
           title: 'EnHorario',
           debugShowCheckedModeBanner: false,
