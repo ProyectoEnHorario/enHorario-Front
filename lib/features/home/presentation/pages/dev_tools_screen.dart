@@ -2,7 +2,9 @@ import 'dart:convert';
 
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/core/errors/api_exception.dart';
+import 'package:enhorario/features/notifications/presentation/bloc/notification_trigger_cubit.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class DevToolsScreen extends StatefulWidget {
   const DevToolsScreen({super.key});
@@ -263,6 +265,23 @@ class _DevToolsScreenState extends State<DevToolsScreen> {
               ElevatedButton(
                 onPressed: _loading ? null : () => _run(_cancelTurn),
                 child: const Text('Cancel turn'),
+              ),
+              const Divider(),
+              const Text(
+                'Notificaciones',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              ElevatedButton(
+                onPressed: _loading
+                    ? null
+                    : () => _run(() async {
+                          _appendLog('Disparando trigger de notificaciones...');
+                          await context
+                              .read<NotificationTriggerCubit>()
+                              .checkAndNotify();
+                          _appendLog('Trigger finalizado.');
+                        }),
+                child: const Text('Probar Notificaciones (Favoritos -> Baja Afluencia)'),
               ),
             ],
           ),
