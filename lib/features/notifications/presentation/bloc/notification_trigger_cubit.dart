@@ -42,8 +42,8 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
 
     final result = await _lowAfluenciaService.getLowAfluenciaAlerts();
 
-    result.fold(
-      (failure) {
+    await result.fold(
+      (failure) async {
         print('[Trigger Error] Fallo al consultar afluencia: ${failure.message}');
         if (failure.message.contains('404')) {
           print('[Trigger Error] Sugerencia: El establecimiento podría haber sido eliminado.');
@@ -68,16 +68,19 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
           }
 
           final notification = AppNotification.lowAfluencia(
-            id: est.id.hashCode,
+            id: est.id.hashCode.abs(),
             establishmentName: est.name,
             establishmentId: est.id,
             afluenciaLevel: 'Baja',
           );
 
-          await _notificationRepository.showAppNotification(notification);
+          final result = await _notificationRepository.showAppNotification(notification);
           
-          // Registrar envío
-          _lastSentNotifications[est.id] = now;
+          // Registrar envío solo si tuvo éxito
+          result.fold(
+            (failure) => print('Error al mostrar notificación: ${failure.message}'),
+            (_) => _lastSentNotifications[est.id] = now,
+          );
         }
       },
     );
