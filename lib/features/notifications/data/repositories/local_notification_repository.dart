@@ -145,8 +145,8 @@ class LocalNotificationRepository implements NotificationRepository {
 
   @override
   Future<NotificationStatus> requestStatus() async {
-    final status = await Permission.notification.request();
-    return _mapPermissionStatus(status);
+    await requestPermissions();
+    return await getStatus();
   }
 
   NotificationStatus _mapPermissionStatus(PermissionStatus status) {
