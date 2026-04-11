@@ -4,6 +4,7 @@ import 'package:enhorario/core/navigation/navigation_service.dart';
 import 'package:enhorario/core/results/result.dart';
 import 'package:enhorario/features/establishments/presentation/pages/pantalla_detalle_tiempo_espera_establecimiento.dart';
 import 'package:enhorario/features/notifications/domain/entities/app_notification.dart';
+import 'package:enhorario/features/notifications/domain/entities/notification_status.dart';
 import 'package:enhorario/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -121,6 +122,25 @@ class LocalNotificationRepository implements NotificationRepository {
       return result ?? false;
     }
     return false;
+  }
+
+  @override
+  Future<NotificationStatus> getStatus() async {
+    final status = await Permission.notification.status;
+    return _mapPermissionStatus(status);
+  }
+
+  @override
+  Future<NotificationStatus> requestStatus() async {
+    final status = await Permission.notification.request();
+    return _mapPermissionStatus(status);
+  }
+
+  NotificationStatus _mapPermissionStatus(PermissionStatus status) {
+    if (status.isGranted) return NotificationStatus.granted;
+    if (status.isPermanentlyDenied) return NotificationStatus.permanentlyDenied;
+    if (status.isDenied) return NotificationStatus.denied;
+    return NotificationStatus.error;
   }
 
   @override

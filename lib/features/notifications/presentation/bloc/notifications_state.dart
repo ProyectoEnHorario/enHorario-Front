@@ -1,13 +1,5 @@
 import 'package:equatable/equatable.dart';
-
-enum NotificationStatus {
-  initial,
-  loading,
-  granted,
-  denied,
-  permanentlyDenied,
-  error,
-}
+import 'package:enhorario/features/notifications/domain/entities/notification_status.dart';
 
 class NotificationsState extends Equatable {
   const NotificationsState({
