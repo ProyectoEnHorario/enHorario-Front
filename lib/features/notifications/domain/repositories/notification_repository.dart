@@ -1,5 +1,6 @@
 import 'package:enhorario/core/results/result.dart';
 import 'package:enhorario/core/errors/failure.dart';
+import 'package:enhorario/features/notifications/domain/entities/app_notification.dart';
 
 abstract class NotificationRepository {
   /// Inicializa el servicio de notificaciones.
@@ -12,6 +13,9 @@ abstract class NotificationRepository {
     required String body,
     String? payload,
   });
+
+  /// Muestra una notificación estructurada de la App.
+  Future<Result<void>> showAppNotification(AppNotification notification);
 
   /// Solicita permisos al sistema.
   Future<bool> requestPermissions();

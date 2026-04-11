@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:enhorario/core/errors/failure.dart';
 import 'package:enhorario/core/results/result.dart';
+import 'package:enhorario/features/notifications/domain/entities/app_notification.dart';
 import 'package:enhorario/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -85,6 +86,16 @@ class LocalNotificationRepository implements NotificationRepository {
     } catch (e) {
       return Left(Failure('Error al mostrar notificación: $e'));
     }
+  }
+
+  @override
+  Future<Result<void>> showAppNotification(AppNotification notification) {
+    return showNotification(
+      id: notification.id,
+      title: notification.title,
+      body: notification.body,
+      payload: notification.payload,
+    );
   }
 
   @override
