@@ -3,16 +3,59 @@ import 'package:enhorario/features/auth/data/repositories/account_deletion_servi
 import 'package:enhorario/features/auth/presentation/bloc/delete_account_cubit.dart';
 import 'package:enhorario/features/auth/presentation/bloc/user_profile_cubit.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
+import 'package:enhorario/features/auth/presentation/validators/register_form_validators.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class UserProfileScreen extends StatelessWidget {
+class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
 
   @override
+  State<UserProfileScreen> createState() => _UserProfileScreenState();
+}
+
+class _UserProfileScreenState extends State<UserProfileScreen> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nombreController;
+  late TextEditingController _apellidoController;
+  late TextEditingController _telefonoController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nombreController = TextEditingController();
+    _apellidoController = TextEditingController();
+    _telefonoController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nombreController.dispose();
+    _apellidoController.dispose();
+    _telefonoController.dispose();
+    super.dispose();
+  }
+
+  void _initControllers(UserProfileState state) {
+    if (state.user != null && _nombreController.text.isEmpty) {
+      _nombreController.text = state.user!.nombre;
+      _apellidoController.text = state.user!.apellido;
+      _telefonoController.text = state.user!.telefono ?? '';
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<UserProfileCubit, UserProfileState>(
+    return BlocConsumer<UserProfileCubit, UserProfileState>(
+      listener: (context, state) {
+        if (state.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.error!), backgroundColor: Colors.red),
+          );
+          context.read<UserProfileCubit>().clearError();
+        }
+      },
       builder: (context, state) {
         if (state.isLoading && state.user == null) {
           return const Center(child: CircularProgressIndicator());
@@ -25,62 +68,98 @@ class UserProfileScreen extends StatelessWidget {
           );
         }
 
+        _initControllers(state);
         final user = state.user;
 
         return RefreshIndicator(
           onRefresh: () => context.read<UserProfileCubit>().loadProfile(),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            child: Column(
-              children: [
-                _ProfileHeader(
-                  name: user != null ? '${user.nombre} ${user.apellido}' : 'Usuario',
-                  role: user?.rol ?? 'Cargando...',
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      _ProfileInfoSection(
-                        title: 'Información Personal',
-                        items: [
-                          _ProfileInfoItem(
-                            icon: Icons.person_outline,
-                            label: 'Nombre',
-                            value: user?.nombre ?? '---',
-                          ),
-                          _ProfileInfoItem(
-                            icon: Icons.person_outline,
-                            label: 'Apellido',
-                            value: user?.apellido ?? '---',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      _ProfileInfoSection(
-                        title: 'Contacto',
-                        items: [
-                          _ProfileInfoItem(
-                            icon: Icons.email_outlined,
-                            label: 'Email',
-                            value: user?.email ?? '---',
-                          ),
-                          _ProfileInfoItem(
-                            icon: Icons.phone_outlined,
-                            label: 'Teléfono',
-                            value: user?.telefono ?? 'No registrado',
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      _DangerZone(
-                        onDeleteAccount: () => _showDeleteAccountDialog(context),
-                      ),
-                      const SizedBox(height: 32),
-                    ],
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _ProfileHeader(
+                    name: user != null ? '${user.nombre} ${user.apellido}' : 'Usuario',
+                    role: user?.rol ?? 'Cargando...',
+                    isEditing: state.isEditing,
+                    onEdit: () => context.read<UserProfileCubit>().startEditing(),
+                    onCancel: () {
+                      _formKey.currentState?.reset();
+                      _nombreController.text = user?.nombre ?? '';
+                      _apellidoController.text = user?.apellido ?? '';
+                      _telefonoController.text = user?.telefono ?? '';
+                      context.read<UserProfileCubit>().cancelEditing();
+                    },
+                    onSave: () {
+                      if (_formKey.currentState?.validate() ?? false) {
+                        context.read<UserProfileCubit>().updateProfile(
+                          nombre: _nombreController.text.trim(),
+                          apellido: _apellidoController.text.trim(),
+                          telefono: _telefonoController.text.trim(),
+                        );
+                      }
+                    },
+                    isLoading: state.isLoading,
                   ),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        _ProfileInfoSection(
+                          title: 'Información Personal',
+                          items: [
+                            _ProfileInfoItem(
+                              icon: Icons.person_outline,
+                              label: 'Nombre',
+                              value: user?.nombre ?? '---',
+                              isEditing: state.isEditing,
+                              controller: _nombreController,
+                              validator: (v) => RegisterFormValidators.validateNombre(v ?? ''),
+                            ),
+                            _ProfileInfoItem(
+                              icon: Icons.person_outline,
+                              label: 'Apellido',
+                              value: user?.apellido ?? '---',
+                              isEditing: state.isEditing,
+                              controller: _apellidoController,
+                              validator: (v) => RegisterFormValidators.validateApellido(v ?? ''),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        _ProfileInfoSection(
+                          title: 'Contacto',
+                          items: [
+                            _ProfileInfoItem(
+                              icon: Icons.email_outlined,
+                              label: 'Email',
+                              value: user?.email ?? '---',
+                              isEditing: false, // El email no se edita por ahora
+                            ),
+                            _ProfileInfoItem(
+                              icon: Icons.phone_outlined,
+                              label: 'Teléfono',
+                              value: user?.telefono ?? 'No registrado',
+                              isEditing: state.isEditing,
+                              controller: _telefonoController,
+                              keyboardType: TextInputType.phone,
+                              validator: (v) => RegisterFormValidators.validatePhone(v ?? ''),
+                            ),
+                          ],
+                        ),
+                        if (!state.isEditing) ...[
+                          const SizedBox(height: 32),
+                          _DangerZone(
+                            onDeleteAccount: () => _showDeleteAccountDialog(context),
+                          ),
+                        ],
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -248,10 +327,23 @@ class UserProfileScreen extends StatelessWidget {
 }
 
 class _ProfileHeader extends StatelessWidget {
-  const _ProfileHeader({required this.name, required this.role});
+  const _ProfileHeader({
+    required this.name,
+    required this.role,
+    required this.isEditing,
+    this.onEdit,
+    this.onCancel,
+    this.onSave,
+    this.isLoading = false,
+  });
 
   final String name;
   final String role;
+  final bool isEditing;
+  final VoidCallback? onEdit;
+  final VoidCallback? onCancel;
+  final VoidCallback? onSave;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -269,13 +361,26 @@ class _ProfileHeader extends StatelessWidget {
           ],
         ),
       ),
-      padding: const EdgeInsets.only(top: 40, bottom: 24),
+      padding: const EdgeInsets.only(top: 20, bottom: 24),
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundColor: Colors.white.withOpacity(0.2),
-            child: const Icon(Icons.person, size: 60, color: Colors.white),
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.white.withOpacity(0.2),
+                child: const Icon(Icons.person, size: 60, color: Colors.white),
+              ),
+              if (!isEditing)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: FloatingActionButton.small(
+                    onPressed: onEdit,
+                    child: const Icon(Icons.edit),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 16),
           Text(
@@ -303,6 +408,35 @@ class _ProfileHeader extends StatelessWidget {
               ),
             ),
           ),
+          if (isEditing) ...[
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        side: const BorderSide(color: Colors.white),
+                      ),
+                      onPressed: isLoading ? null : onCancel,
+                      child: const Text('Cancelar'),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : onSave,
+                      child: isLoading 
+                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                        : const Text('Guardar'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -349,17 +483,26 @@ class _ProfileInfoItem extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    required this.isEditing,
+    this.controller,
+    this.validator,
+    this.keyboardType,
   });
 
   final IconData icon;
   final String label;
   final String value;
+  final bool isEditing;
+  final TextEditingController? controller;
+  final String? Function(String?)? validator;
+  final TextInputType? keyboardType;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: Row(
+        crossAxisAlignment: isEditing ? CrossAxisAlignment.center : CrossAxisAlignment.center,
         children: [
           Icon(icon, color: Theme.of(context).colorScheme.primary, size: 24),
           const SizedBox(width: 16),
@@ -371,10 +514,22 @@ class _ProfileInfoItem extends StatelessWidget {
                   label,
                   style: const TextStyle(fontSize: 12, color: Colors.grey),
                 ),
-                Text(
-                  value,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                ),
+                if (isEditing && controller != null)
+                  TextFormField(
+                    controller: controller,
+                    validator: validator,
+                    keyboardType: keyboardType,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(vertical: 8),
+                    ),
+                  )
+                else
+                  Text(
+                    value,
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                  ),
               ],
             ),
           ),
