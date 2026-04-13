@@ -1,5 +1,4 @@
 import 'package:enhorario/features/auth/data/repositories/account_deletion_service.dart';
-import 'package:enhorario/core/results/result.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class DeleteAccountState {

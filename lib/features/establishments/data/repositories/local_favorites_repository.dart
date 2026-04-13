@@ -1,3 +1,4 @@
+import 'package:enhorario/features/establishments/data/models/railway_establishment_view.dart';
 import 'package:enhorario/features/establishments/domain/repositories/favorites_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -11,6 +12,13 @@ class LocalFavoritesRepository implements FavoritesRepository {
     final list = prefs.getStringList(_key) ?? [];
     // ENH-178: Validar que no se dupliquen favoritos al leerlo de persistencia
     return list.toSet().toList();
+  }
+
+  @override
+  Future<List<RailwayEstablishmentView>> getFavoritesDetails() async {
+    // LocalFavoritesRepository solo maneja IDs persistidos localmente.
+    // Para obtener detalles, se suele requerir el RailwayFavoritesRepository (API).
+    return [];
   }
 
   @override

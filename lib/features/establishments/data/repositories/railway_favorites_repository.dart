@@ -2,14 +2,13 @@ import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
 import 'package:enhorario/features/establishments/data/models/railway_establishment_view.dart';
 import 'package:enhorario/features/establishments/domain/repositories/favorites_repository.dart';
+import 'package:flutter/foundation.dart';
 
 class RailwayFavoritesRepository implements FavoritesRepository {
   final ApiClient _apiClient;
   final AuthSessionRepository _sessionRepository;
 
   RailwayFavoritesRepository(this._apiClient) : _sessionRepository = AuthSessionRepository();
-
-  List<RailwayEstablishmentView>? _cachedDetails;
 
   @override
   Future<List<String>> getFavorites() async {
@@ -23,7 +22,7 @@ class RailwayFavoritesRepository implements FavoritesRepository {
       final userId = await _sessionRepository.getCurrentUserId();
       
       if (userId == null || userId.isEmpty) {
-        print('[FavoritesRepo] Error: UserId no encontrado en SharedPreferences');
+        debugPrint('[FavoritesRepo] Error: UserId no encontrado en SharedPreferences');
         throw Exception('Inicia sesión para ver tus favoritos');
       }
 
@@ -40,10 +39,9 @@ class RailwayFavoritesRepository implements FavoritesRepository {
           .where((item) => item.id.isNotEmpty)
           .toList();
 
-      _cachedDetails = details;
       return details;
     } catch (e) {
-      print('[FavoritesRepo] Error en getFavoritesDetails: $e');
+      debugPrint('[FavoritesRepo] Error en getFavoritesDetails: $e');
       rethrow;
     }
   }
@@ -60,7 +58,7 @@ class RailwayFavoritesRepository implements FavoritesRepository {
         token: userId,
       );
     } catch (e) {
-      print('[FavoritesRepo] Error en addFavorite ($id): $e');
+      debugPrint('[FavoritesRepo] Error en addFavorite ($id): $e');
       rethrow;
     }
   }
@@ -76,7 +74,7 @@ class RailwayFavoritesRepository implements FavoritesRepository {
         token: userId,
       );
     } catch (e) {
-      print('[FavoritesRepo] Error en removeFavorite ($id): $e');
+      debugPrint('[FavoritesRepo] Error en removeFavorite ($id): $e');
       rethrow;
     }
   }

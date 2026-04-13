@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:enhorario/core/errors/failure.dart';
 import 'package:enhorario/core/navigation/navigation_service.dart';
 import 'package:enhorario/core/results/result.dart';

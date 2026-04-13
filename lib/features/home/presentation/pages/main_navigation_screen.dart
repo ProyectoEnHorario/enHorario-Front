@@ -1,17 +1,10 @@
-import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
-import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
-import 'package:enhorario/features/establishments/data/repositories/railway_favorites_repository.dart';
-import 'package:enhorario/features/establishments/domain/repositories/favorites_repository.dart';
-import 'package:enhorario/features/establishments/presentation/bloc/favorites_cubit.dart';
-import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/pages/favorites_screen.dart';
 import 'package:enhorario/features/establishments/presentation/pages/pantalla_inicio_app_real.dart';
 import 'package:enhorario/features/home/presentation/pages/user_profile_screen.dart';
 import 'package:enhorario/features/turns/presentation/pages/turns_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
