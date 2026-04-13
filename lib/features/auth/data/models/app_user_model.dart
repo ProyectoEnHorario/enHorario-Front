@@ -9,6 +9,7 @@ class AppUserModel extends AppUser {
     required super.apellido,
     required super.rol,
     super.telefono,
+    super.profilePhotoUrl,
     required super.createdAt,
     super.deletedAt,
   });
@@ -21,6 +22,7 @@ class AppUserModel extends AppUser {
       apellido: (map['apellido'] ?? '') as String,
       rol: (map['rol'] ?? 'usuario') as String,
       telefono: map['telefono'] as String?,
+      profilePhotoUrl: map['profilePhotoUrl'] as String?,
       createdAt: DateMapper.toDateTime(map['createdAt']) ?? DateTime.now(),
       deletedAt: DateMapper.toDateTime(map['deletedAt']),
     );
@@ -34,6 +36,7 @@ class AppUserModel extends AppUser {
       'apellido': apellido,
       'rol': rol,
       'telefono': telefono,
+      'profilePhotoUrl': profilePhotoUrl,
       'createdAt': DateMapper.toIsoString(createdAt),
       'deletedAt': DateMapper.toIsoString(deletedAt),
     };
@@ -46,9 +49,11 @@ class AppUserModel extends AppUser {
     String? apellido,
     String? rol,
     String? telefono,
+    String? profilePhotoUrl,
     DateTime? createdAt,
     DateTime? deletedAt,
     bool clearDeletedAt = false,
+    bool clearProfilePhotoUrl = false,
   }) {
     return AppUserModel(
       uid: uid ?? this.uid,
@@ -57,6 +62,7 @@ class AppUserModel extends AppUser {
       apellido: apellido ?? this.apellido,
       rol: rol ?? this.rol,
       telefono: telefono ?? this.telefono,
+      profilePhotoUrl: clearProfilePhotoUrl ? null : (profilePhotoUrl ?? this.profilePhotoUrl),
       createdAt: createdAt ?? this.createdAt,
       deletedAt: clearDeletedAt ? null : (deletedAt ?? this.deletedAt),
     );
