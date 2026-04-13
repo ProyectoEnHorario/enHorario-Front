@@ -10,6 +10,9 @@ import 'package:enhorario/features/establishments/presentation/pages/favorites_s
 import 'package:enhorario/features/establishments/presentation/pages/pantalla_inicio_app_real.dart';
 import 'package:enhorario/features/home/presentation/pages/user_profile_screen.dart';
 import 'package:enhorario/features/turns/presentation/pages/turns_screen.dart';
+import 'package:enhorario/features/auth/data/repositories/railway_user_repository.dart';
+import 'package:enhorario/features/auth/domain/repositories/user_repository.dart';
+import 'package:enhorario/features/auth/presentation/bloc/user_profile_cubit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -37,6 +40,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         RepositoryProvider<ApiClient>(
           create: (_) => ApiClient(),
         ),
+        RepositoryProvider<UserRepository>(
+          create: (context) => RailwayUserRepository(
+            context.read<ApiClient>(),
+          ),
+        ),
         RepositoryProvider<FavoritesRepository>(
           create: (context) => RailwayFavoritesRepository(
             context.read<ApiClient>(),
@@ -54,6 +62,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             create: (context) => RealEstablishmentsCubit(
               RailwayEstablishmentQueryService(context.read<ApiClient>()),
             ),
+          ),
+          BlocProvider(
+            create: (context) => UserProfileCubit(
+              context.read<UserRepository>(),
+            )..loadProfile(),
           ),
         ],
         child: PopScope(
