@@ -30,9 +30,9 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  void _submit(BuildContext childContext) {
     if (_formKey.currentState?.validate() ?? false) {
-      context.read<PasswordCubit>().changePassword(
+      childContext.read<PasswordCubit>().changePassword(
             currentPassword: _currentPasswordController.text,
             newPassword: _newPasswordController.text,
             confirmNewPassword: _confirmPasswordController.text,
@@ -150,7 +150,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
                     // Botón Guardar
                     FilledButton(
-                      onPressed: isLoading ? null : _submit,
+                      onPressed: isLoading ? null : () => _submit(context),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),

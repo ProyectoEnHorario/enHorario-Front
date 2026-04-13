@@ -23,9 +23,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  void _submit(BuildContext childContext) {
     if (_formKey.currentState?.validate() ?? false) {
-      context.read<PasswordCubit>().forgotPassword(_emailController.text.trim());
+      childContext.read<PasswordCubit>().forgotPassword(_emailController.text.trim());
     }
   }
 
@@ -114,7 +114,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                     // Botón Enviar
                     FilledButton(
-                      onPressed: isLoading ? null : _submit,
+                      onPressed: isLoading ? null : () => _submit(context),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),

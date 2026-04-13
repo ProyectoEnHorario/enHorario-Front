@@ -45,9 +45,9 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  void _submit(BuildContext childContext) {
     if (_formKey.currentState?.validate() ?? false) {
-      context.read<PasswordCubit>().resetPassword(
+      childContext.read<PasswordCubit>().resetPassword(
             token: _tokenController.text.trim(),
             newPassword: _newPasswordController.text,
             confirmNewPassword: _confirmPasswordController.text,
@@ -169,7 +169,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
                     // Botón Guardar
                     FilledButton(
-                      onPressed: isLoading ? null : _submit,
+                      onPressed: isLoading ? null : () => _submit(context),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
