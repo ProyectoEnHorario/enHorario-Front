@@ -120,22 +120,9 @@ class LocalNotificationRepository implements NotificationRepository {
 
   @override
   Future<bool> requestPermissions() async {
-    if (Platform.isAndroid) {
-      final status = await Permission.notification.request();
-      return status.isGranted;
-    } else if (Platform.isIOS) {
-      // Usar Darwin para iOS >= 10
-      final bool? result = await _plugin
-          .resolvePlatformSpecificImplementation<
-              DarwinFlutterLocalNotificationsPlugin>()
-          ?.requestPermissions(
-            alert: true,
-            badge: true,
-            sound: true,
-          );
-      return result ?? false;
-    }
-    return false;
+    // Usamos permission_handler para ambas plataformas para mayor consistencia
+    final status = await Permission.notification.request();
+    return status.isGranted;
   }
 
   @override
