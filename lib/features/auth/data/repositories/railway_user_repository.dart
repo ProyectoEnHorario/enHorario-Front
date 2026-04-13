@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/core/errors/api_exception.dart';
 import 'package:enhorario/core/errors/failure.dart';
@@ -16,16 +17,15 @@ class RailwayUserRepository implements UserRepository {
   @override
   Future<Result<AppUser>> getUserProfile() async {
     try {
-      // Nota: Según la especificación del backend actual, se usa el email como token.
       final email = await _sessionRepository.getCurrentUserEmail();
-      
+
       if (email == null || email.isEmpty) {
         return const Left(Failure('No hay una sesión activa.'));
       }
 
       final response = await _apiClient.get<Map<String, dynamic>>(
         '/auth/me',
-        token: email, // Usamos el email como indica la especificación
+        token: email,
       );
 
       return Right(_mapToUserModel(response));
@@ -41,25 +41,42 @@ class RailwayUserRepository implements UserRepository {
     String? name,
     String? lastName,
     String? phone,
-    String? profilePhotoUrl,
+    String? profilePhotoPath,
   }) async {
     try {
       final email = await _sessionRepository.getCurrentUserEmail();
-      
+
       if (email == null || email.isEmpty) {
         return const Left(Failure('No hay una sesión activa.'));
       }
 
-      final Map<String, dynamic> data = {};
-      if (name != null) data['name'] = name;
-      if (lastName != null) data['lastName'] = lastName;
-      if (phone != null) data['phone'] = phone;
-      if (profilePhotoUrl != null) data['profilePhotoUrl'] = profilePhotoUrl;
+      // Siempre usamos multipart/form-data para compatibilidad con la foto
+      final formData = FormData();
+
+      if (name != null && name.isNotEmpty) {
+        formData.fields.add(MapEntry('name', name));
+      }
+      if (lastName != null && lastName.isNotEmpty) {
+        formData.fields.add(MapEntry('lastName', lastName));
+      }
+      if (phone != null && phone.isNotEmpty) {
+        formData.fields.add(MapEntry('phone', phone));
+      }
+      if (profilePhotoPath != null && profilePhotoPath.isNotEmpty) {
+        // Extraemos el nombre del archivo para enviarlo correctamente
+        final fileName = profilePhotoPath.split('/').last;
+        formData.files.add(
+          MapEntry(
+            'profilePhoto',
+            await MultipartFile.fromFile(profilePhotoPath, filename: fileName),
+          ),
+        );
+      }
 
       final response = await _apiClient.patch<Map<String, dynamic>>(
         '/auth/me',
-        data: data,
-        token: email, // Usamos el email como indica la especificación
+        data: formData,
+        token: email,
       );
 
       return Right(_mapToUserModel(response));
@@ -78,6 +95,7 @@ class RailwayUserRepository implements UserRepository {
       apellido: response['lastName']?.toString() ?? '',
       rol: response['role']?.toString() ?? 'usuario',
       telefono: response['phone']?.toString(),
+      profilePhotoUrl: response['profilePhotoUrl']?.toString(),
       createdAt: DateTime.tryParse(response['createdAt']?.toString() ?? '') ?? DateTime.now(),
     );
   }

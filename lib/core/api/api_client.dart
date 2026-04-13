@@ -97,7 +97,12 @@ class ApiClient {
     String? token,
   }) async {
     try {
-      final options = Options(headers: _headers(token));
+      // Si el data es FormData, no fijamos contentType para que Dio
+      // lo gestione automáticamente con el boundary correcto.
+      final options = Options(
+        headers: _headers(token),
+        contentType: data is FormData ? null : 'application/json',
+      );
       final response = await _dio.patch(
         path,
         data: data,

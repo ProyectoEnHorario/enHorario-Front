@@ -8,6 +8,6 @@ abstract class UserRepository {
     String? name,
     String? lastName,
     String? phone,
-    String? profilePhotoUrl,
+    String? profilePhotoPath, // ruta local del archivo de imagen
   });
 }
