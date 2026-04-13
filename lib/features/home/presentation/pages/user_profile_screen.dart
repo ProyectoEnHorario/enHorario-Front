@@ -3,6 +3,7 @@ import 'package:enhorario/core/config/app_config.dart';
 import 'package:enhorario/features/auth/data/repositories/account_deletion_service.dart';
 import 'package:enhorario/features/auth/presentation/bloc/delete_account_cubit.dart';
 import 'package:enhorario/features/auth/presentation/bloc/user_profile_cubit.dart';
+import 'package:enhorario/features/auth/presentation/pages/change_password_screen.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
 import 'package:enhorario/features/auth/presentation/validators/register_form_validators.dart';
 import 'package:flutter/material.dart';
@@ -237,6 +238,16 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                           ],
                         ),
                         if (!state.isEditing) ...[
+                          const SizedBox(height: 32),
+                          _SecuritySection(
+                            onChangePassword: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ChangePasswordScreen(),
+                                ),
+                              );
+                            },
+                          ),
                           const SizedBox(height: 32),
                           _DangerZone(
                             onDeleteAccount: () => _showDeleteAccountDialog(context),
@@ -667,6 +678,52 @@ class _ProfileInfoItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SecuritySection extends StatelessWidget {
+  const _SecuritySection({required this.onChangePassword});
+
+  final VoidCallback onChangePassword;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.security, color: Colors.grey),
+                SizedBox(width: 8),
+                Text(
+                  'Seguridad',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Actualiza tu contraseña para mantener tu cuenta segura.',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: onChangePassword,
+                icon: const Icon(Icons.password),
+                label: const Text('Cambiar Contraseña'),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
