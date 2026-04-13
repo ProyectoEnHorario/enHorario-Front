@@ -1,43 +1,22 @@
 import 'package:enhorario/core/results/result.dart';
 import 'package:enhorario/core/errors/failure.dart';
 import 'package:enhorario/features/establishments/data/models/railway_establishment_view.dart';
-import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 import 'package:enhorario/features/establishments/domain/repositories/favorites_repository.dart';
 
 class LowAfluenciaService {
   LowAfluenciaService({
     required FavoritesRepository favoritesRepository,
-    required RailwayEstablishmentQueryService queryService,
-  }) : _favoritesRepository = favoritesRepository,
-       _queryService = queryService;
+  }) : _favoritesRepository = favoritesRepository;
 
   final FavoritesRepository _favoritesRepository;
-  final RailwayEstablishmentQueryService _queryService;
 
   /// Obtiene los establecimientos favoritos que tienen datos actualizados de afluencia.
   Future<Result<List<RailwayEstablishmentView>>> getFavoritesAfluencia() async {
     try {
-      // 1. Obtener IDs de favoritos
-      final favoriteIds = await _favoritesRepository.getFavorites();
-
-      if (favoriteIds.isEmpty) {
-        return const Right([]);
-      }
-
-      // 2. Consultar cada favorito por ID para evitar depender de paginación
-      final futures = favoriteIds
-          .map((id) => _queryService.fetchEstablishmentById(id));
-      final results = await Future.wait(futures);
-
-      final establishments = <RailwayEstablishmentView>[];
-      for (final result in results) {
-        result.fold(
-          (_) {}, // Ignorar errores individuales (ej. establecimiento eliminado)
-          establishments.add,
-        );
-      }
-
-      return Right(establishments);
+      // 1. Obtener detalles de favoritos directamente (una sola peticion al backend)
+      final favoritesData = await _favoritesRepository.getFavoritesDetails();
+      
+      return Right(favoritesData);
     } catch (e) {
       return Left(Failure('Error al consultar datos de afluencia: $e'));
     }

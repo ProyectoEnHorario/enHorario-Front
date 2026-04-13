@@ -61,10 +61,10 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
 
       await result.fold(
         (failure) async {
-          debugPrint('[Trigger Error] Fallo al consultar afluencia: ${failure.message}');
-          if (failure.message.contains('404')) {
-            debugPrint('[Trigger Error] Sugerencia: El establecimiento podría haber sido eliminado.');
-          } else if (failure.message.contains('500')) {
+          debugPrint('[Trigger Error] Fallo al consultar afluencia: ${failure.message} (Status: ${failure.statusCode})');
+          if (failure.statusCode == 404) {
+            debugPrint('[Trigger Error] Sugerencia: El establecimiento podría haber sido eliminado o el endpoint de favoritos es inválido.');
+          } else if (failure.statusCode != null && failure.statusCode! >= 500) {
             debugPrint('[Trigger Error] Sugerencia: Error interno del servidor Railway.');
           }
         },

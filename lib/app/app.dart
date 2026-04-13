@@ -39,9 +39,6 @@ class EnHorarioApp extends StatelessWidget {
         RepositoryProvider<LowAfluenciaService>(
           create: (context) => LowAfluenciaService(
             favoritesRepository: context.read<FavoritesRepository>(),
-            queryService: RailwayEstablishmentQueryService(
-              context.read<ApiClient>(),
-            ),
           ),
         ),
       ],

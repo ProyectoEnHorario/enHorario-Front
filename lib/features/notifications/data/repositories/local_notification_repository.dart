@@ -124,9 +124,10 @@ class LocalNotificationRepository implements NotificationRepository {
       final status = await Permission.notification.request();
       return status.isGranted;
     } else if (Platform.isIOS) {
+      // Usar Darwin para iOS >= 10
       final bool? result = await _plugin
           .resolvePlatformSpecificImplementation<
-              IOSFlutterLocalNotificationsPlugin>()
+              DarwinFlutterLocalNotificationsPlugin>()
           ?.requestPermissions(
             alert: true,
             badge: true,

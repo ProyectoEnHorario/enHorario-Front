@@ -1,5 +1,6 @@
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
+import 'package:enhorario/features/establishments/data/models/railway_establishment_view.dart';
 import 'package:enhorario/features/establishments/domain/repositories/favorites_repository.dart';
 
 class RailwayFavoritesRepository implements FavoritesRepository {
@@ -8,8 +9,16 @@ class RailwayFavoritesRepository implements FavoritesRepository {
 
   RailwayFavoritesRepository(this._apiClient) : _sessionRepository = AuthSessionRepository();
 
+  List<RailwayEstablishmentView>? _cachedDetails;
+
   @override
   Future<List<String>> getFavorites() async {
+    final details = await getFavoritesDetails();
+    return details.map((e) => e.id).toList();
+  }
+
+  @override
+  Future<List<RailwayEstablishmentView>> getFavoritesDetails() async {
     try {
       final userId = await _sessionRepository.getCurrentUserId();
       
@@ -18,7 +27,6 @@ class RailwayFavoritesRepository implements FavoritesRepository {
         throw Exception('Inicia sesión para ver tus favoritos');
       }
 
-      // Usamos dynamic para manejar respuestas paginadas o listas directas
       final response = await _apiClient.get<dynamic>(
         '/favorites/my-favorites',
         token: userId,
@@ -26,13 +34,16 @@ class RailwayFavoritesRepository implements FavoritesRepository {
       
       final items = _extractList(response);
       
-      return items
+      final details = items
           .whereType<Map<String, dynamic>>()
-          .map((item) => item['id']?.toString() ?? '')
-          .where((id) => id.isNotEmpty)
+          .map(RailwayEstablishmentView.fromMap)
+          .where((item) => item.id.isNotEmpty)
           .toList();
+
+      _cachedDetails = details;
+      return details;
     } catch (e) {
-      print('[FavoritesRepo] Error en getFavorites: $e');
+      print('[FavoritesRepo] Error en getFavoritesDetails: $e');
       rethrow;
     }
   }
