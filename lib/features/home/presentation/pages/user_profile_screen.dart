@@ -6,6 +6,7 @@ import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen
 import 'package:enhorario/features/auth/presentation/validators/register_form_validators.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class UserProfileScreen extends StatefulWidget {
@@ -20,6 +21,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   late TextEditingController _nombreController;
   late TextEditingController _apellidoController;
   late TextEditingController _telefonoController;
+  final _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -43,6 +45,88 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       _apellidoController.text = state.user!.apellido;
       _telefonoController.text = state.user!.telefono ?? '';
     }
+  }
+
+  Future<void> _pickPhoto(BuildContext context, ImageSource source) async {
+    Navigator.of(context).pop(); // Cierra el bottom sheet
+    try {
+      final pickedFile = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 1024,
+        maxHeight: 1024,
+        imageQuality: 85,
+      );
+
+      if (pickedFile == null || !context.mounted) return;
+
+      await context.read<UserProfileCubit>().uploadProfilePhoto(pickedFile.path);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Foto de perfil actualizada'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al seleccionar foto: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showPhotoOptions(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const Text(
+                'Cambiar foto de perfil',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              ListTile(
+                leading: const Icon(Icons.photo_library_outlined),
+                title: const Text('Elegir de la galería'),
+                onTap: () => _pickPhoto(context, ImageSource.gallery),
+              ),
+              ListTile(
+                leading: const Icon(Icons.camera_alt_outlined),
+                title: const Text('Tomar una foto'),
+                onTap: () => _pickPhoto(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.close, color: Colors.red),
+                title: const Text('Cancelar', style: TextStyle(color: Colors.red)),
+                onTap: () => Navigator.of(sheetContext).pop(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -82,7 +166,10 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                   _ProfileHeader(
                     name: user != null ? '${user.nombre} ${user.apellido}' : 'Usuario',
                     role: user?.rol ?? 'Cargando...',
+                    profilePhotoUrl: user?.profilePhotoUrl,
                     isEditing: state.isEditing,
+                    isUploadingPhoto: state.isUploadingPhoto,
+                    onPhotoTap: () => _showPhotoOptions(context),
                     onEdit: () => context.read<UserProfileCubit>().startEditing(),
                     onCancel: () {
                       _formKey.currentState?.reset();
@@ -135,7 +222,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               icon: Icons.email_outlined,
                               label: 'Email',
                               value: user?.email ?? '---',
-                              isEditing: false, // El email no se edita por ahora
+                              isEditing: false,
                             ),
                             _ProfileInfoItem(
                               icon: Icons.phone_outlined,
@@ -326,11 +413,18 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Widgets Privados
+// ---------------------------------------------------------------------------
+
 class _ProfileHeader extends StatelessWidget {
   const _ProfileHeader({
     required this.name,
     required this.role,
     required this.isEditing,
+    required this.isUploadingPhoto,
+    required this.onPhotoTap,
+    this.profilePhotoUrl,
     this.onEdit,
     this.onCancel,
     this.onSave,
@@ -340,6 +434,9 @@ class _ProfileHeader extends StatelessWidget {
   final String name;
   final String role;
   final bool isEditing;
+  final bool isUploadingPhoto;
+  final VoidCallback onPhotoTap;
+  final String? profilePhotoUrl;
   final VoidCallback? onEdit;
   final VoidCallback? onCancel;
   final VoidCallback? onSave;
@@ -348,7 +445,7 @@ class _ProfileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -366,18 +463,49 @@ class _ProfileHeader extends StatelessWidget {
         children: [
           Stack(
             children: [
+              // Avatar: foto personalizada o icono por defecto
               CircleAvatar(
                 radius: 50,
                 backgroundColor: Colors.white.withOpacity(0.2),
-                child: const Icon(Icons.person, size: 60, color: Colors.white),
+                backgroundImage: profilePhotoUrl != null && profilePhotoUrl!.isNotEmpty
+                    ? NetworkImage(profilePhotoUrl!)
+                    : null,
+                child: isUploadingPhoto
+                    ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
+                    : (profilePhotoUrl == null || profilePhotoUrl!.isEmpty)
+                        ? const Icon(Icons.person, size: 60, color: Colors.white)
+                        : null,
               ),
+              // Botón de editar foto (siempre visible, no solo en modo edición)
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: GestureDetector(
+                  onTap: isUploadingPhoto ? null : onPhotoTap,
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.secondary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 2),
+                    ),
+                    child: const Icon(
+                      Icons.camera_alt,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              // Botón de editar información (lápiz) cuando no se está editando
               if (!isEditing)
                 Positioned(
                   right: 0,
-                  bottom: 0,
+                  top: 0,
                   child: FloatingActionButton.small(
+                    elevation: 2,
                     onPressed: onEdit,
-                    child: const Icon(Icons.edit),
+                    child: const Icon(Icons.edit, size: 18),
                   ),
                 ),
             ],
@@ -428,9 +556,13 @@ class _ProfileHeader extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: isLoading ? null : onSave,
-                      child: isLoading 
-                        ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : const Text('Guardar'),
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Guardar'),
                     ),
                   ),
                 ],
@@ -502,7 +634,7 @@ class _ProfileInfoItem extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       child: Row(
-        crossAxisAlignment: isEditing ? CrossAxisAlignment.center : CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Icon(icon, color: Theme.of(context).colorScheme.primary, size: 24),
           const SizedBox(width: 16),
