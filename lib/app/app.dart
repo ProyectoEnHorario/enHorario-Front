@@ -36,6 +36,11 @@ class EnHorarioApp extends StatelessWidget {
             context.read<ApiClient>(),
           ),
         ),
+        RepositoryProvider<RailwayEstablishmentQueryService>(
+          create: (context) => RailwayEstablishmentQueryService(
+            context.read<ApiClient>(),
+          ),
+        ),
         RepositoryProvider<LowAfluenciaService>(
           create: (context) => LowAfluenciaService(
             favoritesRepository: context.read<FavoritesRepository>(),
@@ -49,6 +54,11 @@ class EnHorarioApp extends StatelessWidget {
           ),
           BlocProvider<NotificationsCubit>(
             create: (context) => NotificationsCubit(context.read<NotificationRepository>()),
+          ),
+          BlocProvider<RealEstablishmentsCubit>(
+            create: (context) => RealEstablishmentsCubit(
+              context.read<RailwayEstablishmentQueryService>(),
+            ),
           ),
           BlocProvider<NotificationTriggerCubit>(
             create: (context) => NotificationTriggerCubit(

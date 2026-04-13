@@ -30,6 +30,10 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
   // Tiempo mínimo entre notificaciones para el mismo establecimiento (1 hora)
   static const Duration _cooldownDuration = Duration(hours: 1);
 
+  // Tiempo mínimo entre chequeos globales para evitar bucles (5 minutos)
+  static const Duration _globalCheckInterval = Duration(minutes: 5);
+  DateTime? _lastGlobalCheck;
+
   int _generateNotificationId(String id) {
     int hash = 0x811c9dc5;
     for (int i = 0; i < id.length; i++) {
@@ -54,7 +58,15 @@ class NotificationTriggerCubit extends Cubit<NotificationTriggerState> {
     }
     if (state.isChecking) return;
 
+    final now = DateTime.now();
+    if (_lastGlobalCheck != null && now.difference(_lastGlobalCheck!) < _globalCheckInterval) {
+      final remaining = _globalCheckInterval - now.difference(_lastGlobalCheck!);
+      debugPrint('[Trigger] Saltando chequeo global por intervalo mínimo. Reintentar en ${remaining.inSeconds}s');
+      return;
+    }
+
     emit(const NotificationTriggerState(isChecking: true));
+    _lastGlobalCheck = now;
 
     try {
       final result = await _lowAfluenciaService.getLowAfluenciaAlerts();
