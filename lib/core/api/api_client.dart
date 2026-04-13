@@ -90,6 +90,35 @@ class ApiClient {
     }
   }
 
+  Future<T> patch<T>(
+    String path, {
+    required dynamic data,
+    Map<String, dynamic>? queryParameters,
+    String? token,
+  }) async {
+    try {
+      final headers = _headers(token);
+
+      // Para FormData, Dio debe generar el boundary automáticamente.
+      // No fijamos contentType en Options para evitar sobreescribir el
+      // header que Dio construye internamente con el boundary correcto.
+      final options = data is FormData
+          ? Options(headers: headers)
+          : Options(headers: headers, contentType: 'application/json');
+
+      final response = await _dio.patch(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+      return response.data as T;
+    } on DioException catch (e) {
+      throw _handleError(e);
+    }
+  }
+
+
   Future<void> delete(String path, {String? token}) async {
     try {
       final options = Options(headers: _headers(token));

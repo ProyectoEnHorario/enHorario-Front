@@ -119,7 +119,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                       textInputAction: TextInputAction.next,
                       decoration: const InputDecoration(
                         labelText: 'Nombre',
-                        hintText: 'Ejemplo: Ana',
+                        hintText: 'Mínimo 2 caracteres',
                       ),
                       validator: (value) =>
                           RegisterFormValidators.validateNombre(value ?? ''),
@@ -132,7 +132,7 @@ class _RegisterUserScreenState extends State<RegisterUserScreen> {
                       textInputAction: TextInputAction.next,
                       decoration: const InputDecoration(
                         labelText: 'Apellido',
-                        hintText: 'Ejemplo: Perez',
+                        hintText: 'Mínimo 2 caracteres',
                       ),
                       validator: (value) =>
                           RegisterFormValidators.validateApellido(value ?? ''),
