@@ -1,4 +1,5 @@
 import 'package:enhorario/core/api/api_client.dart';
+import 'package:enhorario/core/config/app_config.dart';
 import 'package:enhorario/features/auth/data/repositories/account_deletion_service.dart';
 import 'package:enhorario/features/auth/presentation/bloc/delete_account_cubit.dart';
 import 'package:enhorario/features/auth/presentation/bloc/user_profile_cubit.dart';
@@ -468,7 +469,7 @@ class _ProfileHeader extends StatelessWidget {
                 radius: 50,
                 backgroundColor: Colors.white.withOpacity(0.2),
                 backgroundImage: profilePhotoUrl != null && profilePhotoUrl!.isNotEmpty
-                    ? NetworkImage(profilePhotoUrl!)
+                    ? NetworkImage(_resolveImageUrl(profilePhotoUrl!))
                     : null,
                 child: isUploadingPhoto
                     ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 3)
@@ -741,5 +742,20 @@ class _ErrorState extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+String _resolveImageUrl(String url) {
+  if (url.startsWith('http')) return url;
+  
+  try {
+    final uri = Uri.parse(AppConfig.backendBaseUrl);
+    final baseUrl = '${uri.scheme}://${uri.host}';
+    final portString = (uri.port != 80 && uri.port != 443 && uri.port != 0) ? ':${uri.port}' : '';
+    
+    final path = url.startsWith('/') ? url : '/$url';
+    return '$baseUrl$portString$path';
+  } catch (e) {
+    return url;
   }
 }
