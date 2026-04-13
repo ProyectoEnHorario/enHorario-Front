@@ -3,8 +3,11 @@ import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen
 import 'package:enhorario/features/establishments/presentation/pages/favorites_screen.dart';
 import 'package:enhorario/features/establishments/presentation/pages/pantalla_inicio_app_real.dart';
 import 'package:enhorario/features/home/presentation/pages/user_profile_screen.dart';
+import 'package:enhorario/features/notifications/domain/entities/app_notification.dart';
+import 'package:enhorario/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:enhorario/features/turns/presentation/pages/turns_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -22,6 +25,47 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     'Mi Información',
     'Tickets',
   ];
+
+  /// Envía una notificación de prueba para verificar que el sistema funciona
+  Future<void> _sendTestNotification(BuildContext context) async {
+    final notificationRepo = context.read<NotificationRepository>();
+    
+    // 1. Verificar/Pedir permisos primero
+    final hasPermission = await notificationRepo.requestPermissions();
+    if (!hasPermission) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Debes dar permisos de notificación primero')),
+      );
+      return;
+    }
+
+    // 2. Crear una notificación de prueba
+    final testNotification = AppNotification.lowAfluencia(
+      id: 999,
+      establishmentName: 'Establecimiento de Prueba',
+      establishmentId: 'test-id',
+      afluenciaLevel: 'Baja',
+    );
+
+    // 3. Mostrarla
+    final result = await notificationRepo.showAppNotification(testNotification);
+    
+    result.fold(
+      (failure) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al notificar: ${failure.message}')),
+        );
+      },
+      (_) {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Notificación de prueba enviada! Revisa tu barra superior.')),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -48,6 +92,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 )
               : null,
           actions: [
+            // Botón de PRUEBA de Notificación
+            IconButton(
+              onPressed: () => _sendTestNotification(context),
+              icon: const Icon(Icons.notification_add),
+              tooltip: 'Prueba de notificación',
+              color: Colors.blue,
+            ),
             IconButton(
               onPressed: () async {
                 await AuthSessionRepository().clearSession();
