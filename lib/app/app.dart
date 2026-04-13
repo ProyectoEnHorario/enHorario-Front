@@ -5,6 +5,7 @@ import 'package:enhorario/features/establishments/data/repositories/railway_esta
 import 'package:enhorario/features/establishments/data/repositories/railway_favorites_repository.dart';
 import 'package:enhorario/features/establishments/domain/repositories/favorites_repository.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/favorites_cubit.dart';
+import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
 import 'package:enhorario/features/home/presentation/pages/home_screen.dart';
 import 'package:enhorario/features/notifications/data/services/low_afluencia_service.dart';
 import 'package:enhorario/features/notifications/domain/repositories/notification_repository.dart';
