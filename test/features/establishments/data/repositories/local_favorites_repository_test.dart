@@ -12,9 +12,11 @@ void main() {
     });
 
     test('should persist favorites between different repository instances', () async {
+      const initialFavorites = ['est_1', 'est_2'];
+      
       // 1. Guardar favoritos en la primera instancia
-      await repository.addFavorite('est_1');
-      await repository.addFavorite('est_2');
+      await repository.addFavorite(initialFavorites[0]);
+      await repository.addFavorite(initialFavorites[1]);
 
       // 2. Simular "reinicio" creando una nueva instancia del repositorio
       final newRepository = LocalFavoritesRepository();

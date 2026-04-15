@@ -1,10 +1,8 @@
 import 'dart:async';
 
-import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/core/utils/afluencia_utils.dart';
 import 'package:enhorario/core/widgets/favorite_button.dart';
 import 'package:enhorario/features/establishments/data/models/railway_establishment_view.dart';
-import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 import 'package:enhorario/features/establishments/data/repositories/user_location_service.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/favorites_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';

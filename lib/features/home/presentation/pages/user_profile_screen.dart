@@ -5,6 +5,8 @@ import 'package:enhorario/features/auth/presentation/bloc/delete_account_cubit.d
 import 'package:enhorario/features/auth/presentation/bloc/user_profile_cubit.dart';
 import 'package:enhorario/features/auth/presentation/pages/change_password_screen.dart';
 import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
+import 'package:enhorario/features/notifications/presentation/bloc/notifications_cubit.dart';
+import 'package:enhorario/features/notifications/presentation/bloc/notifications_state.dart';
 import 'package:enhorario/features/auth/presentation/validators/register_form_validators.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -244,6 +246,44 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (_) => const ChangePasswordScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 32),
+                          // Configuración de notificaciones
+                          BlocBuilder<NotificationsCubit, NotificationsState>(
+                            builder: (context, notifState) {
+                              return Card(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Padding(
+                                        padding: EdgeInsets.fromLTRB(16, 8, 16, 0),
+                                        child: Text(
+                                          'Notificaciones',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      SwitchListTile(
+                                        title: const Text('Baja afluencia en favoritos'),
+                                        subtitle: const Text(
+                                          'Recibe alertas cuando un lugar que te gusta tenga poca fila.',
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                        secondary: const Icon(Icons.notifications_active_outlined),
+                                        value: notifState.isNotificationsEnabled,
+                                        onChanged: (value) {
+                                          context.read<NotificationsCubit>().toggleNotifications(value);
+                                        },
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               );
                             },

@@ -29,20 +29,22 @@ class RailwayEstablishmentQueryService {
       return Right<Failure, List<RailwayEstablishmentView>>(items);
     } on ApiException catch (e) {
       if ((e.statusCode ?? 0) >= 500) {
-        return const Left<Failure, List<RailwayEstablishmentView>>(
-          Failure('El servidor no esta disponible en este momento.'),
+        return Left<Failure, List<RailwayEstablishmentView>>(
+          Failure('El servidor no esta disponible en este momento.', statusCode: e.statusCode),
         );
       }
       if (e.message.toLowerCase().contains('application not found')) {
-        return const Left<Failure, List<RailwayEstablishmentView>>(
+        return Left<Failure, List<RailwayEstablishmentView>>(
           Failure(
             'No fue posible conectar con el backend configurado. Verifica BACKEND_URL o el despliegue de Railway.',
+            statusCode: e.statusCode,
           ),
         );
       }
       return Left<Failure, List<RailwayEstablishmentView>>(
         Failure(
           'No fue posible consultar establecimientos. Detalle: ${e.message}',
+          statusCode: e.statusCode,
         ),
       );
     } catch (_) {
@@ -68,17 +70,17 @@ class RailwayEstablishmentQueryService {
       );
     } on ApiException catch (e) {
       if (e.statusCode == 404) {
-        return const Left<Failure, RailwayEstablishmentView>(
-          Failure('No se encontro el establecimiento solicitado.'),
+        return Left<Failure, RailwayEstablishmentView>(
+          Failure('No se encontro el establecimiento solicitado.', statusCode: 404),
         );
       }
       if ((e.statusCode ?? 0) >= 500) {
-        return const Left<Failure, RailwayEstablishmentView>(
-          Failure('El servidor no esta disponible en este momento.'),
+        return Left<Failure, RailwayEstablishmentView>(
+          Failure('El servidor no esta disponible en este momento.', statusCode: e.statusCode),
         );
       }
-      return const Left<Failure, RailwayEstablishmentView>(
-        Failure('No fue posible consultar el tiempo de espera.'),
+      return Left<Failure, RailwayEstablishmentView>(
+        Failure('No fue posible consultar el tiempo de espera.', statusCode: e.statusCode),
       );
     } catch (_) {
       return const Left<Failure, RailwayEstablishmentView>(
