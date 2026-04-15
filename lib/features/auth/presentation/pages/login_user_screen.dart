@@ -2,6 +2,7 @@ import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
 import 'package:enhorario/features/auth/data/repositories/railway_login_account_service.dart';
 import 'package:enhorario/features/auth/presentation/bloc/login_user_cubit.dart';
+import 'package:enhorario/features/auth/presentation/pages/forgot_password_screen.dart';
 import 'package:enhorario/features/auth/presentation/pages/register_user_screen.dart';
 import 'package:enhorario/features/auth/presentation/validators/login_form_validators.dart';
 import 'package:enhorario/features/home/presentation/pages/main_navigation_screen.dart';
@@ -128,7 +129,19 @@ class _LoginUserScreenState extends State<LoginUserScreen> {
                             : const Text('Iniciar sesion'),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
+                    TextButton(
+                      onPressed: state.isSubmitting
+                          ? null
+                          : () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute<void>(
+                                  builder: (_) => const ForgotPasswordScreen(),
+                                ),
+                              );
+                            },
+                      child: const Text('¿Olvidaste tu contraseña?'),
+                    ),
                     TextButton(
                       onPressed: state.isSubmitting
                           ? null
