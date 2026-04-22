@@ -27,6 +27,7 @@ class PantallaDetalleTiempoEsperaEstablecimiento extends StatefulWidget {
 class _PantallaDetalleTiempoEsperaEstablecimientoState
     extends State<PantallaDetalleTiempoEsperaEstablecimiento> {
   Timer? _autoRefreshTimer;
+  late final EstablishmentWaitTimeCubit _cubit;
 
   // Máximo de minutos que consideramos 100% de afluencia
   static const int _minutosMaximosEspera = 15;
@@ -40,17 +41,20 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
   @override
   void initState() {
     super.initState();
+    _cubit = EstablishmentWaitTimeCubit(
+      RailwayEstablishmentQueryService(ApiClient()),
+    )..load(widget.establishmentId);
+
     _autoRefreshTimer = Timer.periodic(const Duration(seconds: 45), (_) {
       if (!mounted) return;
-      context
-          .read<EstablishmentWaitTimeCubit>()
-          .refresh(widget.establishmentId);
+      _cubit.refresh(widget.establishmentId);
     });
   }
 
   @override
   void dispose() {
     _autoRefreshTimer?.cancel();
+    _cubit.close();
     super.dispose();
   }
 
@@ -63,10 +67,8 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => EstablishmentWaitTimeCubit(
-        RailwayEstablishmentQueryService(ApiClient()),
-      )..load(widget.establishmentId),
+    return BlocProvider.value(
+      value: _cubit,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Detalle del establecimiento'),
@@ -122,7 +124,7 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
                 );
 
                 if (result == true && context.mounted) {
-                  context.read<EstablishmentWaitTimeCubit>().refresh(widget.establishmentId);
+                  _cubit.refresh(widget.establishmentId);
                 }
               },
               icon: const Icon(Icons.timer),
