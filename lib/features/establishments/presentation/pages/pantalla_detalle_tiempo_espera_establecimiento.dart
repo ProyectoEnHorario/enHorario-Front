@@ -4,6 +4,8 @@ import 'package:enhorario/core/widgets/indicador_afluencia.dart';
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/favorites_cubit.dart';
+import 'package:enhorario/features/establishments/presentation/bloc/wait_time_report_cubit.dart';
+import 'package:enhorario/features/establishments/presentation/widgets/formulario_tiempo_espera_widget.dart';
 import 'package:enhorario/core/widgets/favorite_button.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/establishment_wait_time_cubit.dart';
 import 'package:flutter/material.dart';
@@ -93,6 +95,40 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
               },
             ),
           ],
+        ),
+        floatingActionButton: BlocBuilder<EstablishmentWaitTimeCubit, EstablishmentWaitTimeState>(
+          builder: (context, state) {
+            final item = state.item;
+            // Solo mostramos el boton si ya cargó y el establecimiento está abierto
+            if (item == null || !item.isOpen) {
+              return const SizedBox.shrink(); 
+            }
+            return FloatingActionButton.extended(
+              onPressed: () async {
+                final result = await showModalBottomSheet<bool>(
+                  context: context,
+                  isScrollControlled: true,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                  ),
+                  builder: (_) => BlocProvider(
+                    create: (context) => WaitTimeReportCubit(
+                      RailwayEstablishmentQueryService(ApiClient()),
+                    ),
+                    child: FormularioTiempoEsperaWidget(
+                      establishmentId: widget.establishmentId,
+                    ),
+                  ),
+                );
+
+                if (result == true && context.mounted) {
+                  context.read<EstablishmentWaitTimeCubit>().refresh(widget.establishmentId);
+                }
+              },
+              icon: const Icon(Icons.timer),
+              label: const Text('Reportar Espera'),
+            );
+          },
         ),
         body: BlocBuilder<EstablishmentWaitTimeCubit, EstablishmentWaitTimeState>(
           builder: (context, state) {
