@@ -118,6 +118,16 @@ class RailwayEstablishmentQueryService {
     */
   }
 
+  Future<Result<void>> sendWaitTimeRating(
+    String establishmentId,
+    WaitTimeRatingModel model,
+  ) async {
+    // SIMULACIÓN: El backend aún no tiene este endpoint,
+    // así que simulamos éxito para completar el flujo de la UI.
+    await Future.delayed(const Duration(milliseconds: 1500));
+    return const Right(null);
+  }
+
   List<dynamic> _extractContent(dynamic response) {
     if (response is List) {
       return response;
