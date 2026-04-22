@@ -90,7 +90,7 @@ class RailwayEstablishmentQueryService {
     }
   }
 
-  Future<Result<Failure, void>> reportWaitTime(
+  Future<Result<void>> reportWaitTime(
     String establishmentId,
     WaitTimeReportModel model,
   ) async {
