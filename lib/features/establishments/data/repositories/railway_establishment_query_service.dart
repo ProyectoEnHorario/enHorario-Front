@@ -3,6 +3,7 @@ import 'package:enhorario/core/errors/api_exception.dart';
 import 'package:enhorario/core/errors/failure.dart';
 import 'package:enhorario/core/results/result.dart';
 import 'package:enhorario/features/establishments/data/models/railway_establishment_view.dart';
+import 'package:enhorario/features/establishments/data/models/wait_time_report_model.dart';
 
 class RailwayEstablishmentQueryService {
   RailwayEstablishmentQueryService(this._apiClient);
@@ -85,6 +86,32 @@ class RailwayEstablishmentQueryService {
     } catch (_) {
       return const Left<Failure, RailwayEstablishmentView>(
         Failure('Error inesperado al consultar el establecimiento.'),
+      );
+    }
+  }
+
+  Future<Result<Failure, void>> reportWaitTime(
+    String establishmentId,
+    WaitTimeReportModel model,
+  ) async {
+    try {
+      await _apiClient.post<dynamic>(
+        '/establishments/$establishmentId/wait-time',
+        data: model.toMap(),
+      );
+      return const Right<Failure, void>(null);
+    } on ApiException catch (e) {
+      if ((e.statusCode ?? 0) >= 500) {
+        return Left<Failure, void>(
+          Failure('El servidor no está disponible. No se pudo enviar el reporte.', statusCode: e.statusCode),
+        );
+      }
+      return Left<Failure, void>(
+        Failure('No pudimos procesar tu reporte. Detalle: ${e.message}', statusCode: e.statusCode),
+      );
+    } catch (_) {
+      return const Left<Failure, void>(
+        Failure('Ocurrió un error inesperado al intentar enviar el reporte.'),
       );
     }
   }
