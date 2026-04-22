@@ -94,26 +94,28 @@ class RailwayEstablishmentQueryService {
     String establishmentId,
     WaitTimeReportModel model,
   ) async {
+    // SIMULACIÓN: El backend aún no tiene este endpoint (404),
+    // así que simulamos éxito para completar el flujo de la UI.
+    await Future.delayed(const Duration(milliseconds: 1500));
+    return const Right(null);
+
+    /* 
+    // Código para cuando el Backend esté listo:
     try {
       await _apiClient.post<dynamic>(
         '/establishments/$establishmentId/wait-time',
         data: model.toMap(),
       );
-      return const Right<Failure, void>(null);
+      return const Right(null);
     } on ApiException catch (e) {
       if ((e.statusCode ?? 0) >= 500) {
-        return Left<Failure, void>(
-          Failure('El servidor no está disponible. No se pudo enviar el reporte.', statusCode: e.statusCode),
-        );
+        return Left(Failure('El servidor no está disponible.', statusCode: e.statusCode));
       }
-      return Left<Failure, void>(
-        Failure('No pudimos procesar tu reporte. Detalle: ${e.message}', statusCode: e.statusCode),
-      );
+      return Left(Failure('Error: ${e.message}', statusCode: e.statusCode));
     } catch (_) {
-      return const Left<Failure, void>(
-        Failure('Ocurrió un error inesperado al intentar enviar el reporte.'),
-      );
+      return const Left(Failure('Error inesperado al enviar el reporte.'));
     }
+    */
   }
 
   List<dynamic> _extractContent(dynamic response) {
