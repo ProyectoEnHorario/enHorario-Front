@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:enhorario/core/errors/failure.dart';
 import 'package:enhorario/features/establishments/data/models/wait_time_rating_model.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 

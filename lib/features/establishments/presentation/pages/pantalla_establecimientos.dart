@@ -1,5 +1,5 @@
 import 'package:enhorario/features/establishments/data/models/establishment_model.dart';
-import 'package:enhorario/features/establishments/data/repositories/firestore_establishment_repository.dart';
+import 'package:enhorario/features/establishments/data/repositories/local_establishment_repository.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/establishments_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/pages/pantalla_detalle_establecimiento.dart';
 import 'package:enhorario/features/establishments/presentation/pages/pantalla_formulario_establecimiento.dart';
@@ -13,7 +13,7 @@ class PantallaEstablecimientos extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => EstablishmentsCubit(FirestoreEstablishmentRepository()),
+      create: (_) => EstablishmentsCubit(LocalEstablishmentRepository()),
       child: const _VistaEstablecimientos(),
     );
   }
