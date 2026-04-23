@@ -1,3 +1,4 @@
+import 'package:enhorario/features/auth/data/models/app_user_model.dart';
 import 'package:enhorario/features/auth/domain/entities/app_user.dart';
 import 'package:enhorario/features/auth/domain/repositories/user_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

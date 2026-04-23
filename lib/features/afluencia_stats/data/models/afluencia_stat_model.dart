@@ -1,5 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:enhorario/core/utils/firestore_mapper.dart';
+import 'package:enhorario/core/utils/date_mapper.dart';
 
 class AfluenciaStatModel {
   const AfluenciaStatModel({
@@ -30,7 +29,7 @@ class AfluenciaStatModel {
       categoryId: (map['categoryId'] ?? '') as String,
       totalTurnos: (map['totalTurnos'] ?? 0) as int,
       turnosPrioritarios: (map['turnosPrioritarios'] ?? 0) as int,
-      fechaHora: FirestoreMapper.toDateTime(map['fechaHora']) ?? DateTime.now(),
+      fechaHora: DateMapper.toDateTime(map['fechaHora']) ?? DateTime.now(),
       periodo: (map['periodo'] ?? 'diario') as String,
     );
   }
@@ -42,7 +41,7 @@ class AfluenciaStatModel {
       'categoryId': categoryId,
       'totalTurnos': totalTurnos,
       'turnosPrioritarios': turnosPrioritarios,
-      'fechaHora': Timestamp.fromDate(fechaHora),
+      'fechaHora': DateMapper.toIsoString(fechaHora),
       'periodo': periodo,
     };
   }
