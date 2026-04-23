@@ -1,9 +1,6 @@
-import 'package:enhorario/features/afluencia_stats/presentation/pages/afluencia_stats_screen.dart';
-import 'package:enhorario/features/categories/presentation/pages/categories_screen.dart';
-import 'package:enhorario/features/establishments/presentation/pages/establishments_screen.dart';
-import 'package:enhorario/features/turns/presentation/pages/turns_screen.dart';
-import 'package:enhorario/features/wait_times/presentation/pages/wait_times_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:enhorario/features/auth/presentation/pages/admin_placeholder_page.dart';
+import 'package:enhorario/features/auth/presentation/pages/real_app_entry_screen.dart';
+import 'package:enhorario/features/home/presentation/pages/dev_tools_screen.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -11,48 +8,59 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final email = FirebaseAuth.instance.currentUser?.email ?? 'sin correo';
-
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('EnHorario - Inicio'),
-        actions: [
-          IconButton(
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-            },
-            icon: const Icon(Icons.logout),
-            tooltip: 'Cerrar sesion',
+      appBar: AppBar(title: const Text('EnHorario - Inicio')),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Selecciona un modo',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall,
+                ),
+                const SizedBox(height: 20),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const RealAppEntryScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text('App real'),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const DevToolsScreen(),
+                      ),
+                    );
+                  },
+                  child: const Text('Modo test'),
+                ),
+                const SizedBox(height: 12),
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const AdminPlaceholderPage(),
+                      ),
+                    );
+                  },
+                  child: const Text('Modo administrador'),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          Text('Usuario autenticado: $email'),
-          const SizedBox(height: 16),
-          _item(context, 'CRUD Categorias', const CategoriesScreen()),
-          _item(context, 'CRUD Establecimientos', const EstablishmentsScreen()),
-          _item(context, 'CRUD Turnos', const TurnsScreen()),
-          _item(context, 'CRUD Tiempos de espera', const WaitTimesScreen()),
-          _item(
-            context,
-            'CRUD Estadisticas de afluencia',
-            const AfluenciaStatsScreen(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _item(BuildContext context, String title, Widget screen) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: ElevatedButton(
-        onPressed: () {
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
-        },
-        child: Text(title),
+        ),
       ),
     );
   }

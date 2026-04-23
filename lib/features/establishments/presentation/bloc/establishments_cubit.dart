@@ -45,26 +45,17 @@ class EstablishmentsState {
 
 class EstablishmentsCubit extends Cubit<EstablishmentsState> {
   EstablishmentsCubit(this._repository) : super(const EstablishmentsState()) {
-    _subscription = _repository.watchAll().listen(
-      (items) {
-        final newState = state.copyWith(
-          all: items,
-          isLoading: false,
-          clearError: true,
-        );
-        emit(_applyFilter(newState));
-      },
-      onError: (_) => emit(
-        state.copyWith(
-          isLoading: false,
-          error: 'Error cargando establecimientos',
-        ),
-      ),
-    );
+    _subscribe();
   }
 
   final EstablishmentRepository _repository;
   StreamSubscription<List<EstablishmentModel>>? _subscription;
+
+  Future<void> retrySearch() async {
+    emit(state.copyWith(isLoading: true, clearError: true));
+    _subscription?.cancel();
+    _subscribe();
+  }
 
   void setQuery(String query) {
     emit(_applyFilter(state.copyWith(query: query)));
@@ -94,6 +85,25 @@ class EstablishmentsCubit extends Cubit<EstablishmentsState> {
   Future<String?> delete(String id) async {
     final result = await _repository.delete(id);
     return result.fold((l) => l.message, (_) => null);
+  }
+
+  void _subscribe() {
+    _subscription = _repository.watchAll().listen(
+      (items) {
+        final newState = state.copyWith(
+          all: items,
+          isLoading: false,
+          clearError: true,
+        );
+        emit(_applyFilter(newState));
+      },
+      onError: (_) => emit(
+        state.copyWith(
+          isLoading: false,
+          error: 'Error cargando establecimientos',
+        ),
+      ),
+    );
   }
 
   EstablishmentsState _applyFilter(EstablishmentsState value) {

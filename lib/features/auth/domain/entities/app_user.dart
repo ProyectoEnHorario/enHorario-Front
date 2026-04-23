@@ -6,6 +6,7 @@ class AppUser {
     required this.apellido,
     required this.rol,
     this.telefono,
+    this.profilePhotoUrl,
     required this.createdAt,
     this.deletedAt,
   });
@@ -16,6 +17,7 @@ class AppUser {
   final String apellido;
   final String rol;
   final String? telefono;
+  final String? profilePhotoUrl;
   final DateTime createdAt;
   final DateTime? deletedAt;
 
