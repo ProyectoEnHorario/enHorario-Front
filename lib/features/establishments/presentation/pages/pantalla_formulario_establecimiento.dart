@@ -1,8 +1,8 @@
 import 'package:enhorario/features/establishments/data/models/establishment_model.dart';
 import 'package:flutter/material.dart';
 
-class EstablishmentFormScreen extends StatefulWidget {
-  const EstablishmentFormScreen({
+class PantallaFormularioEstablecimiento extends StatefulWidget {
+  const PantallaFormularioEstablecimiento({
     super.key,
     this.initial,
     required this.onSave,
@@ -12,11 +12,11 @@ class EstablishmentFormScreen extends StatefulWidget {
   final Future<String?> Function(EstablishmentModel model) onSave;
 
   @override
-  State<EstablishmentFormScreen> createState() =>
-      _EstablishmentFormScreenState();
+  State<PantallaFormularioEstablecimiento> createState() =>
+      _PantallaFormularioEstablecimientoState();
 }
 
-class _EstablishmentFormScreenState extends State<EstablishmentFormScreen> {
+class _PantallaFormularioEstablecimientoState extends State<PantallaFormularioEstablecimiento> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nombre;
   late final TextEditingController _descripcion;

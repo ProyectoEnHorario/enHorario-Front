@@ -1,15 +1,25 @@
 import 'package:enhorario/app/app.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
+import 'package:enhorario/features/notifications/data/repositories/local_notification_repository.dart';
 import 'package:flutter/material.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (kIsWeb) {
-    throw UnsupportedError(
-      'Web no esta configurado para Firebase. Ejecuta flutterfire configure para generar firebase_options.dart.',
-    );
-  }
-  await Firebase.initializeApp();
-  runApp(const EnHorarioApp());
+  
+  final notificationRepo = LocalNotificationRepository();
+  final result = await notificationRepo.initialize();
+  
+  result.fold(
+    (failure) {
+      debugPrint('[Main] Error crítico inicializando notificaciones: ${failure.message}');
+      FlutterError.reportError(FlutterErrorDetails(
+        exception: failure,
+        library: 'Notificaciones',
+        context: ErrorDescription('Falló la inicialización de notificaciones locales: ${failure.message}'),
+      ));
+      // La app continua pero el repositorio de notificaciones estara en un estado fallido interno
+    },
+    (_) => debugPrint('[Main] Notificaciones locales inicializadas correctamente'),
+  );
+
+  runApp(EnHorarioApp(notificationRepository: notificationRepo));
 }
