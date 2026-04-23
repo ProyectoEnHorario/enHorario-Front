@@ -3,6 +3,7 @@ import 'package:enhorario/core/errors/api_exception.dart';
 import 'package:enhorario/core/errors/failure.dart';
 import 'package:enhorario/core/results/result.dart';
 import 'package:enhorario/features/establishments/data/models/railway_establishment_view.dart';
+import 'package:enhorario/features/establishments/data/models/wait_time_rating_model.dart';
 import 'package:enhorario/features/establishments/data/models/wait_time_report_model.dart';
 
 class RailwayEstablishmentQueryService {
