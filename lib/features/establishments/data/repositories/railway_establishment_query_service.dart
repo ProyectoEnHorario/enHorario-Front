@@ -124,16 +124,24 @@ class RailwayEstablishmentQueryService {
     String establishmentId,
     WaitTimeRatingModel model,
   ) async {
-    // SIMULACIÓN: El backend aún no tiene este endpoint,
-    // así que simulamos éxito para completar el flujo de la UI.
-    debugPrint('--- [SIMULACIÓN] Enviando calificación de precisión ---');
-    debugPrint('Establecimiento ID: $establishmentId');
-    debugPrint('Estrellas: ${model.rating}');
-    
-    await Future.delayed(const Duration(milliseconds: 1500));
-    
-    debugPrint('--- [SIMULACIÓN] Calificación enviada con éxito ---');
-    return const Right(null);
+    try {
+      await _apiClient.post(
+        '/establishments/$establishmentId/wait-time/rating',
+        data: model.toMap(),
+      );
+      return const Right(null);
+    } on ApiException catch (e) {
+      return Left(
+        Failure(
+          'No fue posible enviar la calificación: ${e.message}',
+          statusCode: e.statusCode,
+        ),
+      );
+    } catch (e) {
+      return const Left(
+        Failure('Error inesperado al enviar la calificación de precisión.'),
+      );
+    }
   }
 
   List<dynamic> _extractContent(dynamic response) {
