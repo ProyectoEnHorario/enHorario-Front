@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/core/errors/api_exception.dart';
 import 'package:enhorario/core/errors/failure.dart';
@@ -125,7 +126,13 @@ class RailwayEstablishmentQueryService {
   ) async {
     // SIMULACIÓN: El backend aún no tiene este endpoint,
     // así que simulamos éxito para completar el flujo de la UI.
+    debugPrint('--- [SIMULACIÓN] Enviando calificación de precisión ---');
+    debugPrint('Establecimiento ID: $establishmentId');
+    debugPrint('Estrellas: ${model.rating}');
+    
     await Future.delayed(const Duration(milliseconds: 1500));
+    
+    debugPrint('--- [SIMULACIÓN] Calificación enviada con éxito ---');
     return const Right(null);
   }
 
