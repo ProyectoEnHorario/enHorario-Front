@@ -6,6 +6,8 @@ import 'package:enhorario/features/establishments/data/repositories/railway_esta
 import 'package:enhorario/features/establishments/presentation/bloc/favorites_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/wait_time_report_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/formulario_tiempo_espera_widget.dart';
+import 'package:enhorario/features/establishments/presentation/widgets/calificacion_precision_widget.dart';
+import 'package:enhorario/features/establishments/presentation/bloc/wait_time_rating_cubit.dart';
 import 'package:enhorario/core/widgets/favorite_button.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/establishment_wait_time_cubit.dart';
 import 'package:flutter/material.dart';
@@ -67,8 +69,15 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider.value(
-      value: _cubit,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _cubit),
+        BlocProvider(
+          create: (_) => WaitTimeRatingCubit(
+            RailwayEstablishmentQueryService(ApiClient()),
+          ),
+        ),
+      ],
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Detalle del establecimiento'),
@@ -278,6 +287,12 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
                       color: Colors.grey.shade500,
                     ),
                   ),
+
+                  // Nueva sección de calificación de precisión (ENH-12)
+                  if (item.isOpen)
+                    CalificacionPrecisionWidget(
+                      establishmentId: widget.establishmentId,
+                    ),
 
                   // Barra de progreso de refresco automático
                   if (state.isRefreshing) ...[

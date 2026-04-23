@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/core/errors/api_exception.dart';
 import 'package:enhorario/core/errors/failure.dart';
 import 'package:enhorario/core/results/result.dart';
 import 'package:enhorario/features/establishments/data/models/railway_establishment_view.dart';
+import 'package:enhorario/features/establishments/data/models/wait_time_rating_model.dart';
 import 'package:enhorario/features/establishments/data/models/wait_time_report_model.dart';
 
 class RailwayEstablishmentQueryService {
@@ -116,6 +118,30 @@ class RailwayEstablishmentQueryService {
       return const Left(Failure('Error inesperado al enviar el reporte.'));
     }
     */
+  }
+
+  Future<Result<void>> sendWaitTimeRating(
+    String establishmentId,
+    WaitTimeRatingModel model,
+  ) async {
+    try {
+      await _apiClient.post(
+        '/establishments/$establishmentId/wait-time/rating',
+        data: model.toMap(),
+      );
+      return const Right(null);
+    } on ApiException catch (e) {
+      return Left(
+        Failure(
+          'No fue posible enviar la calificación: ${e.message}',
+          statusCode: e.statusCode,
+        ),
+      );
+    } catch (e) {
+      return const Left(
+        Failure('Error inesperado al enviar la calificación de precisión.'),
+      );
+    }
   }
 
   List<dynamic> _extractContent(dynamic response) {
