@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/core/errors/api_exception.dart';
 import 'package:enhorario/core/errors/failure.dart';
