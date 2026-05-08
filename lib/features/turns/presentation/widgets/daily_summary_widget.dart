@@ -26,6 +26,29 @@ class DailySummaryWidget extends StatelessWidget {
           return Center(child: Text(state.error!, style: const TextStyle(color: Colors.red)));
         }
 
+        if (state.turns.isEmpty) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(context, state),
+              const SizedBox(height: 24),
+              Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.analytics_outlined, size: 48, color: Colors.grey[400]),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Aún no hay actividad en este día',
+                      style: TextStyle(color: Colors.grey, fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          );
+        }
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
