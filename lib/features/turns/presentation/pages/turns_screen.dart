@@ -1,6 +1,9 @@
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
+import 'package:enhorario/features/turns/presentation/bloc/daily_summary_cubit.dart';
+import 'package:enhorario/features/turns/presentation/widgets/daily_summary_widget.dart';
+import 'package:enhorario/features/turns/data/repositories/railway_turn_repository.dart';
 import 'package:enhorario/features/turns/data/models/turn_model.dart';
 import 'package:enhorario/features/turns/presentation/bloc/user_tickets_cubit.dart';
 import 'package:flutter/material.dart';
@@ -174,39 +177,56 @@ class _TurnsScreenState extends State<TurnsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: BlocProvider<UserTicketsCubit>.value(
-        value: _userTicketsCubit,
-        child: BlocListener<UserTicketsCubit, UserTicketsState>(
-          listener: (context, state) {
-            if (state.successMessage != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(state.successMessage!)),
-              );
-            }
-            if (state.error != null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.error!),
-                  backgroundColor: Colors.red,
-                ),
-              );
-            }
-          },
-          child: BlocBuilder<UserTicketsCubit, UserTicketsState>(
-            builder: (context, state) {
-              return CustomScrollView(
-                slivers: [
-                  // Botón de crear ticket
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: FilledButton.icon(
-                        onPressed: _showCreateTicketDialog,
-                        icon: const Icon(Icons.add),
-                        label: const Text('Solicitar nuevo ticket'),
+          child: MultiBlocProvider(
+            providers: [
+              BlocProvider<UserTicketsCubit>.value(value: _userTicketsCubit),
+              BlocProvider<DailySummaryCubit>(
+                create: (context) => DailySummaryCubit(
+                  RailwayTurnRepository(ApiClient()),
+                )..loadSummary('b1000000-0000-0000-0000-000000000001'),
+              ),
+            ],
+            child: BlocListener<UserTicketsCubit, UserTicketsState>(
+              listener: (context, state) {
+                if (state.successMessage != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(state.successMessage!)),
+                  );
+                }
+                if (state.error != null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(state.error!),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              child: BlocBuilder<UserTicketsCubit, UserTicketsState>(
+              builder: (context, state) {
+                return CustomScrollView(
+                  slivers: [
+                    // Resumen Diario (Solo para Admin/Demo)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                        child: DailySummaryWidget(
+                          establishmentId: 'b1000000-0000-0000-0000-000000000001',
+                        ),
                       ),
                     ),
-                  ),
+                    const SliverToBoxAdapter(child: Divider(indent: 16, endIndent: 16)),
+                    // Botón de crear ticket
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: FilledButton.icon(
+                          onPressed: _showCreateTicketDialog,
+                          icon: const Icon(Icons.add),
+                          label: const Text('Solicitar nuevo ticket'),
+                        ),
+                      ),
+                    ),
                   // Sección de tickets activos
                   SliverToBoxAdapter(
                     child: Padding(
