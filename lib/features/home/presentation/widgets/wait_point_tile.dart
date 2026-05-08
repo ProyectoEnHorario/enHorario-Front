@@ -16,19 +16,26 @@ class WaitPointTile extends StatelessWidget {
     final updatedAgo = DateTime.now().difference(point.updatedAt).inMinutes;
 
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       leading: CircleAvatar(
-        backgroundColor: scheme.primaryContainer,
-        foregroundColor: scheme.onPrimaryContainer,
-        child: Text(point.category.substring(0, 1)),
+        radius: 24,
+        backgroundColor: scheme.tertiary.withOpacity(0.12),
+        child: Text(
+          point.category.substring(0, 1).toUpperCase(),
+          style: TextStyle(color: scheme.tertiary, fontWeight: FontWeight.w700),
+        ),
       ),
       title: Text(
         point.name,
-        style: const TextStyle(fontWeight: FontWeight.w600),
+        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
       ),
       subtitle: Text('Actualizado hace ${formatMinutes(updatedAgo)}'),
       trailing: Chip(
-        label: Text('${point.estimatedMinutes} min'),
+        backgroundColor: scheme.primary.withOpacity(0.08),
+        label: Text(
+          '${point.estimatedMinutes} min',
+          style: TextStyle(color: scheme.primary, fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }
