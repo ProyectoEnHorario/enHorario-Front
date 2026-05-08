@@ -183,7 +183,9 @@ class _TurnsScreenState extends State<TurnsScreen> {
               BlocProvider<DailySummaryCubit>(
                 create: (context) => DailySummaryCubit(
                   RailwayTurnRepository(ApiClient()),
-                )..loadSummary('b1000000-0000-0000-0000-000000000001'),
+                )
+                  ..loadSummary('b1000000-0000-0000-0000-000000000001')
+                  ..startAutoRefresh('b1000000-0000-0000-0000-000000000001'),
               ),
             ],
             child: BlocListener<UserTicketsCubit, UserTicketsState>(

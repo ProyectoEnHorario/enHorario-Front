@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:enhorario/features/turns/data/models/turn_model.dart';
 import 'package:enhorario/features/turns/data/repositories/railway_turn_repository.dart';
@@ -54,13 +55,31 @@ class DailySummaryState {
 
 class DailySummaryCubit extends Cubit<DailySummaryState> {
   final RailwayTurnRepository _repository;
+  Timer? _refreshTimer;
 
   DailySummaryCubit(this._repository)
       : super(DailySummaryState(selectedDate: DateTime.now()));
 
+  void startAutoRefresh(String establishmentId) {
+    _refreshTimer?.cancel();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      loadSummary(establishmentId);
+    });
+  }
+
+  @override
+  Future<void> close() {
+    _refreshTimer?.cancel();
+    return super.close();
+  }
+
   Future<void> loadSummary(String establishmentId, {DateTime? date}) async {
     final targetDate = date ?? state.selectedDate;
-    emit(state.copyWith(isLoading: true, error: null, selectedDate: targetDate));
+    
+    // No mostramos loading si es un refresco automático para no molestar al usuario
+    if (date != null) {
+      emit(state.copyWith(isLoading: true, error: null, selectedDate: targetDate));
+    }
 
     final result = await _repository.fetchDailyTurns(
       establishmentId: establishmentId,
