@@ -133,7 +133,7 @@ class _TurnsScreenState extends State<TurnsScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.successMessage!)));
               }
               if (state.error != null) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.error!), backgroundColor: Colors.red));
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.error!), backgroundColor: Theme.of(context).colorScheme.error));
               }
             },
             child: TabBarView(
@@ -187,10 +187,10 @@ class _TurnsScreenState extends State<TurnsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey[400]),
+            Icon(Icons.receipt_long_outlined, size: 64, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
             const SizedBox(height: 16),
             Text(title, style: const TextStyle(fontSize: 16)),
-            Text(subtitle, style: const TextStyle(color: Colors.grey)),
+            Text(subtitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
           ],
         ),
       ),
@@ -210,17 +210,17 @@ class _TurnsScreenState extends State<TurnsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text('Ticket ${ticket.codigo}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  if (ticket.estado == 'en_espera' || ticket.estado == 'cancelado')
-                    IconButton(
-                      onPressed: state.isDeletingTurn ? null : () => _showDeleteConfirmation(context, ticket),
-                      icon: state.isDeletingTurn ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.delete_outline),
-                    ),
+                      if (ticket.estado == 'en_espera' || ticket.estado == 'cancelado')
+                        IconButton(
+                          onPressed: state.isDeletingTurn ? null : () => _showDeleteConfirmation(context, ticket),
+                          icon: state.isDeletingTurn ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.delete_outline),
+                        ),
                 ],
               ),
               const Divider(),
               Text('Establecimiento: ${ticket.establishmentId}'),
               const SizedBox(height: 8),
-              Text('Estado: ${_formatEstado(ticket.estado)}', style: TextStyle(fontWeight: FontWeight.bold, color: _getEstadoColor(ticket.estado))),
+                  Text('Estado: ${_formatEstado(ticket.estado)}', style: TextStyle(fontWeight: FontWeight.bold, color: _getEstadoColor(ticket.estado, context))),
               const SizedBox(height: 8),
               Text('Solicitado: ${DateFormat('d/M/y HH:mm').format(ticket.solicitadoEn)}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
             ],
@@ -238,7 +238,7 @@ class _TurnsScreenState extends State<TurnsScreen> {
         content: const Text('¿Está seguro de que desea eliminar este ticket?'),
         actions: [
           TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancelar')),
-          FilledButton(style: FilledButton.styleFrom(backgroundColor: Colors.red), onPressed: () { _userTicketsCubit.deleteTurn(ticket.id); Navigator.of(dialogContext).pop(); }, child: const Text('Eliminar')),
+          FilledButton(style: FilledButton.styleFrom(backgroundColor: Theme.of(dialogContext).colorScheme.error), onPressed: () { _userTicketsCubit.deleteTurn(ticket.id); Navigator.of(dialogContext).pop(); }, child: const Text('Eliminar')),
         ],
       ),
     );
@@ -253,12 +253,13 @@ class _TurnsScreenState extends State<TurnsScreen> {
     }
   }
 
-  Color _getEstadoColor(String estado) {
+  Color _getEstadoColor(String estado, BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     switch (estado) {
-      case 'en_espera': return Colors.blue;
-      case 'atendido': return Colors.green;
-      case 'cancelado': return Colors.red;
-      default: return Colors.grey;
+      case 'en_espera': return scheme.secondary; // azul/steel-blue
+      case 'atendido': return scheme.tertiary; // usar cerulean para éxito
+      case 'cancelado': return scheme.error; // rojo de error
+      default: return scheme.onSurface.withOpacity(0.6);
     }
   }
 }
