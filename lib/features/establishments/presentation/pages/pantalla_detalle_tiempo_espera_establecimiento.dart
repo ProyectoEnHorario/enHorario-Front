@@ -12,6 +12,7 @@ import 'package:enhorario/features/establishments/presentation/bloc/establishmen
 import 'package:enhorario/features/turns/presentation/bloc/turn_request_cubit.dart';
 import 'package:enhorario/features/turns/presentation/widgets/solicitud_turno_widget.dart';
 import 'package:enhorario/features/turns/data/repositories/railway_turn_repository.dart';
+import 'package:enhorario/features/turns/presentation/widgets/estado_turno_activo_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -322,14 +323,28 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
 
                   const SizedBox(height: 24),
 
-                  // ── SECCIÓN DE SOLICITUD DE TURNO (ENH-331) ─────
+                  // ── SECCIÓN DE GESTIÓN DE TURNOS (ENH-331) ─────
                   if (item.isOpen)
-                    SolicitudTurnoWidget(
-                      establishmentId: widget.establishmentId,
-                      onTurnRequested: () {
-                        // El widget interno ya tiene su estado de prioridad
-                        // Aquí disparamos la acción desde el Cubit
-                        // Nota: El widget ahora necesitará acceso al contexto del Bloc
+                    BlocBuilder<TurnRequestCubit, TurnRequestState>(
+                      builder: (context, turnState) {
+                        final activeTurn = turnState.activeTurn;
+
+                        if (activeTurn != null) {
+                          return EstadoTurnoActivoWidget(
+                            turn: activeTurn,
+                            isCancelling: turnState is TurnRequestCancelling,
+                            onCancel: () {
+                              context.read<TurnRequestCubit>().cancelCurrentTurn();
+                            },
+                          );
+                        }
+
+                        return SolicitudTurnoWidget(
+                          establishmentId: widget.establishmentId,
+                          onTurnRequested: () {
+                            // La acción ya se dispara dentro del widget
+                          },
+                        );
                       },
                     ),
 

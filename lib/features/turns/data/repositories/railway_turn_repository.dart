@@ -57,4 +57,15 @@ class RailwayTurnRepository {
       return const Left(Failure('Error inesperado al crear el turno.'));
     }
   }
+
+  Future<Result<bool>> cancelTurn(String turnId) async {
+    try {
+      await _apiClient.delete('/turns/$turnId');
+      return const Right(true);
+    } on ApiException catch (e) {
+      return Left(Failure('Error al cancelar el turno: ${e.message}', statusCode: e.statusCode));
+    } catch (e) {
+      return const Left(Failure('Error inesperado al cancelar el turno.'));
+    }
+  }
 }
