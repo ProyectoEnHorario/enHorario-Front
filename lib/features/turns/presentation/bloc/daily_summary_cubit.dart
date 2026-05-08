@@ -27,15 +27,21 @@ class DailySummaryState {
   }
 
   int get tiempoPromedioEsperaMinutos {
-    final atendidos = turns.where((t) => t.estado == 'atendido' && t.atendidoEn != null).toList();
-    if (atendidos.isEmpty) return 0;
+    // Solo tomamos turnos atendidos que tengan AMBAS fechas válidas
+    final atendidosConFecha = turns.where((t) => 
+      t.estado == 'atendido' && 
+      t.atendidoEn != null
+    ).toList();
+    
+    if (atendidosConFecha.isEmpty) return 0;
 
-    final totalEspera = atendidos.fold<int>(0, (sum, t) {
+    final totalEspera = atendidosConFecha.fold<int>(0, (sum, t) {
       final espera = t.atendidoEn!.difference(t.solicitadoEn).inMinutes;
-      return sum + espera;
+      // Evitamos valores negativos si por alguna razón la fecha de atención es previa a la solicitud
+      return sum + (espera > 0 ? espera : 0);
     });
 
-    return (totalEspera / atendidos.length).round();
+    return (totalEspera / atendidosConFecha.length).round();
   }
 
   DailySummaryState copyWith({
