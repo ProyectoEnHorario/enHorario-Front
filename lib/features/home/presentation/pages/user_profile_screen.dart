@@ -344,7 +344,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             child: const Text('Cancelar'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(dialogContext).colorScheme.error),
             onPressed: () {
               Navigator.of(dialogContext).pop();
               _confirmDeleteAccount(context);
@@ -388,7 +388,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
             child: const Text('Cancelar eliminación'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(backgroundColor: Theme.of(dialogContext).colorScheme.error),
             onPressed: () => Navigator.of(dialogContext).pop(true),
             child: const Text('Sí, eliminar todo'),
           ),
@@ -806,7 +806,7 @@ class _DangerZone extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                style: FilledButton.styleFrom(backgroundColor: Theme.of(context).colorScheme.error),
                 onPressed: onDeleteAccount,
                 icon: const Icon(Icons.delete_forever),
                 label: const Text('Eliminar Mi Cuenta'),

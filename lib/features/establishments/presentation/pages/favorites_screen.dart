@@ -246,13 +246,6 @@ class _ErrorState extends StatelessWidget {
               onPressed: onRetry,
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Reintentar'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.black87,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
             ),
           ],
         ),
