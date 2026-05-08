@@ -6,10 +6,12 @@ import 'package:enhorario/features/establishments/data/repositories/railway_esta
 import 'package:enhorario/features/establishments/presentation/bloc/favorites_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/wait_time_report_cubit.dart';
 import 'package:enhorario/features/establishments/presentation/widgets/formulario_tiempo_espera_widget.dart';
-import 'package:enhorario/features/establishments/presentation/widgets/calificacion_precision_widget.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/wait_time_rating_cubit.dart';
 import 'package:enhorario/core/widgets/favorite_button.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/establishment_wait_time_cubit.dart';
+import 'package:enhorario/features/turns/presentation/bloc/turn_request_cubit.dart';
+import 'package:enhorario/features/turns/presentation/widgets/solicitud_turno_widget.dart';
+import 'package:enhorario/features/turns/data/repositories/railway_turn_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -77,8 +79,32 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
             RailwayEstablishmentQueryService(ApiClient()),
           ),
         ),
+        BlocProvider(
+          create: (_) => TurnRequestCubit(
+            RailwayTurnRepository(ApiClient()),
+          ),
+        ),
       ],
-      child: Scaffold(
+      child: BlocListener<TurnRequestCubit, TurnRequestState>(
+        listener: (context, state) {
+          if (state is TurnRequestSuccess) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('¡Turno solicitado con éxito! Tu código es: ${state.ticketCode}'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+          if (state is TurnRequestError) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+        child: Scaffold(
         appBar: AppBar(
           title: const Text('Detalle del establecimiento'),
           actions: [
@@ -293,6 +319,21 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
                     CalificacionPrecisionWidget(
                       establishmentId: widget.establishmentId,
                     ),
+
+                  const SizedBox(height: 24),
+
+                  // ── SECCIÓN DE SOLICITUD DE TURNO (ENH-331) ─────
+                  if (item.isOpen)
+                    SolicitudTurnoWidget(
+                      establishmentId: widget.establishmentId,
+                      onTurnRequested: () {
+                        // El widget interno ya tiene su estado de prioridad
+                        // Aquí disparamos la acción desde el Cubit
+                        // Nota: El widget ahora necesitará acceso al contexto del Bloc
+                      },
+                    ),
+
+                  const SizedBox(height: 16),
 
                   // Barra de progreso de refresco automático
                   if (state.isRefreshing) ...[
