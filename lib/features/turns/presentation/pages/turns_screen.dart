@@ -173,9 +173,24 @@ class _TurnsScreenState extends State<TurnsScreen> {
     return BlocBuilder<UserTicketsCubit, UserTicketsState>(
       builder: (context, state) {
         final historyTickets = state.tickets.where((t) => t.estado != 'en_espera').toList();
-        if (state.isLoading) return const Center(child: CircularProgressIndicator());
-        if (historyTickets.isEmpty) return _buildEmptyState('Historial vacío', 'Tus turnos finalizados aparecerán aquí');
-        return ListView.builder(padding: const EdgeInsets.all(16), itemCount: historyTickets.length, itemBuilder: (context, index) => _buildTicketCard(context, historyTickets[index], state));
+        return CustomScrollView(
+          slivers: [
+            if (state.isLoading)
+              const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
+            else if (historyTickets.isEmpty)
+              _buildEmptyState('Historial vacío', 'Tus turnos finalizados aparecerán aquí')
+            else
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => _buildTicketCard(context, historyTickets[index], state),
+                    childCount: historyTickets.length,
+                  ),
+                ),
+              ),
+          ],
+        );
       },
     );
   }
