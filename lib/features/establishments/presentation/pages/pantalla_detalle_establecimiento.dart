@@ -26,6 +26,7 @@ class PantallaDetalleEstablecimiento extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(title: Text(item.nombre)),
@@ -40,15 +41,15 @@ class PantallaDetalleEstablecimiento extends StatelessWidget {
             children: [
               _StatusChip(
                 label: item.abierto ? 'Abierto' : 'Cerrado',
-                color: item.abierto ? Colors.green : Colors.red,
+                color: item.abierto ? scheme.secondary : scheme.error,
               ),
               const SizedBox(width: 8),
               _StatusChip(
                 label: item.activo ? 'Activo' : 'Inactivo',
-                color: item.activo ? Colors.blue : Colors.grey,
+                color: item.activo ? scheme.tertiary : scheme.onSurface.withOpacity(0.5),
               ),
             ],
-          ),
+            ),
 
           const SizedBox(height: 24),
 
@@ -69,7 +70,7 @@ class PantallaDetalleEstablecimiento extends StatelessWidget {
               '${afluenciaStat!.totalTurnos} turnos activos '
                   '(${afluenciaStat!.turnosPrioritarios} prioritarios)',
               style: textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade600,
+                color: scheme.onSurface.withOpacity(0.7),
               ),
             ),
           ] else ...[
@@ -77,7 +78,7 @@ class PantallaDetalleEstablecimiento extends StatelessWidget {
             Text(
               'Sin datos de afluencia disponibles',
               style: textTheme.bodySmall?.copyWith(
-                color: Colors.grey.shade500,
+                color: scheme.onSurface.withOpacity(0.6),
               ),
             ),
           ],
@@ -128,9 +129,9 @@ class _StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        border: Border.all(color: color.withOpacity(0.28)),
       ),
       child: Text(
         label,

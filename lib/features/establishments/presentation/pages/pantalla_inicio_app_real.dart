@@ -306,9 +306,7 @@ class _VistaInicioAppRealState extends State<_VistaInicioAppReal> {
 
                                 return Card(
                                   elevation: 0,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainerHighest,
+                                  color: Theme.of(context).colorScheme.surface,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14),
                                   ),
@@ -466,7 +464,7 @@ class _VistaInicioAppRealState extends State<_VistaInicioAppReal> {
                                 },
                               ),
                         filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.96),
+                        fillColor: Theme.of(context).colorScheme.surface,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide.none,
@@ -484,7 +482,8 @@ class _VistaInicioAppRealState extends State<_VistaInicioAppReal> {
                   child: TextFieldTapRegion(
                     child: Material(
                       elevation: 6,
-                      borderRadius: BorderRadius.circular(14),
+                      color: Theme.of(context).colorScheme.surface,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxHeight: 260),
                         child: ListView.separated(
@@ -613,7 +612,7 @@ class _VistaInicioAppRealState extends State<_VistaInicioAppReal> {
                   top: 130,
                   child: Material(
                     elevation: 2,
-                    borderRadius: BorderRadius.circular(12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     color: _permissionDenied
                         ? Theme.of(context).colorScheme.errorContainer
                         : Theme.of(context).colorScheme.surface,
@@ -625,10 +624,9 @@ class _VistaInicioAppRealState extends State<_VistaInicioAppReal> {
                       child: Row(
                         children: [
                           Icon(
-                            _permissionDenied
-                                ? Icons.location_off
-                                : Icons.my_location,
+                            _permissionDenied ? Icons.location_off : Icons.my_location,
                             size: 16,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -649,7 +647,7 @@ class _VistaInicioAppRealState extends State<_VistaInicioAppReal> {
                   top: 188,
                   child: Material(
                     elevation: 2,
-                    borderRadius: BorderRadius.circular(12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     color: Theme.of(context).colorScheme.errorContainer,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
@@ -675,6 +673,12 @@ class _VistaInicioAppRealState extends State<_VistaInicioAppReal> {
                 right: 12,
                 bottom: 18,
                 child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.primary,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  ),
                   onPressed: () => _openNearbyPanel(context, visibleItems),
                   icon: const Icon(Icons.place),
                   label: Text('Cercanos (${visibleItems.length})'),

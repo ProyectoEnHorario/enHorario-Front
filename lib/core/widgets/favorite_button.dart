@@ -55,6 +55,8 @@ class _FavoriteButtonState extends State<FavoriteButton>
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return IconButton(
       iconSize: widget.size,
       padding: EdgeInsets.zero,
@@ -67,7 +69,7 @@ class _FavoriteButtonState extends State<FavoriteButton>
           duration: const Duration(milliseconds: 200),
           child: Icon(
             widget.isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: widget.isFavorite ? const Color(0xFFFF4B4B) : Colors.grey.shade400,
+            color: widget.isFavorite ? scheme.primary : scheme.onSurface.withOpacity(0.5),
           ),
         ),
       ),
