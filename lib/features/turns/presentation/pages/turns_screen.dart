@@ -1,8 +1,11 @@
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/establishments/data/repositories/railway_establishment_query_service.dart';
 import 'package:enhorario/features/establishments/presentation/bloc/real_establishments_cubit.dart';
+import 'package:enhorario/features/turns/data/repositories/railway_turn_repository.dart';
 import 'package:enhorario/features/turns/data/models/turn_model.dart';
+import 'package:enhorario/features/turns/presentation/bloc/daily_summary_cubit.dart';
 import 'package:enhorario/features/turns/presentation/bloc/user_tickets_cubit.dart';
+import 'package:enhorario/features/turns/presentation/widgets/daily_summary_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -160,8 +163,17 @@ class _TurnsScreenState extends State<TurnsScreen> {
             ],
           ),
         ),
-        body: BlocProvider<UserTicketsCubit>.value(
-          value: _userTicketsCubit,
+        body: MultiBlocProvider(
+          providers: [
+            BlocProvider<UserTicketsCubit>.value(value: _userTicketsCubit),
+            BlocProvider<DailySummaryCubit>(
+              create: (context) => DailySummaryCubit(
+                RailwayTurnRepository(ApiClient()),
+              )
+                ..loadSummary('b1000000-0000-0000-0000-000000000001')
+                ..startAutoRefresh('b1000000-0000-0000-0000-000000000001'),
+            ),
+          ],
           child: BlocListener<UserTicketsCubit, UserTicketsState>(
             listener: (context, state) {
               if (state.successMessage != null) {
@@ -195,6 +207,17 @@ class _TurnsScreenState extends State<TurnsScreen> {
             .toList();
         return CustomScrollView(
           slivers: [
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                child: DailySummaryWidget(
+                  establishmentId: 'b1000000-0000-0000-0000-000000000001',
+                ),
+              ),
+            ),
+            const SliverToBoxAdapter(
+              child: Divider(indent: 16, endIndent: 16),
+            ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
