@@ -173,7 +173,7 @@ class _TurnsScreenState extends State<TurnsScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.error!),
-                    backgroundColor: Colors.red,
+                    backgroundColor: Theme.of(context).colorScheme.error,
                   ),
                 );
               }
@@ -272,11 +272,11 @@ class _TurnsScreenState extends State<TurnsScreen> {
             Icon(
               Icons.receipt_long_outlined,
               size: 64,
-              color: Colors.grey[400],
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
             ),
             const SizedBox(height: 16),
             Text(title, style: const TextStyle(fontSize: 16)),
-            Text(subtitle, style: const TextStyle(color: Colors.grey)),
+            Text(subtitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
           ],
         ),
       ),
@@ -296,12 +296,12 @@ class _TurnsScreenState extends State<TurnsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Ticket ${ticket.codigo}',
-                    style: const TextStyle(
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Ticket ${ticket.codigo}',
+                      style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -329,7 +329,7 @@ class _TurnsScreenState extends State<TurnsScreen> {
                 'Estado: ${_formatEstado(ticket.estado)}',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: _getEstadoColor(ticket.estado),
+                  color: _getEstadoColor(ticket.estado, context),
                 ),
               ),
               const SizedBox(height: 8),
@@ -356,7 +356,9 @@ class _TurnsScreenState extends State<TurnsScreen> {
             child: const Text('Cancelar'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
             onPressed: () {
               _userTicketsCubit.deleteTurn(ticket.id);
               Navigator.of(dialogContext).pop();
@@ -381,16 +383,17 @@ class _TurnsScreenState extends State<TurnsScreen> {
     }
   }
 
-  Color _getEstadoColor(String estado) {
+  Color _getEstadoColor(String estado, BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     switch (estado) {
       case 'en_espera':
-        return Colors.blue;
+        return scheme.secondary;
       case 'atendido':
-        return Colors.green;
+        return scheme.tertiary;
       case 'cancelado':
-        return Colors.red;
+        return scheme.error;
       default:
-        return Colors.grey;
+        return scheme.onSurface.withOpacity(0.6);
     }
   }
 }
