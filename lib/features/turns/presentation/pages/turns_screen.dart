@@ -48,50 +48,82 @@ class _TurnsScreenState extends State<TurnsScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Seleccionar establecimiento:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Seleccionar establecimiento:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 12),
                 BlocProvider(
-                  create: (_) => RealEstablishmentsCubit(RailwayEstablishmentQueryService(ApiClient())),
-                  child: BlocBuilder<RealEstablishmentsCubit, RealEstablishmentsState>(
-                    builder: (context, state) {
-                      return DropdownButtonFormField<String>(
-                        value: _selectedEstablishmentId,
-                        hint: const Text('Elige un establecimiento'),
-                        isExpanded: true,
-                        items: state.items.map((establishment) {
-                          return DropdownMenuItem<String>(value: establishment.id, child: Text(establishment.name));
-                        }).toList(),
-                        onChanged: (value) => setDialogState(() => _selectedEstablishmentId = value),
-                      );
-                    },
+                  create: (_) => RealEstablishmentsCubit(
+                    RailwayEstablishmentQueryService(ApiClient()),
                   ),
+                  child:
+                      BlocBuilder<
+                        RealEstablishmentsCubit,
+                        RealEstablishmentsState
+                      >(
+                        builder: (context, state) {
+                          return DropdownButtonFormField<String>(
+                            value: _selectedEstablishmentId,
+                            hint: const Text('Elige un establecimiento'),
+                            isExpanded: true,
+                            items: state.items.map((establishment) {
+                              return DropdownMenuItem<String>(
+                                value: establishment.id,
+                                child: Text(establishment.name),
+                              );
+                            }).toList(),
+                            onChanged: (value) => setDialogState(
+                              () => _selectedEstablishmentId = value,
+                            ),
+                          );
+                        },
+                      ),
                 ),
                 const SizedBox(height: 24),
-                const Text('Tipo de ticket:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text(
+                  'Tipo de ticket:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
                 const SizedBox(height: 12),
                 CheckboxListTile(
                   title: const Text('Ticket con prioridad'),
                   value: _isPriority,
-                  onChanged: (bool? value) => setDialogState(() => _isPriority = value ?? false),
+                  onChanged: (bool? value) =>
+                      setDialogState(() => _isPriority = value ?? false),
                 ),
                 if (_isPriority) ...[
                   const SizedBox(height: 12),
-                  const Text('Razón de prioridad:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                  const Text(
+                    'Razón de prioridad:',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
                   const SizedBox(height: 8),
                   DropdownButtonFormField<String>(
                     value: _priorityReason,
                     items: const [
-                      DropdownMenuItem(value: 'adulto_mayor', child: Text('Adulto mayor (65+)')),
-                      DropdownMenuItem(value: 'mujer_gestante', child: Text('Mujer en estado de gestación')),
+                      DropdownMenuItem(
+                        value: 'adulto_mayor',
+                        child: Text('Adulto mayor (65+)'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'mujer_gestante',
+                        child: Text('Mujer en estado de gestación'),
+                      ),
                     ],
-                    onChanged: (value) => setDialogState(() => _priorityReason = value ?? 'adulto_mayor'),
+                    onChanged: (value) => setDialogState(
+                      () => _priorityReason = value ?? 'adulto_mayor',
+                    ),
                   ),
                 ],
               ],
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancelar')),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar'),
+            ),
             FilledButton(
               onPressed: _selectedEstablishmentId == null
                   ? null
@@ -120,7 +152,10 @@ class _TurnsScreenState extends State<TurnsScreen> {
           title: const Text('Mis Turnos'),
           bottom: const TabBar(
             tabs: [
-              Tab(text: 'Activos', icon: Icon(Icons.confirmation_number_outlined)),
+              Tab(
+                text: 'Activos',
+                icon: Icon(Icons.confirmation_number_outlined),
+              ),
               Tab(text: 'Historial', icon: Icon(Icons.history_outlined)),
             ],
           ),
@@ -130,17 +165,21 @@ class _TurnsScreenState extends State<TurnsScreen> {
           child: BlocListener<UserTicketsCubit, UserTicketsState>(
             listener: (context, state) {
               if (state.successMessage != null) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.successMessage!)));
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(state.successMessage!)));
               }
               if (state.error != null) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(state.error!), backgroundColor: Theme.of(context).colorScheme.error));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(state.error!),
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                  ),
+                );
               }
             },
             child: TabBarView(
-              children: [
-                _buildActiveTurnsTab(),
-                _buildHistoryTurnsTab(),
-              ],
+              children: [_buildActiveTurnsTab(), _buildHistoryTurnsTab()],
             ),
           ),
         ),
@@ -151,18 +190,38 @@ class _TurnsScreenState extends State<TurnsScreen> {
   Widget _buildActiveTurnsTab() {
     return BlocBuilder<UserTicketsCubit, UserTicketsState>(
       builder: (context, state) {
-        final activeTickets = state.tickets.where((t) => t.estado == 'en_espera').toList();
+        final activeTickets = state.tickets
+            .where((t) => t.estado == 'en_espera')
+            .toList();
         return CustomScrollView(
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: FilledButton.icon(onPressed: _showCreateTicketDialog, icon: const Icon(Icons.add), label: const Text('Solicitar nuevo ticket')),
+                child: FilledButton.icon(
+                  onPressed: _showCreateTicketDialog,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Solicitar nuevo ticket'),
+                ),
               ),
             ),
-            if (state.isLoading) const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
-            else if (activeTickets.isEmpty) _buildEmptyState('No tienes tickets activos', 'Solicita uno para recibir atención')
-            else SliverList(delegate: SliverChildBuilderDelegate((context, index) => _buildTicketCard(context, activeTickets[index], state), childCount: activeTickets.length)),
+            if (state.isLoading)
+              const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (activeTickets.isEmpty)
+              _buildEmptyState(
+                'No tienes tickets activos',
+                'Solicita uno para recibir atención',
+              )
+            else
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) =>
+                      _buildTicketCard(context, activeTickets[index], state),
+                  childCount: activeTickets.length,
+                ),
+              ),
           ],
         );
       },
@@ -172,10 +231,33 @@ class _TurnsScreenState extends State<TurnsScreen> {
   Widget _buildHistoryTurnsTab() {
     return BlocBuilder<UserTicketsCubit, UserTicketsState>(
       builder: (context, state) {
-        final historyTickets = state.tickets.where((t) => t.estado != 'en_espera').toList();
-        if (state.isLoading) return const Center(child: CircularProgressIndicator());
-        if (historyTickets.isEmpty) return _buildEmptyState('Historial vacío', 'Tus turnos finalizados aparecerán aquí');
-        return ListView.builder(padding: const EdgeInsets.all(16), itemCount: historyTickets.length, itemBuilder: (context, index) => _buildTicketCard(context, historyTickets[index], state));
+        final historyTickets = state.tickets
+            .where((t) => t.estado != 'en_espera')
+            .toList();
+        return CustomScrollView(
+          slivers: [
+            if (state.isLoading)
+              const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (historyTickets.isEmpty)
+              _buildEmptyState(
+                'Historial vacío',
+                'Tus turnos finalizados aparecerán aquí',
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) =>
+                        _buildTicketCard(context, historyTickets[index], state),
+                    childCount: historyTickets.length,
+                  ),
+                ),
+              ),
+          ],
+        );
       },
     );
   }
@@ -187,7 +269,11 @@ class _TurnsScreenState extends State<TurnsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 64, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)),
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+            ),
             const SizedBox(height: 16),
             Text(title, style: const TextStyle(fontSize: 16)),
             Text(subtitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
@@ -197,7 +283,11 @@ class _TurnsScreenState extends State<TurnsScreen> {
     );
   }
 
-  Widget _buildTicketCard(BuildContext context, TurnModel ticket, UserTicketsState state) {
+  Widget _buildTicketCard(
+    BuildContext context,
+    TurnModel ticket,
+    UserTicketsState state,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Card(
@@ -206,23 +296,47 @@ class _TurnsScreenState extends State<TurnsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text('Ticket ${ticket.codigo}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                      if (ticket.estado == 'en_espera' || ticket.estado == 'cancelado')
-                        IconButton(
-                          onPressed: state.isDeletingTurn ? null : () => _showDeleteConfirmation(context, ticket),
-                          icon: state.isDeletingTurn ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.delete_outline),
-                        ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Ticket ${ticket.codigo}',
+                      style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (ticket.estado == 'en_espera' ||
+                      ticket.estado == 'cancelado')
+                    IconButton(
+                      onPressed: state.isDeletingTurn
+                          ? null
+                          : () => _showDeleteConfirmation(context, ticket),
+                      icon: state.isDeletingTurn
+                          ? const SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.delete_outline),
+                    ),
                 ],
               ),
               const Divider(),
               Text('Establecimiento: ${ticket.establishmentId}'),
               const SizedBox(height: 8),
-                  Text('Estado: ${_formatEstado(ticket.estado)}', style: TextStyle(fontWeight: FontWeight.bold, color: _getEstadoColor(ticket.estado, context))),
+              Text(
+                'Estado: ${_formatEstado(ticket.estado)}',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: _getEstadoColor(ticket.estado, context),
+                ),
+              ),
               const SizedBox(height: 8),
-              Text('Solicitado: ${DateFormat('d/M/y HH:mm').format(ticket.solicitadoEn)}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
+              Text(
+                'Solicitado: ${DateFormat('d/M/y HH:mm').format(ticket.solicitadoEn)}',
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
             ],
           ),
         ),
@@ -237,8 +351,20 @@ class _TurnsScreenState extends State<TurnsScreen> {
         title: const Text('Eliminar ticket'),
         content: const Text('¿Está seguro de que desea eliminar este ticket?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancelar')),
-          FilledButton(style: FilledButton.styleFrom(backgroundColor: Theme.of(dialogContext).colorScheme.error), onPressed: () { _userTicketsCubit.deleteTurn(ticket.id); Navigator.of(dialogContext).pop(); }, child: const Text('Eliminar')),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(dialogContext).colorScheme.error,
+            ),
+            onPressed: () {
+              _userTicketsCubit.deleteTurn(ticket.id);
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Eliminar'),
+          ),
         ],
       ),
     );
@@ -246,20 +372,28 @@ class _TurnsScreenState extends State<TurnsScreen> {
 
   String _formatEstado(String estado) {
     switch (estado) {
-      case 'en_espera': return 'En espera';
-      case 'atendido': return 'Atendido';
-      case 'cancelado': return 'Cancelado';
-      default: return estado;
+      case 'en_espera':
+        return 'En espera';
+      case 'atendido':
+        return 'Atendido';
+      case 'cancelado':
+        return 'Cancelado';
+      default:
+        return estado;
     }
   }
 
   Color _getEstadoColor(String estado, BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     switch (estado) {
-      case 'en_espera': return scheme.secondary; // azul/steel-blue
-      case 'atendido': return scheme.tertiary; // usar cerulean para éxito
-      case 'cancelado': return scheme.error; // rojo de error
-      default: return scheme.onSurface.withOpacity(0.6);
+      case 'en_espera':
+        return scheme.secondary;
+      case 'atendido':
+        return scheme.tertiary;
+      case 'cancelado':
+        return scheme.error;
+      default:
+        return scheme.onSurface.withOpacity(0.6);
     }
   }
 }
