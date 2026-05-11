@@ -37,26 +37,148 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
 
   // Máximo de minutos que consideramos 100% de afluencia
   static const int _minutosMaximosEspera = 15;
-  static const List<_FranjaAfluencia> _franjasPrediccion = [
-    _FranjaAfluencia(
-      titulo: 'Mañana',
-      rango: '6:00 - 12:00',
-      nivel: 'Menor concurrencia',
-      icono: Icons.wb_sunny_outlined,
-    ),
-    _FranjaAfluencia(
-      titulo: 'Tarde',
-      rango: '12:00 - 18:00',
-      nivel: 'Concurrencia media',
-      icono: Icons.light_mode_outlined,
-    ),
-    _FranjaAfluencia(
-      titulo: 'Noche',
-      rango: '18:00 - 22:00',
-      nivel: 'Mayor concurrencia',
-      icono: Icons.nightlight_round,
-    ),
-  ];
+  static const Map<int, List<_PrediccionFranja>> _prediccionesMock = {
+    DateTime.monday: [
+      _PrediccionFranja(
+        titulo: 'Mañana',
+        rango: '6:00 - 12:00',
+        valor: 0.25,
+        icono: Icons.wb_sunny_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Tarde',
+        rango: '12:00 - 18:00',
+        valor: 0.55,
+        icono: Icons.light_mode_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Noche',
+        rango: '18:00 - 22:00',
+        valor: 0.8,
+        icono: Icons.nightlight_round,
+      ),
+    ],
+    DateTime.tuesday: [
+      _PrediccionFranja(
+        titulo: 'Mañana',
+        rango: '6:00 - 12:00',
+        valor: 0.3,
+        icono: Icons.wb_sunny_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Tarde',
+        rango: '12:00 - 18:00',
+        valor: 0.65,
+        icono: Icons.light_mode_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Noche',
+        rango: '18:00 - 22:00',
+        valor: null,
+        icono: Icons.nightlight_round,
+      ),
+    ],
+    DateTime.wednesday: [
+      _PrediccionFranja(
+        titulo: 'Mañana',
+        rango: '6:00 - 12:00',
+        valor: 0.2,
+        icono: Icons.wb_sunny_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Tarde',
+        rango: '12:00 - 18:00',
+        valor: 0.4,
+        icono: Icons.light_mode_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Noche',
+        rango: '18:00 - 22:00',
+        valor: 0.7,
+        icono: Icons.nightlight_round,
+      ),
+    ],
+    DateTime.thursday: [
+      _PrediccionFranja(
+        titulo: 'Mañana',
+        rango: '6:00 - 12:00',
+        valor: null,
+        icono: Icons.wb_sunny_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Tarde',
+        rango: '12:00 - 18:00',
+        valor: 0.5,
+        icono: Icons.light_mode_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Noche',
+        rango: '18:00 - 22:00',
+        valor: 0.85,
+        icono: Icons.nightlight_round,
+      ),
+    ],
+    DateTime.friday: [
+      _PrediccionFranja(
+        titulo: 'Mañana',
+        rango: '6:00 - 12:00',
+        valor: 0.35,
+        icono: Icons.wb_sunny_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Tarde',
+        rango: '12:00 - 18:00',
+        valor: 0.7,
+        icono: Icons.light_mode_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Noche',
+        rango: '18:00 - 22:00',
+        valor: 0.9,
+        icono: Icons.nightlight_round,
+      ),
+    ],
+    DateTime.saturday: [
+      _PrediccionFranja(
+        titulo: 'Mañana',
+        rango: '6:00 - 12:00',
+        valor: 0.4,
+        icono: Icons.wb_sunny_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Tarde',
+        rango: '12:00 - 18:00',
+        valor: 0.75,
+        icono: Icons.light_mode_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Noche',
+        rango: '18:00 - 22:00',
+        valor: null,
+        icono: Icons.nightlight_round,
+      ),
+    ],
+    DateTime.sunday: [
+      _PrediccionFranja(
+        titulo: 'Mañana',
+        rango: '6:00 - 12:00',
+        valor: 0.15,
+        icono: Icons.wb_sunny_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Tarde',
+        rango: '12:00 - 18:00',
+        valor: 0.45,
+        icono: Icons.light_mode_outlined,
+      ),
+      _PrediccionFranja(
+        titulo: 'Noche',
+        rango: '18:00 - 22:00',
+        valor: 0.6,
+        icono: Icons.nightlight_round,
+      ),
+    ],
+  };
 
   // Convierte averageWaitMinutes a valor 0.0 - 1.0 para IndicadorAfluencia
   double? _calcularValorAfluencia({required int? minutes}) {
@@ -89,6 +211,10 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
     final hh = dateTime.hour.toString().padLeft(2, '0');
     final mm = dateTime.minute.toString().padLeft(2, '0');
     return 'Última actualización: $hh:$mm';
+  }
+
+  List<_PrediccionFranja> get _prediccionDelDiaActual {
+    return _prediccionesMock[DateTime.now().weekday] ?? const [];
   }
 
   @override
@@ -359,7 +485,7 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        for (final franja in _franjasPrediccion)
+                        for (final franja in _prediccionDelDiaActual)
                           Expanded(
                             child: Padding(
                               padding: const EdgeInsets.only(right: 8),
@@ -445,8 +571,22 @@ class _PredictionBandCard extends StatelessWidget {
     required this.color,
   });
 
-  final _FranjaAfluencia franja;
+  final _PrediccionFranja franja;
   final Color color;
+
+  String get _etiquetaNivel {
+    if (franja.valor == null) return 'Sin datos disponibles';
+    if (franja.valor! <= 0.4) return 'Bajo';
+    if (franja.valor! <= 0.75) return 'Medio';
+    return 'Alto';
+  }
+
+  Color get _colorNivel {
+    if (franja.valor == null) return Colors.grey;
+    if (franja.valor! <= 0.4) return Colors.green;
+    if (franja.valor! <= 0.75) return Colors.orange;
+    return Colors.red;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -478,12 +618,20 @@ class _PredictionBandCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            franja.nivel,
-            style: TextStyle(
-              fontSize: 11,
-              color: color,
-              fontWeight: FontWeight.w600,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: _colorNivel.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: _colorNivel.withOpacity(0.28)),
+            ),
+            child: Text(
+              _etiquetaNivel,
+              style: TextStyle(
+                fontSize: 11,
+                color: _colorNivel,
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
         ],
@@ -492,16 +640,16 @@ class _PredictionBandCard extends StatelessWidget {
   }
 }
 
-class _FranjaAfluencia {
-  const _FranjaAfluencia({
+class _PrediccionFranja {
+  const _PrediccionFranja({
     required this.titulo,
     required this.rango,
-    required this.nivel,
+    required this.valor,
     required this.icono,
   });
 
   final String titulo;
   final String rango;
-  final String nivel;
+  final double? valor;
   final IconData icono;
 }
