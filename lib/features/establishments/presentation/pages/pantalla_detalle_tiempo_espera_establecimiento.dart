@@ -37,6 +37,26 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
 
   // Máximo de minutos que consideramos 100% de afluencia
   static const int _minutosMaximosEspera = 15;
+  static const List<_FranjaAfluencia> _franjasPrediccion = [
+    _FranjaAfluencia(
+      titulo: 'Mañana',
+      rango: '6:00 - 12:00',
+      nivel: 'Menor concurrencia',
+      icono: Icons.wb_sunny_outlined,
+    ),
+    _FranjaAfluencia(
+      titulo: 'Tarde',
+      rango: '12:00 - 18:00',
+      nivel: 'Concurrencia media',
+      icono: Icons.light_mode_outlined,
+    ),
+    _FranjaAfluencia(
+      titulo: 'Noche',
+      rango: '18:00 - 22:00',
+      nivel: 'Mayor concurrencia',
+      icono: Icons.nightlight_round,
+    ),
+  ];
 
   // Convierte averageWaitMinutes a valor 0.0 - 1.0 para IndicadorAfluencia
   double? _calcularValorAfluencia({required int? minutes}) {
@@ -320,6 +340,40 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
                       ),
                     ),
 
+                    const SizedBox(height: 24),
+
+                    // ── Sección: predicción por franjas ───────────────────────
+                    Text(
+                      'Predicción por franjas',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Franja horaria definida para la predicción futura de afluencia.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        for (final franja in _franjasPrediccion)
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: _PredictionBandCard(
+                                franja: franja,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
                     // Nueva sección de calificación de precisión (ENH-12)
                     if (item.isOpen)
                       CalificacionPrecisionWidget(
@@ -383,4 +437,71 @@ class _PantallaDetalleTiempoEsperaEstablecimientoState
       ),
     );
   }
+}
+
+class _PredictionBandCard extends StatelessWidget {
+  const _PredictionBandCard({
+    required this.franja,
+    required this.color,
+  });
+
+  final _FranjaAfluencia franja;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.16)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(franja.icono, size: 18, color: color),
+          const SizedBox(height: 8),
+          Text(
+            franja.titulo,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            franja.rango,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            franja.nivel,
+            style: TextStyle(
+              fontSize: 11,
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FranjaAfluencia {
+  const _FranjaAfluencia({
+    required this.titulo,
+    required this.rango,
+    required this.nivel,
+    required this.icono,
+  });
+
+  final String titulo;
+  final String rango;
+  final String nivel;
+  final IconData icono;
 }
