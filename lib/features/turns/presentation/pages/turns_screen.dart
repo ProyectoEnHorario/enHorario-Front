@@ -167,11 +167,10 @@ class _TurnsScreenState extends State<TurnsScreen> {
           providers: [
             BlocProvider<UserTicketsCubit>.value(value: _userTicketsCubit),
             BlocProvider<DailySummaryCubit>(
-              create: (context) => DailySummaryCubit(
-                RailwayTurnRepository(ApiClient()),
-              )
-                ..loadSummary('b1000000-0000-0000-0000-000000000001')
-                ..startAutoRefresh('b1000000-0000-0000-0000-000000000001'),
+              create: (context) =>
+                  DailySummaryCubit(RailwayTurnRepository(ApiClient()))
+                    ..loadSummary('b1000000-0000-0000-0000-000000000001')
+                    ..startAutoRefresh('b1000000-0000-0000-0000-000000000001'),
             ),
           ],
           child: BlocListener<UserTicketsCubit, UserTicketsState>(
@@ -215,9 +214,7 @@ class _TurnsScreenState extends State<TurnsScreen> {
                 ),
               ),
             ),
-            const SliverToBoxAdapter(
-              child: Divider(indent: 16, endIndent: 16),
-            ),
+            const SliverToBoxAdapter(child: Divider(indent: 16, endIndent: 16)),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -299,7 +296,12 @@ class _TurnsScreenState extends State<TurnsScreen> {
             ),
             const SizedBox(height: 16),
             Text(title, style: const TextStyle(fontSize: 16)),
-            Text(subtitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7))),
+            Text(
+              subtitle,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
           ],
         ),
       ),
@@ -319,12 +321,12 @@ class _TurnsScreenState extends State<TurnsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Ticket ${ticket.codigo}',
-                      style: const TextStyle(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Ticket ${ticket.codigo}',
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
