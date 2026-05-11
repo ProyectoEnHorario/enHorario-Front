@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
 
-class VisualizacionAfluenciaFranjasWidget extends StatelessWidget {
-  const VisualizacionAfluenciaFranjasWidget({super.key, this.referenceDate});
+class VisualizacionAfluenciaFranjasWidget extends StatefulWidget {
+  const VisualizacionAfluenciaFranjasWidget({
+    super.key,
+    this.referenceDate,
+    this.debugForceError = false,
+  });
 
   final DateTime? referenceDate;
+  final bool debugForceError;
+
+  @override
+  State<VisualizacionAfluenciaFranjasWidget> createState() =>
+      _VisualizacionAfluenciaFranjasWidgetState();
+}
+
+class _VisualizacionAfluenciaFranjasWidgetState
+    extends State<VisualizacionAfluenciaFranjasWidget> {
+  late Future<List<_PrediccionFranja>> _prediccionesFuture;
 
   static const Map<int, List<_PrediccionFranja>> _prediccionesMock = {
     DateTime.monday: [
@@ -43,8 +57,27 @@ class VisualizacionAfluenciaFranjasWidget extends StatelessWidget {
     ],
   };
 
-  List<_PrediccionFranja> get _prediccionDelDiaActual {
-    final day = referenceDate?.weekday ?? DateTime.now().weekday;
+  @override
+  void initState() {
+    super.initState();
+    _prediccionesFuture = _loadPredicciones();
+  }
+
+  @override
+  void didUpdateWidget(covariant VisualizacionAfluenciaFranjasWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.referenceDate != widget.referenceDate ||
+        oldWidget.debugForceError != widget.debugForceError) {
+      _prediccionesFuture = _loadPredicciones();
+    }
+  }
+
+  Future<List<_PrediccionFranja>> _loadPredicciones() async {
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    if (widget.debugForceError) {
+      throw Exception('No se pudieron cargar las predicciones');
+    }
+    final day = widget.referenceDate?.weekday ?? DateTime.now().weekday;
     return _prediccionesMock[day] ?? const [];
   }
 
@@ -53,6 +86,69 @@ class VisualizacionAfluenciaFranjasWidget extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
 
+    return FutureBuilder<List<_PrediccionFranja>>(
+      future: _prediccionesFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return _PredictionLoadingState(colorScheme: colorScheme, textTheme: textTheme);
+        }
+
+        if (snapshot.hasError) {
+          return _PredictionErrorState(
+            message: 'No se pudieron cargar las predicciones de afluencia.',
+            colorScheme: colorScheme,
+            textTheme: textTheme,
+          );
+        }
+
+        final predictions = snapshot.data ?? const <_PrediccionFranja>[];
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Predicción por franjas',
+              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Estimación basada en datos históricos del día actual de la semana.',
+              style: textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurface.withOpacity(0.6),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                for (var index = 0; index < predictions.length; index++)
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(
+                        right: index == predictions.length - 1 ? 0 : 8,
+                      ),
+                      child: _PredictionBandCard(
+                        franja: predictions[index],
+                        color: colorScheme.primary,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _PredictionLoadingState extends StatelessWidget {
+  const _PredictionLoadingState({required this.colorScheme, required this.textTheme});
+
+  final ColorScheme colorScheme;
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -62,29 +158,73 @@ class VisualizacionAfluenciaFranjasWidget extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'Estimación basada en datos históricos del día actual de la semana.',
+          'Cargando predicciones...',
           style: textTheme.bodySmall?.copyWith(
             color: colorScheme.onSurface.withOpacity(0.6),
           ),
         ),
         const SizedBox(height: 12),
         Row(
-          children: [
-            for (var index = 0; index < _prediccionDelDiaActual.length; index++)
-              Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    right: index == _prediccionDelDiaActual.length - 1 ? 0 : 8,
+          children: List.generate(
+            3,
+            (index) => Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: index == 2 ? 0 : 8),
+                child: Container(
+                  height: 132,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surfaceContainerHighest.withOpacity(0.35),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: _PredictionBandCard(
-                    franja: _prediccionDelDiaActual[index],
-                    color: colorScheme.primary,
+                  child: const Center(
+                    child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                 ),
               ),
-          ],
+            ),
+          ),
         ),
       ],
+    );
+  }
+}
+
+class _PredictionErrorState extends StatelessWidget {
+  const _PredictionErrorState({
+    required this.message,
+    required this.colorScheme,
+    required this.textTheme,
+  });
+
+  final String message;
+  final ColorScheme colorScheme;
+  final TextTheme textTheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.errorContainer.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colorScheme.error.withOpacity(0.22)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.error_outline, color: colorScheme.error),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onErrorContainer,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
