@@ -60,8 +60,38 @@ class _UserManagementView extends StatelessWidget {
                 ),
                 FilledButton(
                   onPressed: () {
-                    cubit.updateUserRole(user.uid, selectedRole);
-                    Navigator.of(ctx).pop();
+                    if (selectedRole == user.rol) {
+                      Navigator.of(ctx).pop();
+                      return; // No hay cambios
+                    }
+
+                    showDialog(
+                      context: ctx,
+                      builder: (confirmCtx) {
+                        return AlertDialog(
+                          title: const Text('Confirmar Cambio'),
+                          content: Text(
+                            '¿Estás seguro de que deseas cambiar el rol de ${user.nombre} a ${selectedRole.toUpperCase()}?\n\n'
+                            'Esto alterará sus permisos dentro del sistema.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.of(confirmCtx).pop(),
+                              child: const Text('Cancelar'),
+                            ),
+                            FilledButton(
+                              style: FilledButton.styleFrom(backgroundColor: Colors.orange),
+                              onPressed: () {
+                                cubit.updateUserRole(user.uid, selectedRole);
+                                Navigator.of(confirmCtx).pop(); // Cierra confirmación
+                                Navigator.of(ctx).pop(); // Cierra diálogo original
+                              },
+                              child: const Text('Confirmar'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
                   },
                   child: const Text('Guardar'),
                 ),
