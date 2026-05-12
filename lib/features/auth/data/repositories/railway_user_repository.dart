@@ -93,10 +93,83 @@ class RailwayUserRepository implements UserRepository {
       email: response['email']?.toString() ?? '',
       nombre: response['name']?.toString() ?? '',
       apellido: response['lastName']?.toString() ?? '',
-      rol: response['role']?.toString() ?? 'usuario',
+      rol: response['role']?.toString() ?? 'USER',
       telefono: response['phone']?.toString(),
       profilePhotoUrl: response['profilePhotoUrl']?.toString(),
       createdAt: DateTime.tryParse(response['createdAt']?.toString() ?? '') ?? DateTime.now(),
     );
+  }
+
+  @override
+  Future<Result<List<AppUser>>> getAllUsers([String? query]) async {
+    try {
+      final email = await _sessionRepository.getCurrentUserEmail();
+      if (email == null || email.isEmpty) {
+        return const Left(Failure('No hay una sesión activa.'));
+      }
+
+      final Map<String, dynamic> queryParams = {};
+      if (query != null && query.isNotEmpty) {
+        queryParams['q'] = query; // o el parámetro que decidan en el backend ('search', 'query', etc)
+      }
+
+      final response = await _apiClient.get<dynamic>(
+        '/users',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+        token: email,
+      );
+
+      final List<dynamic> usersList = response is List ? response : response['users'] ?? [];
+      
+      final users = usersList.map((e) => _mapToUserModel(e as Map<String, dynamic>)).toList();
+      return Right(users);
+    } on ApiException catch (e) {
+      return Left(Failure(e.message));
+    } catch (e) {
+      return Left(Failure('Error inesperado al obtener los usuarios: $e'));
+    }
+  }
+
+  @override
+  Future<Result<String>> updateUserRole(String uid, String newRole) async {
+    try {
+      final email = await _sessionRepository.getCurrentUserEmail();
+      if (email == null || email.isEmpty) {
+        return const Left(Failure('No hay una sesión activa.'));
+      }
+
+      final response = await _apiClient.patch<Map<String, dynamic>>(
+        '/users/$uid/role',
+        data: {'role': newRole},
+        token: email,
+      );
+
+      return Right(response['message']?.toString() ?? 'Rol actualizado con éxito');
+    } on ApiException catch (e) {
+      return Left(Failure(e.message));
+    } catch (e) {
+      return Left(Failure('Error inesperado al actualizar el rol: $e'));
+    }
+  }
+
+  @override
+  Future<Result<String>> deleteUser(String uid) async {
+    try {
+      final email = await _sessionRepository.getCurrentUserEmail();
+      if (email == null || email.isEmpty) {
+        return const Left(Failure('No hay una sesión activa.'));
+      }
+
+      final response = await _apiClient.delete<Map<String, dynamic>>(
+        '/users/$uid',
+        token: email,
+      );
+
+      return Right(response['message']?.toString() ?? 'Usuario eliminado con éxito');
+    } on ApiException catch (e) {
+      return Left(Failure(e.message));
+    } catch (e) {
+      return Left(Failure('Error inesperado al eliminar el usuario: $e'));
+    }
   }
 }

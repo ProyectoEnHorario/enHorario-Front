@@ -70,7 +70,7 @@ class LocalAuthRepository implements AuthRepository {
       email: normalized,
       nombre: nombre.trim(),
       apellido: apellido.trim(),
-      rol: 'usuario',
+      rol: 'USER',
       telefono: telefono?.trim().isEmpty == true ? null : telefono?.trim(),
       createdAt: DateTime.now(),
     );
@@ -111,7 +111,7 @@ class LocalAuthRepository implements AuthRepository {
       email: 'admin@enhorario.com',
       nombre: 'Admin',
       apellido: 'Test',
-      rol: 'admin',
+      rol: 'SUPERADMIN',
       telefono: '3000000000',
       createdAt: DateTime.now().subtract(const Duration(days: 30)),
     );
@@ -120,7 +120,7 @@ class LocalAuthRepository implements AuthRepository {
       email: 'test@enhorario.com',
       nombre: 'Usuario',
       apellido: 'Pruebas',
-      rol: 'usuario',
+      rol: 'USER',
       telefono: '3001111111',
       createdAt: DateTime.now().subtract(const Duration(days: 15)),
     );
