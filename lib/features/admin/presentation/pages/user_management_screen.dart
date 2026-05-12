@@ -1,6 +1,7 @@
 import 'package:enhorario/core/api/api_client.dart';
 import 'package:enhorario/features/auth/data/repositories/railway_user_repository.dart';
 import 'package:enhorario/features/auth/presentation/bloc/user_management_cubit.dart';
+import 'package:enhorario/features/auth/presentation/bloc/user_profile_cubit.dart';
 import 'package:enhorario/features/auth/domain/entities/app_user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -195,6 +196,8 @@ class _UserManagementView extends StatelessWidget {
               itemBuilder: (context, index) {
                 final user = state.users[index];
                 final isSuperAdmin = user.rol == 'superadmin';
+                final currentUserUid = context.read<UserProfileCubit>().state.user?.uid;
+                final isCurrentUser = user.uid == currentUserUid;
 
                 return Card(
                   elevation: 2,
@@ -231,37 +234,42 @@ class _UserManagementView extends StatelessWidget {
                         ),
                       ],
                     ),
-                    trailing: PopupMenuButton<String>(
-                      onSelected: (value) {
-                        if (value == 'role') {
-                          _showRoleDialog(context, user);
-                        } else if (value == 'delete') {
-                          _showDeleteDialog(context, user);
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(
-                          value: 'role',
-                          child: Row(
-                            children: [
-                              Icon(Icons.manage_accounts, size: 20),
-                              SizedBox(width: 8),
-                              Text('Cambiar Rol'),
+                    trailing: isCurrentUser
+                        ? const Tooltip(
+                            message: 'No puedes modificar tu propia cuenta',
+                            child: Icon(Icons.shield, color: Colors.grey),
+                          )
+                        : PopupMenuButton<String>(
+                            onSelected: (value) {
+                              if (value == 'role') {
+                                _showRoleDialog(context, user);
+                              } else if (value == 'delete') {
+                                _showDeleteDialog(context, user);
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'role',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.manage_accounts, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Cambiar Rol'),
+                                  ],
+                                ),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete, color: Colors.red, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Eliminar', style: TextStyle(color: Colors.red)),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
-                        ),
-                        const PopupMenuItem(
-                          value: 'delete',
-                          child: Row(
-                            children: [
-                              Icon(Icons.delete, color: Colors.red, size: 20),
-                              SizedBox(width: 8),
-                              Text('Eliminar', style: TextStyle(color: Colors.red)),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
                     isThreeLine: true,
                   ),
                 );
