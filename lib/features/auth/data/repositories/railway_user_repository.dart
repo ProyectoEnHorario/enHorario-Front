@@ -93,7 +93,7 @@ class RailwayUserRepository implements UserRepository {
       email: response['email']?.toString() ?? '',
       nombre: response['name']?.toString() ?? '',
       apellido: response['lastName']?.toString() ?? '',
-      rol: response['role']?.toString() ?? 'usuario',
+      rol: response['role']?.toString() ?? 'USER',
       telefono: response['phone']?.toString(),
       profilePhotoUrl: response['profilePhotoUrl']?.toString(),
       createdAt: DateTime.tryParse(response['createdAt']?.toString() ?? '') ?? DateTime.now(),

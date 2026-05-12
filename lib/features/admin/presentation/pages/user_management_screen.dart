@@ -43,8 +43,8 @@ class _UserManagementView extends StatelessWidget {
                     value: selectedRole,
                     isExpanded: true,
                     items: const [
-                      DropdownMenuItem(value: 'usuario', child: Text('Usuario Normal')),
-                      DropdownMenuItem(value: 'superadmin', child: Text('Superadministrador')),
+                      DropdownMenuItem(value: 'USER', child: Text('Usuario Normal')),
+                      DropdownMenuItem(value: 'SUPERADMIN', child: Text('Superadministrador')),
                     ],
                     onChanged: (val) {
                       if (val != null) {
@@ -195,7 +195,7 @@ class _UserManagementView extends StatelessWidget {
               itemCount: state.users.length,
               itemBuilder: (context, index) {
                 final user = state.users[index];
-                final isSuperAdmin = user.rol == 'superadmin';
+                final isSuperAdmin = user.rol == 'SUPERADMIN';
                 final currentUserUid = context.read<UserProfileCubit>().state.user?.uid;
                 final isCurrentUser = user.uid == currentUserUid;
 
