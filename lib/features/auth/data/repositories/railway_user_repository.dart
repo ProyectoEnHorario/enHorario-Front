@@ -101,15 +101,21 @@ class RailwayUserRepository implements UserRepository {
   }
 
   @override
-  Future<Result<List<AppUser>>> getAllUsers() async {
+  Future<Result<List<AppUser>>> getAllUsers([String? query]) async {
     try {
       final email = await _sessionRepository.getCurrentUserEmail();
       if (email == null || email.isEmpty) {
         return const Left(Failure('No hay una sesión activa.'));
       }
 
+      final Map<String, dynamic> queryParams = {};
+      if (query != null && query.isNotEmpty) {
+        queryParams['q'] = query; // o el parámetro que decidan en el backend ('search', 'query', etc)
+      }
+
       final response = await _apiClient.get<dynamic>(
         '/users',
+        queryParameters: queryParams.isNotEmpty ? queryParams : null,
         token: email,
       );
 

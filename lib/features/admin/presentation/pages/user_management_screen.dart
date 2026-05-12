@@ -118,12 +118,30 @@ class _UserManagementView extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        if (state.status == UserManagementStatus.loading && state.users.isEmpty) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        final searchBar = Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'Buscar por nombre o correo...',
+              prefixIcon: const Icon(Icons.search),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            onSubmitted: (value) {
+              context.read<UserManagementCubit>().loadUsers(value);
+            },
+            textInputAction: TextInputAction.search,
+          ),
+        );
 
-        if (state.users.isEmpty) {
-          return Center(
+        Widget content;
+
+        if (state.status == UserManagementStatus.loading && state.users.isEmpty) {
+          content = const Center(child: CircularProgressIndicator());
+        } else if (state.users.isEmpty) {
+          content = Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -138,88 +156,97 @@ class _UserManagementView extends StatelessWidget {
               ],
             ),
           );
-        }
+        } else {
+          content = RefreshIndicator(
+            onRefresh: () async => context.read<UserManagementCubit>().loadUsers(),
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: state.users.length,
+              itemBuilder: (context, index) {
+                final user = state.users[index];
+                final isSuperAdmin = user.rol == 'superadmin';
 
-        return RefreshIndicator(
-          onRefresh: () async => context.read<UserManagementCubit>().loadUsers(),
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: state.users.length,
-            itemBuilder: (context, index) {
-              final user = state.users[index];
-              final isSuperAdmin = user.rol == 'superadmin';
-
-              return Card(
-                elevation: 2,
-                margin: const EdgeInsets.only(bottom: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: isSuperAdmin ? Colors.purple.withOpacity(0.2) : Colors.blue.withOpacity(0.2),
-                    child: Icon(
-                      isSuperAdmin ? Icons.admin_panel_settings : Icons.person,
-                      color: isSuperAdmin ? Colors.purple : Colors.blue,
+                return Card(
+                  elevation: 2,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: isSuperAdmin ? Colors.purple.withOpacity(0.2) : Colors.blue.withOpacity(0.2),
+                      child: Icon(
+                        isSuperAdmin ? Icons.admin_panel_settings : Icons.person,
+                        color: isSuperAdmin ? Colors.purple : Colors.blue,
+                      ),
                     ),
-                  ),
-                  title: Text('${user.nombre} ${user.apellido}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(user.email),
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isSuperAdmin ? Colors.purple : Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          user.rol.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: isSuperAdmin ? Colors.white : Colors.black87,
+                    title: Text('${user.nombre} ${user.apellido}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(user.email),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: isSuperAdmin ? Colors.purple : Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            user.rol.toUpperCase(),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: isSuperAdmin ? Colors.white : Colors.black87,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'role') {
-                        _showRoleDialog(context, user);
-                      } else if (value == 'delete') {
-                        _showDeleteDialog(context, user);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'role',
-                        child: Row(
-                          children: [
-                            Icon(Icons.manage_accounts, size: 20),
-                            SizedBox(width: 8),
-                            Text('Cambiar Rol'),
-                          ],
+                      ],
+                    ),
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (value) {
+                        if (value == 'role') {
+                          _showRoleDialog(context, user);
+                        } else if (value == 'delete') {
+                          _showDeleteDialog(context, user);
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'role',
+                          child: Row(
+                            children: [
+                              Icon(Icons.manage_accounts, size: 20),
+                              SizedBox(width: 8),
+                              Text('Cambiar Rol'),
+                            ],
+                          ),
                         ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, color: Colors.red, size: 20),
-                            SizedBox(width: 8),
-                            Text('Eliminar', style: TextStyle(color: Colors.red)),
-                          ],
+                        const PopupMenuItem(
+                          value: 'delete',
+                          child: Row(
+                            children: [
+                              Icon(Icons.delete, color: Colors.red, size: 20),
+                              SizedBox(width: 8),
+                              Text('Eliminar', style: TextStyle(color: Colors.red)),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
+                    isThreeLine: true,
                   ),
-                  isThreeLine: true,
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            searchBar,
+            if (state.status == UserManagementStatus.loading && state.users.isNotEmpty)
+              const LinearProgressIndicator(),
+            Expanded(child: content),
+          ],
         );
       },
     );

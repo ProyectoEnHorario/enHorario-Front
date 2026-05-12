@@ -11,8 +11,8 @@ abstract class UserRepository {
     String? profilePhotoPath, // ruta local del archivo de imagen
   });
 
-  /// [SUPERADMIN] Obtiene la lista de todos los usuarios registrados.
-  Future<Result<List<AppUser>>> getAllUsers();
+  /// [SUPERADMIN] Obtiene la lista de todos los usuarios registrados. Soporta búsqueda por nombre o correo.
+  Future<Result<List<AppUser>>> getAllUsers([String? query]);
 
   /// [SUPERADMIN] Cambia el rol de un usuario (ej. a 'superadmin' o 'usuario').
   Future<Result<String>> updateUserRole(String uid, String newRole);

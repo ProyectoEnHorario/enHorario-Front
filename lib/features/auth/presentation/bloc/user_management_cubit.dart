@@ -8,18 +8,21 @@ class UserManagementState {
   const UserManagementState({
     this.status = UserManagementStatus.initial,
     this.users = const [],
+    this.searchQuery = '',
     this.message,
     this.error,
   });
 
   final UserManagementStatus status;
   final List<AppUser> users;
+  final String searchQuery;
   final String? message;
   final String? error;
 
   UserManagementState copyWith({
     UserManagementStatus? status,
     List<AppUser>? users,
+    String? searchQuery,
     String? message,
     String? error,
     bool clearMessage = false,
@@ -28,6 +31,7 @@ class UserManagementState {
     return UserManagementState(
       status: status ?? this.status,
       users: users ?? this.users,
+      searchQuery: searchQuery ?? this.searchQuery,
       message: clearMessage ? null : (message ?? this.message),
       error: clearError ? null : (error ?? this.error),
     );
@@ -39,10 +43,15 @@ class UserManagementCubit extends Cubit<UserManagementState> {
 
   final UserRepository _userRepository;
 
-  Future<void> loadUsers() async {
-    emit(state.copyWith(status: UserManagementStatus.loading, clearError: true, clearMessage: true));
+  Future<void> loadUsers([String? query]) async {
+    emit(state.copyWith(
+      status: UserManagementStatus.loading,
+      clearError: true,
+      clearMessage: true,
+      searchQuery: query ?? state.searchQuery,
+    ));
 
-    final result = await _userRepository.getAllUsers();
+    final result = await _userRepository.getAllUsers(query ?? state.searchQuery);
 
     result.fold(
       (failure) => emit(state.copyWith(status: UserManagementStatus.error, error: failure.message)),
