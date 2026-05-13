@@ -15,13 +15,10 @@ import 'package:enhorario/features/home/presentation/pages/user_profile_screen.d
 import 'package:enhorario/features/notifications/domain/entities/app_notification.dart';
 import 'package:enhorario/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:enhorario/features/turns/presentation/pages/turns_screen.dart';
-<<<<<<< HEAD
-=======
 import 'package:enhorario/features/admin/presentation/pages/user_management_screen.dart';
-import 'package:enhorario/features/auth/data/repositories/railway_user_repository.dart';
 import 'package:enhorario/features/auth/domain/repositories/user_repository.dart';
 import 'package:enhorario/features/auth/presentation/bloc/user_profile_cubit.dart';
->>>>>>> 71f752e (feat(ENH-294): implementar pantalla de gestión de usuarios para superadmin y endpoints base)
+import 'package:enhorario/core/enums/app_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -35,32 +32,32 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
-  List<String> _getNavigationTitles(bool isSuperAdmin) {
+  List<String> _getNavigationTitles(AppRole role) {
     return [
       'Establecimientos',
       'Favoritos',
       'Mi Información',
-      'Tickets',
-      if (isSuperAdmin) 'Administración',
+      if (role.canViewAndCreateTurns) 'Tickets',
+      if (role.canManageUsers) 'Administración',
     ];
   }
 
-  List<Widget> _getPages(bool isSuperAdmin) {
+  List<Widget> _getPages(AppRole role) {
     return [
       const PantallaInicioAppReal(),
       const FavoritesScreen(),
       const UserProfileScreen(),
-      const TurnsScreen(),
-      if (isSuperAdmin) const UserManagementScreen(),
+      if (role.canViewAndCreateTurns) const TurnsScreen(),
+      if (role.canManageUsers) const UserManagementScreen(),
     ];
   }
 
-  List<NavigationDestination> _getDestinations(bool isSuperAdmin) {
+  List<NavigationDestination> _getDestinations(AppRole role) {
     return [
       const NavigationDestination(
         icon: Icon(Icons.home_outlined),
         selectedIcon: Icon(Icons.home),
-        label: 'Establecimientos',
+        label: 'Inicio',
       ),
       const NavigationDestination(
         icon: Icon(Icons.favorite_outline),
@@ -70,14 +67,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       const NavigationDestination(
         icon: Icon(Icons.person_outline),
         selectedIcon: Icon(Icons.person),
-        label: 'Mi Información',
+        label: 'Perfil',
       ),
-      const NavigationDestination(
-        icon: Icon(Icons.receipt_long_outlined),
-        selectedIcon: Icon(Icons.receipt_long),
-        label: 'Tickets',
-      ),
-      if (isSuperAdmin)
+      if (role.canViewAndCreateTurns)
+        const NavigationDestination(
+          icon: Icon(Icons.receipt_long_outlined),
+          selectedIcon: Icon(Icons.receipt_long),
+          label: 'Tickets',
+        ),
+      if (role.canManageUsers)
         const NavigationDestination(
           icon: Icon(Icons.admin_panel_settings_outlined),
           selectedIcon: Icon(Icons.admin_panel_settings),
@@ -165,10 +163,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ],
         child: BlocBuilder<UserProfileCubit, UserProfileState>(
           builder: (context, userState) {
-            final isSuperAdmin = userState.user?.rol.canManageUsers ?? false;
-            final titles = _getNavigationTitles(isSuperAdmin);
-            final pages = _getPages(isSuperAdmin);
-            final destinations = _getDestinations(isSuperAdmin);
+            final role = userState.user?.rol ?? AppRole.unknown;
+            final titles = _getNavigationTitles(role);
+            final pages = _getPages(role);
+            final destinations = _getDestinations(role);
 
             // Ajuste de índice por si cambia el rol y se queda fuera de rango
             if (_selectedIndex >= destinations.length) {
