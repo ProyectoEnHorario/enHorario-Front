@@ -169,7 +169,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
                 children: [
                   _ProfileHeader(
                     name: user != null ? '${user.nombre} ${user.apellido}' : 'Usuario',
-                    role: user?.rol ?? 'Cargando...',
+                    role: user?.rol.displayName ?? 'Cargando...',
                     profilePhotoUrl: user?.profilePhotoUrl,
                     isEditing: state.isEditing,
                     isUploadingPhoto: state.isUploadingPhoto,

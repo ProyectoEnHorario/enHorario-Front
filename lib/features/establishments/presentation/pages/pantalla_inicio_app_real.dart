@@ -395,6 +395,67 @@ class _VistaInicioAppRealState extends State<_VistaInicioAppReal> {
               .toList()
             ..sort();
 
+          // Lógica de Estado Vacío
+          if (visibleItems.isEmpty && !state.isLoading) {
+            return BlocBuilder<UserProfileCubit, UserProfileState>(
+              builder: (context, userState) {
+                final isAdmin = userState.user?.rol.canManageLocal ?? false;
+                
+                return Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        isAdmin ? Icons.store_outlined : Icons.search_off_rounded,
+                        size: 80,
+                        color: Colors.grey.shade400,
+                      ),
+                      const SizedBox(height: 24),
+                      Text(
+                        isAdmin 
+                          ? 'No tienes establecimientos asignados'
+                          : 'No encontramos establecimientos cerca',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        isAdmin
+                          ? 'Contacta al administrador global para vincular tu local a esta cuenta.'
+                          : 'Intenta cambiar el radio de búsqueda o la categoría seleccionada.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
+                      const SizedBox(height: 32),
+                      if (!isAdmin)
+                        FilledButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _nearbyRadiusKm = 10;
+                              _selectedCategory = null;
+                            });
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Ampliar búsqueda'),
+                        )
+                      else
+                        OutlinedButton.icon(
+                          onPressed: () => context.read<RealEstablishmentsCubit>().load(adminId: userState.user?.email),
+                          icon: const Icon(Icons.sync),
+                          label: const Text('Reintentar sincronización'),
+                        ),
+                    ],
+                  ),
+                );
+              },
+            );
+          }
+
           return Stack(
             fit: StackFit.expand,
             children: [

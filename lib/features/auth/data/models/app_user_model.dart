@@ -15,16 +15,18 @@ class AppUserModel extends AppUser {
   });
 
   factory AppUserModel.fromMap(Map<String, dynamic> map) {
+    // Soporta llaves del backend en inglés ('id', 'name', 'lastName', 'role', 'phone')
+    // y mantiene fallback para llaves locales ('uid', 'nombre', 'apellido', 'rol', 'telefono')
     return AppUserModel(
-      uid: (map['uid'] ?? '') as String,
+      uid: (map['id'] ?? map['uid'] ?? '') as String,
       email: (map['email'] ?? '') as String,
-      nombre: (map['nombre'] ?? '') as String,
-      apellido: (map['apellido'] ?? '') as String,
-      rol: (map['rol'] ?? 'usuario') as String,
-      telefono: map['telefono'] as String?,
+      nombre: (map['name'] ?? map['nombre'] ?? '') as String,
+      apellido: (map['lastName'] ?? map['apellido'] ?? '') as String,
+      rol: AppRole.fromString((map['role'] ?? map['rol'])?.toString()),
+      telefono: (map['phone'] ?? map['telefono']) as String?,
       profilePhotoUrl: map['profilePhotoUrl'] as String?,
       createdAt: DateMapper.toDateTime(map['createdAt']) ?? DateTime.now(),
-      deletedAt: DateMapper.toDateTime(map['deletedAt']),
+      deletedAt: (map['isActive'] == false) ? DateTime.now() : DateMapper.toDateTime(map['deletedAt']),
     );
   }
 
@@ -34,7 +36,7 @@ class AppUserModel extends AppUser {
       'email': email,
       'nombre': nombre,
       'apellido': apellido,
-      'rol': rol,
+      'rol': rol.toBackendString(),
       'telefono': telefono,
       'profilePhotoUrl': profilePhotoUrl,
       'createdAt': DateMapper.toIsoString(createdAt),
