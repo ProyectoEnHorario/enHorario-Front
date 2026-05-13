@@ -13,12 +13,7 @@ class UserManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => UserManagementCubit(
-        RailwayUserRepository(context.read<ApiClient>()),
-      )..loadUsers(),
-      child: const UserManagementView(),
-    );
+    return const UserManagementView();
   }
 }
 

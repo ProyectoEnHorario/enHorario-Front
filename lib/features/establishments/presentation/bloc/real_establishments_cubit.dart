@@ -198,4 +198,32 @@ class RealEstablishmentsCubit extends Cubit<RealEstablishmentsState> {
       ),
     );
   }
+
+  Future<void> toggleEstablishmentStatus(String id, bool currentlyOpen) async {
+    final newStatus = currentlyOpen ? 'CLOSED' : 'OPEN';
+    final result = await _service.updateEstablishmentStatus(id, newStatus);
+    
+    result.fold(
+      (failure) => emit(state.copyWith(error: failure.message)),
+      (_) => load(), // Recargamos la lista
+    );
+  }
+
+  Future<void> deleteEstablishment(String id) async {
+    final result = await _service.deleteEstablishment(id);
+    
+    result.fold(
+      (failure) => emit(state.copyWith(error: failure.message)),
+      (_) => load(), // Recargamos la lista
+    );
+  }
+
+  Future<void> assignAdmin(String id, String adminEmail) async {
+    final result = await _service.assignAdminToEstablishment(id, adminEmail);
+    
+    result.fold(
+      (failure) => emit(state.copyWith(error: failure.message)),
+      (_) => load(), // Recargamos la lista
+    );
+  }
 }

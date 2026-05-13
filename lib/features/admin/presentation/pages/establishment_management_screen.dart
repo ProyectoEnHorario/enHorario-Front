@@ -75,10 +75,75 @@ class _EstablishmentCard extends StatelessWidget {
 
   const _EstablishmentCard({required this.establishment});
 
+  void _showDeleteDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar Establecimiento'),
+        content: Text('¿Estás seguro de que deseas eliminar permanentemente "${establishment.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            onPressed: () {
+              context.read<RealEstablishmentsCubit>().deleteEstablishment(establishment.id);
+              Navigator.pop(ctx);
+            },
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAssignDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => BlocBuilder<UserManagementCubit, UserManagementState>(
+        builder: (context, state) {
+          final admins = state.users.where((u) => u.rol == AppRole.adminLocal || u.rol == AppRole.admin).toList();
+
+          return AlertDialog(
+            title: const Text('Asignar Administrador'),
+            content: admins.isEmpty
+                ? const Text('No hay administradores disponibles.')
+                : SizedBox(
+                    width: double.maxFinite,
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      itemCount: admins.length,
+                      itemBuilder: (context, index) {
+                        final admin = admins[index];
+                        return ListTile(
+                          title: Text('${admin.nombre} ${admin.apellido}'),
+                          subtitle: Text(admin.email),
+                          onTap: () {
+                            context.read<RealEstablishmentsCubit>().assignAdmin(establishment.id, admin.email);
+                            Navigator.pop(ctx);
+                          },
+                        );
+                      },
+                    ),
+                  ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cerrar'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isActive = establishment.status.toUpperCase() == 'OPEN';
+    final isActive = establishment.isOpen;
 
     return Card(
       elevation: 2,
@@ -113,7 +178,7 @@ class _EstablishmentCard extends StatelessWidget {
                 Switch(
                   value: isActive,
                   onChanged: (value) {
-                    // TODO: Implementar activación/desactivación (ENH-319)
+                    context.read<RealEstablishmentsCubit>().toggleEstablishmentStatus(establishment.id, isActive);
                   },
                 ),
               ],
@@ -136,17 +201,13 @@ class _EstablishmentCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 TextButton.icon(
-                  onPressed: () {
-                    // TODO: Implementar asignación (ENH-318)
-                  },
+                  onPressed: () => _showAssignDialog(context),
                   icon: const Icon(Icons.person_add_outlined, size: 18),
                   label: const Text('Asignar'),
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  onPressed: () {
-                    // TODO: Implementar eliminación (ENH-321)
-                  },
+                  onPressed: () => _showDeleteDialog(context),
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   tooltip: 'Eliminar',
                 ),

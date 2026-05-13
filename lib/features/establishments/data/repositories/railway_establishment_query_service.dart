@@ -156,6 +156,59 @@ class RailwayEstablishmentQueryService {
     }
   }
 
+  Future<Result<void>> updateEstablishmentStatus(
+    String id,
+    String status,
+  ) async {
+    try {
+      final email = await _sessionRepository.getCurrentUserEmail();
+      await _apiClient.patch(
+        '/establishments/$id',
+        data: {'status': status},
+        token: email,
+      );
+      return const Right(null);
+    } on ApiException catch (e) {
+      return Left(Failure(e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return const Left(Failure('Error inesperado al actualizar el estado.'));
+    }
+  }
+
+  Future<Result<void>> deleteEstablishment(String id) async {
+    try {
+      final email = await _sessionRepository.getCurrentUserEmail();
+      await _apiClient.delete(
+        '/establishments/$id',
+        token: email,
+      );
+      return const Right(null);
+    } on ApiException catch (e) {
+      return Left(Failure(e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return const Left(Failure('Error inesperado al eliminar el establecimiento.'));
+    }
+  }
+
+  Future<Result<void>> assignAdminToEstablishment(
+    String establishmentId,
+    String adminEmail,
+  ) async {
+    try {
+      final email = await _sessionRepository.getCurrentUserEmail();
+      await _apiClient.patch(
+        '/establishments/$establishmentId/assign',
+        data: {'adminEmail': adminEmail},
+        token: email,
+      );
+      return const Right(null);
+    } on ApiException catch (e) {
+      return Left(Failure(e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return const Left(Failure('Error inesperado al asignar administrador.'));
+    }
+  }
+
   List<dynamic> _extractContent(dynamic response) {
     if (response is List) {
       return response;
