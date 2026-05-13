@@ -161,18 +161,30 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             )..loadProfile(),
           ),
         ],
-        child: BlocBuilder<UserProfileCubit, UserProfileState>(
-          builder: (context, userState) {
-            final role = userState.user?.rol ?? AppRole.unknown;
-            final titles = _getNavigationTitles(role);
-            final pages = _getPages(role);
-            final destinations = _getDestinations(role);
-
-            // Ajuste de índice por si cambia el rol y se queda fuera de rango
-            if (_selectedIndex >= destinations.length) {
-              _selectedIndex = destinations.length - 1;
-              if (_selectedIndex < 0) _selectedIndex = 0;
+        child: BlocListener<UserProfileCubit, UserProfileState>(
+          listenWhen: (previous, current) => previous.user != current.user && current.user != null,
+          listener: (context, state) {
+            final user = state.user!;
+            final establishmentsCubit = context.read<RealEstablishmentsCubit>();
+            
+            if (user.rol == AppRole.adminLocal) {
+              establishmentsCubit.load(adminId: user.email); // Usamos email como ID si el backend usa email como identificador en el Bearer
+            } else {
+              establishmentsCubit.load();
             }
+          },
+          child: BlocBuilder<UserProfileCubit, UserProfileState>(
+            builder: (context, userState) {
+              final role = userState.user?.rol ?? AppRole.unknown;
+              final titles = _getNavigationTitles(role);
+              final pages = _getPages(role);
+              final destinations = _getDestinations(role);
+  
+              // Ajuste de índice por si cambia el rol y se queda fuera de rango
+              if (_selectedIndex >= destinations.length) {
+                _selectedIndex = destinations.length - 1;
+                if (_selectedIndex < 0) _selectedIndex = 0;
+              }
             return PopScope(
               canPop: _selectedIndex == 0,
               onPopInvokedWithResult: (bool didPop, dynamic result) {

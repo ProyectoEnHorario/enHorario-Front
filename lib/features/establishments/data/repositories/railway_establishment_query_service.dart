@@ -7,19 +7,31 @@ import 'package:enhorario/features/establishments/data/models/railway_establishm
 import 'package:enhorario/features/establishments/data/models/wait_time_rating_model.dart';
 import 'package:enhorario/features/establishments/data/models/wait_time_report_model.dart';
 
+import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
+
 class RailwayEstablishmentQueryService {
   RailwayEstablishmentQueryService(this._apiClient);
 
   final ApiClient _apiClient;
+  final _sessionRepository = AuthSessionRepository();
 
   Future<Result<List<RailwayEstablishmentView>>> fetchEstablishments({
     int page = 0,
     int size = 30,
+    String? adminId,
   }) async {
     try {
+      final email = await _sessionRepository.getCurrentUserEmail();
+      
+      final queryParams = {
+        'page': page,
+        'size': size,
+        if (adminId != null) 'adminId': adminId,
+      };
       final response = await _apiClient.get<dynamic>(
         '/establishments',
-        queryParameters: {'page': page, 'size': size},
+        queryParameters: queryParams,
+        token: email,
       );
 
       final content = _extractContent(response);
