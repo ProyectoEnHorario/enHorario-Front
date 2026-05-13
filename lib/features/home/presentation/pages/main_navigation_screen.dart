@@ -15,6 +15,10 @@ import 'package:enhorario/features/home/presentation/pages/user_profile_screen.d
 import 'package:enhorario/features/notifications/domain/entities/app_notification.dart';
 import 'package:enhorario/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:enhorario/features/turns/presentation/pages/turns_screen.dart';
+import 'package:enhorario/features/admin/presentation/pages/user_management_screen.dart';
+import 'package:enhorario/features/auth/domain/repositories/user_repository.dart';
+import 'package:enhorario/features/auth/presentation/bloc/user_profile_cubit.dart';
+import 'package:enhorario/core/enums/app_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -28,12 +32,57 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
-  static const List<String> _navigationTitles = [
-    'Establecimientos',
-    'Favoritos',
-    'Mi Información',
-    'Tickets',
-  ];
+  List<String> _getNavigationTitles(AppRole role) {
+    return [
+      'Establecimientos',
+      'Favoritos',
+      'Mi Información',
+      if (role.canViewAndCreateTurns) 'Tickets',
+      if (role.canManageUsers) 'Administración',
+    ];
+  }
+
+  List<Widget> _getPages(AppRole role) {
+    return [
+      const PantallaInicioAppReal(),
+      const FavoritesScreen(),
+      const UserProfileScreen(),
+      if (role.canViewAndCreateTurns) const TurnsScreen(),
+      if (role.canManageUsers) const UserManagementScreen(),
+    ];
+  }
+
+  List<NavigationDestination> _getDestinations(AppRole role) {
+    return [
+      const NavigationDestination(
+        icon: Icon(Icons.home_outlined),
+        selectedIcon: Icon(Icons.home),
+        label: 'Inicio',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.favorite_outline),
+        selectedIcon: Icon(Icons.favorite),
+        label: 'Favoritos',
+      ),
+      const NavigationDestination(
+        icon: Icon(Icons.person_outline),
+        selectedIcon: Icon(Icons.person),
+        label: 'Perfil',
+      ),
+      if (role.canViewAndCreateTurns)
+        const NavigationDestination(
+          icon: Icon(Icons.receipt_long_outlined),
+          selectedIcon: Icon(Icons.receipt_long),
+          label: 'Tickets',
+        ),
+      if (role.canManageUsers)
+        const NavigationDestination(
+          icon: Icon(Icons.admin_panel_settings_outlined),
+          selectedIcon: Icon(Icons.admin_panel_settings),
+          label: 'Admin',
+        ),
+    ];
+  }
 
   /// Envía una notificación de prueba para verificar que el sistema funciona
   Future<void> _sendTestNotification(BuildContext context) async {
@@ -112,92 +161,80 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             )..loadProfile(),
           ),
         ],
-        child: PopScope(
-          canPop: _selectedIndex == 0,
-          onPopInvokedWithResult: (bool didPop, dynamic result) {
-            if (!didPop && _selectedIndex != 0) {
-              setState(() {
-                _selectedIndex = 0;
-              });
+        child: BlocBuilder<UserProfileCubit, UserProfileState>(
+          builder: (context, userState) {
+            final role = userState.user?.rol ?? AppRole.unknown;
+            final titles = _getNavigationTitles(role);
+            final pages = _getPages(role);
+            final destinations = _getDestinations(role);
+
+            // Ajuste de índice por si cambia el rol y se queda fuera de rango
+            if (_selectedIndex >= destinations.length) {
+              _selectedIndex = destinations.length - 1;
+              if (_selectedIndex < 0) _selectedIndex = 0;
             }
-          },
-          child: Scaffold(
-            appBar: AppBar(
-              title: Text(_navigationTitles[_selectedIndex]),
-              leading: _selectedIndex != 0
-                  ? IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () {
-                        setState(() {
-                          _selectedIndex = 0;
-                        });
-                      },
-                    )
-                  : null,
-              actions: [
-                // Botón de PRUEBA de Notificación
-                IconButton(
-                  onPressed: () => _sendTestNotification(context),
-                  icon: const Icon(Icons.notification_add),
-                  tooltip: 'Prueba de notificación',
-                  color: Colors.blue,
-                ),
-                IconButton(
-                  onPressed: () async {
-                    await AuthSessionRepository().clearSession();
-                    if (!context.mounted) return;
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute<void>(
-                        builder: (_) => const RealAppEntryScreen(),
-                      ),
-                      (_) => false,
-                    );
-                  },
-                  icon: const Icon(Icons.logout),
-                  tooltip: 'Cerrar sesión',
-                ),
-              ],
-            ),
-            body: IndexedStack(
-              index: _selectedIndex,
-              children: const [
-                PantallaInicioAppReal(),
-                FavoritesScreen(),
-                UserProfileScreen(),
-                TurnsScreen(),
-              ],
-            ),
-            bottomNavigationBar: NavigationBar(
-              selectedIndex: _selectedIndex,
-              onDestinationSelected: (int index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
+            return PopScope(
+              canPop: _selectedIndex == 0,
+              onPopInvokedWithResult: (bool didPop, dynamic result) {
+                if (!didPop && _selectedIndex != 0) {
+                  setState(() {
+                    _selectedIndex = 0;
+                  });
+                }
               },
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: 'Establecimientos',
+              child: Scaffold(
+                appBar: AppBar(
+                  title: Text(titles[_selectedIndex]),
+                  leading: _selectedIndex != 0
+                      ? IconButton(
+                          icon: const Icon(Icons.arrow_back),
+                          onPressed: () {
+                            setState(() {
+                              _selectedIndex = 0;
+                            });
+                          },
+                        )
+                      : null,
+                  actions: [
+                    // Botón de PRUEBA de Notificación
+                    IconButton(
+                      onPressed: () => _sendTestNotification(context),
+                      icon: const Icon(Icons.notification_add),
+                      tooltip: 'Prueba de notificación',
+                      color: Colors.blue,
+                    ),
+                    IconButton(
+                      onPressed: () async {
+                        await AuthSessionRepository().clearSession();
+                        if (!context.mounted) return;
+                        Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const RealAppEntryScreen(),
+                          ),
+                          (_) => false,
+                        );
+                      },
+                      icon: const Icon(Icons.logout),
+                      tooltip: 'Cerrar sesión',
+                    ),
+                  ],
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.favorite_outline),
-                  selectedIcon: Icon(Icons.favorite),
-                  label: 'Favoritos',
+                body: IndexedStack(
+                  index: _selectedIndex,
+                  children: pages,
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person),
-                  label: 'Mi Información',
+                bottomNavigationBar: NavigationBar(
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: (int index) {
+                    setState(() {
+                      _selectedIndex = index;
+                    });
+                  },
+                  destinations: destinations,
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.receipt_long_outlined),
-                  selectedIcon: Icon(Icons.receipt_long),
-                  label: 'Tickets',
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
