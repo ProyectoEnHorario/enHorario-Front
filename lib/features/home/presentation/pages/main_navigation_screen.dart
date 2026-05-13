@@ -15,6 +15,7 @@ import 'package:enhorario/features/home/presentation/pages/user_profile_screen.d
 import 'package:enhorario/features/notifications/domain/entities/app_notification.dart';
 import 'package:enhorario/features/notifications/domain/repositories/notification_repository.dart';
 import 'package:enhorario/features/turns/presentation/pages/turns_screen.dart';
+import 'package:enhorario/features/admin/presentation/pages/admin_panel_screen.dart';
 import 'package:enhorario/features/admin/presentation/pages/user_management_screen.dart';
 import 'package:enhorario/features/auth/domain/repositories/user_repository.dart';
 import 'package:enhorario/features/auth/presentation/bloc/user_profile_cubit.dart';
@@ -48,7 +49,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       const FavoritesScreen(),
       const UserProfileScreen(),
       if (role.canViewAndCreateTurns) const TurnsScreen(),
-      if (role.canManageUsers) const UserManagementScreen(),
+      if (role.canManageUsers) const AdminPanelScreen(),
     ];
   }
 

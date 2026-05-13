@@ -17,16 +17,13 @@ class UserManagementScreen extends StatelessWidget {
       create: (context) => UserManagementCubit(
         RailwayUserRepository(context.read<ApiClient>()),
       )..loadUsers(),
-      child: RoleGuard(
-        requirement: (role) => role.canManageUsers,
-        child: const _UserManagementView(),
-      ),
+      child: const UserManagementView(),
     );
   }
 }
 
-class _UserManagementView extends StatelessWidget {
-  const _UserManagementView();
+class UserManagementView extends StatelessWidget {
+  const UserManagementView({super.key});
 
   void _showRoleDialog(BuildContext context, AppUser user) {
     final cubit = context.read<UserManagementCubit>();
