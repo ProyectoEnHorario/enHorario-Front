@@ -9,6 +9,8 @@ import 'package:enhorario/features/auth/data/repositories/railway_user_repositor
 import 'package:enhorario/features/auth/presentation/bloc/user_management_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:enhorario/features/admin/presentation/widgets/admin_establishment_list_view.dart';
+
 class AdminPanelScreen extends StatelessWidget {
   const AdminPanelScreen({super.key});
 
@@ -37,7 +39,7 @@ class AdminPanelScreen extends StatelessWidget {
             children: [
               UserManagementScreen(),
               EstablishmentManagementScreen(),
-              Center(child: Text('Gestión de Administradores (ENH-320)')),
+              AdminEstablishmentListView(),
             ],
           ),
         ),
