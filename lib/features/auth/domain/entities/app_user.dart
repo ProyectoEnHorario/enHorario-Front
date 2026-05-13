@@ -1,3 +1,5 @@
+import 'package:enhorario/core/enums/app_role.dart';
+
 class AppUser {
   const AppUser({
     required this.uid,
@@ -15,7 +17,7 @@ class AppUser {
   final String email;
   final String nombre;
   final String apellido;
-  final String rol;
+  final AppRole rol;
   final String? telefono;
   final String? profilePhotoUrl;
   final DateTime createdAt;

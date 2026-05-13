@@ -14,6 +14,7 @@ class RealEstablishmentsState {
     this.isRefreshing = false,
     this.error,
     this.lastUpdated,
+    this.adminId,
   });
 
   final List<RailwayEstablishmentView> items;
@@ -25,6 +26,7 @@ class RealEstablishmentsState {
   final bool isRefreshing;
   final String? error;
   final DateTime? lastUpdated;
+  final String? adminId;
 
   bool get hasActiveFilters => query.trim().isNotEmpty || selectedCategoryKeys.isNotEmpty;
 
@@ -39,6 +41,7 @@ class RealEstablishmentsState {
     String? error,
     bool clearError = false,
     DateTime? lastUpdated,
+    String? adminId,
   }) {
     return RealEstablishmentsState(
       items: items ?? this.items,
@@ -50,28 +53,28 @@ class RealEstablishmentsState {
       isRefreshing: isRefreshing ?? this.isRefreshing,
       error: clearError ? null : (error ?? this.error),
       lastUpdated: lastUpdated ?? this.lastUpdated,
+      adminId: adminId ?? this.adminId,
     );
   }
 }
 
 class RealEstablishmentsCubit extends Cubit<RealEstablishmentsState> {
   RealEstablishmentsCubit(this._service)
-      : super(const RealEstablishmentsState()) {
-    loadInitial();
-  }
+      : super(const RealEstablishmentsState());
 
   final RailwayEstablishmentQueryService _service;
 
-  Future<void> loadInitial() async {
+  Future<void> loadInitial({String? adminId}) async {
     emit(
       state.copyWith(
         isLoading: true,
         isRefreshing: false,
         clearError: true,
+        adminId: adminId,
       ),
     );
 
-    final result = await _service.fetchEstablishments();
+    final result = await _service.fetchEstablishments(adminId: adminId);
     result.fold(
       (failure) => emit(
         state.copyWith(
@@ -104,13 +107,13 @@ class RealEstablishmentsCubit extends Cubit<RealEstablishmentsState> {
     );
   }
 
-  Future<void> load() => loadInitial();
+  Future<void> load({String? adminId}) => loadInitial(adminId: adminId);
 
   Future<void> refreshTimes() async {
     if (state.isRefreshing) return;
 
     emit(state.copyWith(isRefreshing: true, clearError: true));
-    final result = await _service.fetchEstablishments();
+    final result = await _service.fetchEstablishments(adminId: state.adminId);
 
     result.fold(
       (failure) => emit(
@@ -193,6 +196,34 @@ class RealEstablishmentsCubit extends Cubit<RealEstablishmentsState> {
         selectedCategoryKeys: const [],
         filtered: state.items,
       ),
+    );
+  }
+
+  Future<void> toggleEstablishmentStatus(String id, bool currentlyOpen) async {
+    final newStatus = currentlyOpen ? 'CLOSED' : 'OPEN';
+    final result = await _service.updateEstablishmentStatus(id, newStatus);
+    
+    result.fold(
+      (failure) => emit(state.copyWith(error: failure.message)),
+      (_) => load(), // Recargamos la lista
+    );
+  }
+
+  Future<void> deleteEstablishment(String id) async {
+    final result = await _service.deleteEstablishment(id);
+    
+    result.fold(
+      (failure) => emit(state.copyWith(error: failure.message)),
+      (_) => load(), // Recargamos la lista
+    );
+  }
+
+  Future<void> assignAdmin(String id, String adminEmail) async {
+    final result = await _service.assignAdminToEstablishment(id, adminEmail);
+    
+    result.fold(
+      (failure) => emit(state.copyWith(error: failure.message)),
+      (_) => load(), // Recargamos la lista
     );
   }
 }

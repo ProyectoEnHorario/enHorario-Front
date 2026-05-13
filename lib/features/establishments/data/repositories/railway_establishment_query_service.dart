@@ -7,19 +7,31 @@ import 'package:enhorario/features/establishments/data/models/railway_establishm
 import 'package:enhorario/features/establishments/data/models/wait_time_rating_model.dart';
 import 'package:enhorario/features/establishments/data/models/wait_time_report_model.dart';
 
+import 'package:enhorario/features/auth/data/repositories/auth_session_repository.dart';
+
 class RailwayEstablishmentQueryService {
   RailwayEstablishmentQueryService(this._apiClient);
 
   final ApiClient _apiClient;
+  final _sessionRepository = AuthSessionRepository();
 
   Future<Result<List<RailwayEstablishmentView>>> fetchEstablishments({
     int page = 0,
     int size = 30,
+    String? adminId,
   }) async {
     try {
+      final email = await _sessionRepository.getCurrentUserEmail();
+      
+      final queryParams = {
+        'page': page,
+        'size': size,
+        if (adminId != null) 'adminId': adminId,
+      };
       final response = await _apiClient.get<dynamic>(
         '/establishments',
-        queryParameters: {'page': page, 'size': size},
+        queryParameters: queryParams,
+        token: email,
       );
 
       final content = _extractContent(response);
@@ -141,6 +153,59 @@ class RailwayEstablishmentQueryService {
       return const Left(
         Failure('Error inesperado al enviar la calificación de precisión.'),
       );
+    }
+  }
+
+  Future<Result<void>> updateEstablishmentStatus(
+    String id,
+    String status,
+  ) async {
+    try {
+      final email = await _sessionRepository.getCurrentUserEmail();
+      await _apiClient.patch(
+        '/establishments/$id',
+        data: {'status': status},
+        token: email,
+      );
+      return const Right(null);
+    } on ApiException catch (e) {
+      return Left(Failure(e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return const Left(Failure('Error inesperado al actualizar el estado.'));
+    }
+  }
+
+  Future<Result<void>> deleteEstablishment(String id) async {
+    try {
+      final email = await _sessionRepository.getCurrentUserEmail();
+      await _apiClient.delete(
+        '/establishments/$id',
+        token: email,
+      );
+      return const Right(null);
+    } on ApiException catch (e) {
+      return Left(Failure(e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return const Left(Failure('Error inesperado al eliminar el establecimiento.'));
+    }
+  }
+
+  Future<Result<void>> assignAdminToEstablishment(
+    String establishmentId,
+    String adminEmail,
+  ) async {
+    try {
+      final email = await _sessionRepository.getCurrentUserEmail();
+      await _apiClient.patch(
+        '/establishments/$establishmentId/assign',
+        data: {'adminEmail': adminEmail},
+        token: email,
+      );
+      return const Right(null);
+    } on ApiException catch (e) {
+      return Left(Failure(e.message, statusCode: e.statusCode));
+    } catch (e) {
+      return const Left(Failure('Error inesperado al asignar administrador.'));
     }
   }
 
