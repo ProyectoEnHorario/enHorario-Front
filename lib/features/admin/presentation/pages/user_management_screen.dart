@@ -3,6 +3,8 @@ import 'package:enhorario/features/auth/data/repositories/railway_user_repositor
 import 'package:enhorario/features/auth/presentation/bloc/user_management_cubit.dart';
 import 'package:enhorario/features/auth/presentation/bloc/user_profile_cubit.dart';
 import 'package:enhorario/features/auth/domain/entities/app_user.dart';
+import 'package:enhorario/core/navigation/role_guard.dart';
+import 'package:enhorario/core/enums/app_role.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -15,7 +17,10 @@ class UserManagementScreen extends StatelessWidget {
       create: (context) => UserManagementCubit(
         RailwayUserRepository(context.read<ApiClient>()),
       )..loadUsers(),
-      child: const _UserManagementView(),
+      child: RoleGuard(
+        requirement: (role) => role.canManageUsers,
+        child: const _UserManagementView(),
+      ),
     );
   }
 }
