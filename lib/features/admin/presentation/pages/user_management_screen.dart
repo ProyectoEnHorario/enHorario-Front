@@ -25,7 +25,7 @@ class _UserManagementView extends StatelessWidget {
 
   void _showRoleDialog(BuildContext context, AppUser user) {
     final cubit = context.read<UserManagementCubit>();
-    String selectedRole = user.rol;
+    AppRole selectedRole = user.rol;
 
     showDialog(
       context: context,
@@ -39,12 +39,12 @@ class _UserManagementView extends StatelessWidget {
                 children: [
                   Text('Selecciona el nuevo rol para ${user.nombre} ${user.apellido}'),
                   const SizedBox(height: 16),
-                  DropdownButton<String>(
+                  DropdownButton<AppRole>(
                     value: selectedRole,
                     isExpanded: true,
                     items: const [
-                      DropdownMenuItem(value: 'USER', child: Text('Usuario Normal')),
-                      DropdownMenuItem(value: 'SUPERADMIN', child: Text('Superadministrador')),
+                      DropdownMenuItem(value: AppRole.user, child: Text('Usuario Normal')),
+                      DropdownMenuItem(value: AppRole.superadmin, child: Text('Superadministrador')),
                     ],
                     onChanged: (val) {
                       if (val != null) {
@@ -72,7 +72,7 @@ class _UserManagementView extends StatelessWidget {
                         return AlertDialog(
                           title: const Text('Confirmar Cambio'),
                           content: Text(
-                            '¿Estás seguro de que deseas cambiar el rol de ${user.nombre} a ${selectedRole.toUpperCase()}?\n\n'
+                            '¿Estás seguro de que deseas cambiar el rol de ${user.nombre} a ${selectedRole.displayName.toUpperCase()}?\n\n'
                             'Esto alterará sus permisos dentro del sistema.',
                           ),
                           actions: [
@@ -83,7 +83,7 @@ class _UserManagementView extends StatelessWidget {
                             FilledButton(
                               style: FilledButton.styleFrom(backgroundColor: Colors.orange),
                               onPressed: () {
-                                cubit.updateUserRole(user.uid, selectedRole);
+                                cubit.updateUserRole(user.uid, selectedRole.toBackendString());
                                 Navigator.of(confirmCtx).pop(); // Cierra confirmación
                                 Navigator.of(ctx).pop(); // Cierra diálogo original
                               },
@@ -195,7 +195,7 @@ class _UserManagementView extends StatelessWidget {
               itemCount: state.users.length,
               itemBuilder: (context, index) {
                 final user = state.users[index];
-                final isSuperAdmin = user.rol == 'SUPERADMIN';
+                final isSuperAdmin = user.rol == AppRole.superadmin;
                 final currentUserUid = context.read<UserProfileCubit>().state.user?.uid;
                 final isCurrentUser = user.uid == currentUserUid;
 
@@ -224,7 +224,7 @@ class _UserManagementView extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Text(
-                            user.rol.toUpperCase(),
+                            user.rol.displayName.toUpperCase(),
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,

@@ -165,7 +165,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         ],
         child: BlocBuilder<UserProfileCubit, UserProfileState>(
           builder: (context, userState) {
-            final isSuperAdmin = userState.user?.rol == 'SUPERADMIN';
+            final isSuperAdmin = userState.user?.rol.canManageUsers ?? false;
             final titles = _getNavigationTitles(isSuperAdmin);
             final pages = _getPages(isSuperAdmin);
             final destinations = _getDestinations(isSuperAdmin);

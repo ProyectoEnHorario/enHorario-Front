@@ -88,16 +88,7 @@ class RailwayUserRepository implements UserRepository {
   }
 
   AppUserModel _mapToUserModel(Map<String, dynamic> response) {
-    return AppUserModel(
-      uid: response['id']?.toString() ?? '',
-      email: response['email']?.toString() ?? '',
-      nombre: response['name']?.toString() ?? '',
-      apellido: response['lastName']?.toString() ?? '',
-      rol: response['role']?.toString() ?? 'USER',
-      telefono: response['phone']?.toString(),
-      profilePhotoUrl: response['profilePhotoUrl']?.toString(),
-      createdAt: DateTime.tryParse(response['createdAt']?.toString() ?? '') ?? DateTime.now(),
-    );
+    return AppUserModel.fromMap(response);
   }
 
   @override
